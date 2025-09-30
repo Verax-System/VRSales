@@ -10,11 +10,7 @@ Ambiente Virtual do Python
 Ignora a pasta do ambiente virtual que criamos na pasta /api
 /api/venv/
 
-Arquivos de variáveis de ambiente
-É CRUCIAL ignorar este arquivo para não expor senhas e chaves de API
-.env
-.env.*
-!.env.example
+
 
 Pastas de dependências do Node.js (para o futuro projeto React)
 node_modules/
