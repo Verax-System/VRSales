@@ -14,3 +14,5 @@ from app.models.product import Product
 from app.models.user import User # <-- ADICIONE ESTA LINHA
 from app.models.customer import Customer # <-- ADICIONE
 from app.models.sale import Sale, SaleItem # <-- ADICIONE
+from app.models.cash_register import CashRegisterSession # <-- ADICIONE
+from app.models.supplier import Supplier # <-- ADICIONE ESTA LINHA

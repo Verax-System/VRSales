@@ -8,9 +8,15 @@ class ProductBase(BaseModel):
     description: Optional[str] = None
     price: float
     stock: int
+    image_url: Optional[str] = None
+    barcode: Optional[str] = None
+
 
 # Schema para a criação de um produto (recebido via API)
 class ProductCreate(ProductBase):
+    image_url: Optional[str] = None
+    barcode: Optional[str] = None
+
     pass # Herda todos os campos de ProductBase
 
 # Schema para a atualização de um produto (recebido via API)
@@ -20,6 +26,9 @@ class ProductUpdate(ProductBase):
     description: Optional[str] = None
     price: Optional[float] = None
     stock: Optional[int] = None
+    image_url: Optional[str] = None
+    barcode: Optional[str] = None
+
 
 # Propriedades que são compartilhadas por todos os schemas que
 # representam um produto no banco de dados.
@@ -27,6 +36,7 @@ class ProductInDBBase(ProductBase):
     id: int
     created_at: datetime
     updated_at: datetime
+    
 
     # Configuração para permitir que o Pydantic funcione com modelos ORM do SQLAlchemy
     class Config:
