@@ -2,19 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # --- INÍCIO DA CORREÇÃO ---
-from app import crud
-from app.schemas.user import User, UserCreate # Importa as classes diretamente
-from app.db.session import SessionLocal
+# Importa o módulo CRUD específico para usuários
+from app.crud import crud_user
+# Importa os schemas e dependências necessários diretamente
+from app.schemas.user import User, UserCreate
+from app.api.dependencies import get_db
 # --- FIM DA CORREÇÃO ---
 
 
 router = APIRouter()
 
-async def get_db():
-    async with SessionLocal() as session:
-        yield session
-
-# Use "User" e "UserCreate" diretamente, sem o prefixo "schemas."
 @router.post("/", response_model=User)
 async def create_user(
     user_in: UserCreate,
@@ -23,11 +20,13 @@ async def create_user(
     """
     Cria um novo usuário.
     """
-    user = await crud.get_user_by_email(db, email=user_in.email)
+    # A chamada agora usa crud_user
+    user = await crud_user.get_user_by_email(db, email=user_in.email)
     if user:
         raise HTTPException(
             status_code=400,
             detail="Um usuário com este email já existe no sistema.",
         )
-    user = await crud.create_user(db=db, user=user_in)
+    # A chamada agora usa crud_user
+    user = await crud_user.create_user(db=db, user=user_in)
     return user

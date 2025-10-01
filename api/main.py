@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # Importa a Base e todos os modelos para garantir que o SQLAlchemy
 # os conheça quando a aplicação iniciar.
 from app.db.base import Base
-from app.models import user, product, customer, supplier, sale, cash_register, ingredient, recipe, additional, batch, table, order
+from app.models import payment  ,user, product, customer, supplier, sale, cash_register, ingredient, recipe, additional, batch, table, order
 # --- FIM DA CORREÇÃO ---
 
 from app.api.api import api_router
