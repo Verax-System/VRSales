@@ -16,3 +16,5 @@ from app.models.customer import Customer # <-- ADICIONE
 from app.models.sale import Sale, SaleItem # <-- ADICIONE
 from app.models.cash_register import CashRegisterSession # <-- ADICIONE
 from app.models.supplier import Supplier # <-- ADICIONE ESTA LINHA
+from app.models.ingredient import Ingredient # <-- ADICIONE
+from app.models.recipe import RecipeItem

@@ -5,10 +5,16 @@ from typing import List
 from app import crud
 from app.schemas.product import Product, ProductCreate, ProductUpdate
 from app.db.session import SessionLocal
+from app.schemas.recipe import RecipeUpdate
+from app import crud
 
 # --- INÍCIO DAS NOVAS IMPORTAÇÕES ---
 from app.api.dependencies import get_current_user
 from app.schemas.user import User # Importa o schema do usuário para type hinting
+from app.schemas.product import Product, ProductCreate, ProductUpdate
+from app.schemas.user import User
+from app.schemas.recipe import RecipeUpdate
+from app.api.dependencies import get_db, get_current_user
 # --- FIM DAS NOVAS IMPORTAÇÕES ---
 
 
@@ -90,3 +96,24 @@ async def delete_product(
     if deleted_product is None:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
     return deleted_product
+
+@router.put("/{product_id}/recipe", response_model=Product)
+async def update_product_recipe_endpoint(
+    product_id: int,
+    recipe_in: RecipeUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Atualiza a ficha técnica (receita) de um produto.
+    Substitui a receita antiga pela nova enviada no corpo da requisição.
+    """
+    db_product = await crud.get_product(db, product_id=product_id)
+    if not db_product:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+
+    updated_product = await crud.update_product_recipe(db=db, product=db_product, recipe_in=recipe_in)
+    
+    product_with_recipe = await crud.get_product_with_recipe(db, product_id=updated_product.id)
+    
+    return product_with_recipe
