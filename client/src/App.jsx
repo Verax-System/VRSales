@@ -12,12 +12,16 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import ProductPage from './pages/ProductPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import './App.css';
+import { CalendarOutlined } from '@ant-design/icons';
+import ExpirationControlPage from './pages/ExpirationControlPage.jsx'; // <-- Nova importação
+
 
 const { Header, Content, Footer, Sider } = Layout;
 const { Title } = Typography;
 
 const menuItems = [
   { key: '/', icon: <AreaChartOutlined />, label: 'Análise' },
+  { key: '/expiration', icon: <CalendarOutlined />, label: 'Validade' }, // <-- Novo item
   { key: '/products', icon: <AppstoreOutlined />, label: 'Produtos' },
 ];
 
@@ -74,6 +78,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<DashboardPage />} />
               <Route path="/products" element={<ProductPage />} />
+              <Route path="/expiration" element={<ExpirationControlPage />} /> 
             </Routes>
           </div>
         </Content>
