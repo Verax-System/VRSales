@@ -28,8 +28,11 @@ from app.models.additional import Additional, OrderItemAdditional
 from app.models.batch import ProductBatch
 from app.models.table import Table
 from app.models.order import Order, OrderItem
-from app.models.payment import Payment # <-- ADICIONE
-
+from app.models.payment import Payment
+from app.models.category import ProductCategory, ProductSubcategory
+from app.models.variation import Attribute, AttributeOption
+# Importações que estavam faltando:
+from app.models.variation import Attribute, AttributeOption, ProductVariation, VariationOptionsAssociation
 # --- FIM DA CORREÇÃO ---
 
 

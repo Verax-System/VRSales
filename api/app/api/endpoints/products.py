@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
+from fastapi import HTTPException
+from app.crud import crud_variation
+from app.schemas.variation import ProductVariation, ProductVariationCreate
 
 # --- INÍCIO DA CORREÇÃO ---
 # Importa o módulo CRUD específico para produtos
@@ -15,6 +18,29 @@ from app.db.session import SessionLocal # Adicionado para a dependência get_db
 
 
 router = APIRouter()
+
+@router.post("/{product_id}/variations", response_model=ProductVariation)
+async def create_product_variation(
+    product_id: int,
+    variation_in: ProductVariationCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Cria uma nova variação (SKU) para um produto específico.
+    """
+    # Verifica se o produto "pai" existe
+    db_product = await crud_product.get_product(db, product_id=product_id)
+    if not db_product:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+    
+    try:
+        return await crud_variation.create_product_variation(
+            db=db, variation_in=variation_in, product_id=product_id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
 
 # A dependência get_db estava faltando a importação de SessionLocal
 async def get_db():

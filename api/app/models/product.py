@@ -1,6 +1,7 @@
 from sqlalchemy import String, Float, Integer, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
+from sqlalchemy import ForeignKey
 from typing import List
 
 from app.db.base import Base
@@ -19,7 +20,12 @@ class Product(Base):
     stock: Mapped[int] = mapped_column(Integer, nullable=False)
     image_url: Mapped[str] = mapped_column(String(500), nullable=True)
     barcode: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=True)
+    category_id: Mapped[int] = mapped_column(ForeignKey("product_categories.id"), nullable=True)
+    subcategory_id: Mapped[int] = mapped_column(ForeignKey("product_subcategories.id"), nullable=True)
+    variations: Mapped[List["ProductVariation"]] = relationship(back_populates="product", cascade="all, delete-orphan")
 
+    category: Mapped["ProductCategory"] = relationship()
+    subcategory: Mapped["ProductSubcategory"] = relationship()
     # Campos de data e hora com valores padrão automáticos
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now())

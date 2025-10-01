@@ -1,6 +1,9 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
+from .category import Category, Subcategory # <-- Adicione esta importação
+from .variation import ProductVariation # <-- Adicione esta importação
+
 
 # Schema base com os campos que um produto sempre terá
 class ProductBase(BaseModel):
@@ -8,6 +11,8 @@ class ProductBase(BaseModel):
     description: Optional[str] = None
     price: float
     stock: int
+    category_id: Optional[int] = None
+    subcategory_id: Optional[int] = None
     image_url: Optional[str] = None
     barcode: Optional[str] = None
 
@@ -35,4 +40,7 @@ class ProductInDBBase(ProductBase):
 
 # Schema final para retornar um produto da API para o cliente
 class Product(ProductInDBBase):
+    category: Optional[Category] = None
+    variations: List[ProductVariation] = [] # Para retornar o produto com suas variações
+    subcategory: Optional[Subcategory] = None
     pass

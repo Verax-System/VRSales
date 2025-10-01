@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.endpoints import batches, products, login, users, sales, cash_register, reports, additionals, customers, suppliers, ingredients, tables, orders
+from app.api.endpoints import attributes ,categories  ,batches, products, login, users, sales, cash_register, reports, additionals, customers, suppliers, ingredients, tables, orders
 
 api_router = APIRouter()
 
@@ -19,3 +19,5 @@ api_router.include_router(tables.router, prefix="/tables", tags=["Tables"]) # <-
 api_router.include_router(orders.router, prefix="/orders", tags=["Orders"]) # <-- ADICIONE
 api_router.include_router(additionals.router, prefix="/additionals", tags=["Additionals"]) # <-- ADICIONE
 api_router.include_router(batches.router, prefix="/batches", tags=["Batches"]) # <-- ADICIONE
+api_router.include_router(categories.router, prefix="/categories", tags=["Categorias de Produtos"]) # <-- ADICIONE
+api_router.include_router(attributes.router, prefix="/attributes", tags=["Atributos de Variação"]) # <-- ADICIONE
