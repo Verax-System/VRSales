@@ -23,6 +23,7 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('accessToken');
+      window.location.href = '/login';
       // window.location.href = '/login'; // Descomente quando a tela de login for criada
       message.error('Sua sessão expirou. Por favor, faça o login novamente.');
     }
