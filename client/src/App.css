@@ -1,13 +1,29 @@
-.logo {
-  float: left;
-  width: 120px;
-  height: 31px;
-  margin: 16px 24px 16px 0;
-  background: rgba(255, 255, 255, 0.3);
+.logo-vertical {
+  height: 32px;
+  margin: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
 }
 
-.site-layout-content {
+.logo-text {
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+
+.site-layout .site-header {
+  background: #001529;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.site-layout .site-layout-background {
   background: #fff;
-  padding: 24px;
-  min-height: calc(100vh - 180px); /* Ajusta a altura mínima do conteúdo */
 }

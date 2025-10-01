@@ -22,9 +22,8 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Se o token for inválido/expirado, limpa o storage e redireciona para o login
       localStorage.removeItem('accessToken');
-      window.location.href = '/login';
+      // window.location.href = '/login'; // Descomente quando a tela de login for criada
       message.error('Sua sessão expirou. Por favor, faça o login novamente.');
     }
     return Promise.reject(error);
@@ -60,6 +59,14 @@ const ApiService = {
 
   // --- VENDAS ---
   createSale: (saleData) => apiClient.post('/sales/', saleData),
+  
+  // --- RELATÓRIOS ---
+  getSalesByPeriod: (startDate, endDate) => 
+    apiClient.get(`/reports/sales-by-period?start_date=${startDate}&end_date=${endDate}`),
+  
+  getTopSellingProducts: (limit = 5) => 
+    apiClient.get(`/reports/top-selling-products?limit=${limit}`),
+
 };
 
 export default ApiService;
