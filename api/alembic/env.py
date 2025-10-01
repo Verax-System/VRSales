@@ -1,51 +1,53 @@
 import os
 import sys
 from logging.config import fileConfig
-from app.db.base import Base
-from app.core.config import settings
+
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
 
 # Adiciona o diretório raiz da aplicação ao path do Python
-# para que possamos importar nossos módulos (como 'app.core.config').
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-# --- Início da Seção Modificada ---
-# Importamos nossa Base e as configurações da nossa aplicação
+# --- INÍCIO DA CORREÇÃO ---
+# Importamos a Base e TODAS as configurações e modelos aqui.
+# Isso garante que, quando o Alembic ler os metadados da Base,
+# todos os modelos já estarão definidos e associados a ela.
 from app.db.base import Base
 from app.core.config import settings
-# --- Fim da Seção Modificada ---
+from app.models.user import User
+from app.models.product import Product
+from app.models.customer import Customer
+from app.models.supplier import Supplier
+from app.models.sale import Sale, SaleItem
+from app.models.cash_register import CashRegisterSession
+from app.models.ingredient import Ingredient
+from app.models.recipe import RecipeItem
+from app.models.additional import Additional, OrderItemAdditional
+from app.models.batch import ProductBatch
+from app.models.table import Table
+from app.models.order import Order, OrderItem
+# --- FIM DA CORREÇÃO ---
 
 
 # Esta é a configuração do Alembic, que é lida do arquivo .ini.
 config = context.config
 
-# --- Início da Seção Modificada ---
-# Sobrescreve a URL do banco de dados no objeto de configuração do Alembic
-# com a URL vinda das nossas configurações centrais.
-# Isso garante que o Alembic se conecte ao mesmo banco de dados que a aplicação.
+# Carrega a URL síncrona para uso exclusivo do Alembic.
 config.set_main_option('sqlalchemy.url', os.getenv("SYNC_DATABASE_URL"))
-# --- Fim da Seção Modificada ---
 
 
 # Interpreta o arquivo de configuração para logging.
-# Esta linha desabilita o logging padrão para evitar duplicação se já configurado.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# --- Início da Seção Modificada ---
 # Define o 'target_metadata' para a base declarativa dos nossos modelos.
-# É assim que o Alembic sabe quais tabelas devem existir no banco de dados.
 target_metadata = Base.metadata
-# --- Fim da Seção Modificada ---
 
 
 def run_migrations_offline() -> None:
-    """Executa migrations em modo 'offline'.
-    ... (código padrão do Alembic)
-    """
+    """Executa migrations em modo 'offline'."""
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
@@ -59,9 +61,7 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Executa migrations em modo 'online'.
-    ... (código padrão do Alembic)
-    """
+    """Executa migrations em modo 'online'."""
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

@@ -1,7 +1,12 @@
 from fastapi import FastAPI
-# --- INÍCIO DO NOVO CÓDIGO ---
 from fastapi.middleware.cors import CORSMiddleware
-# --- FIM DO NOVO CÓDIGO ---
+
+# --- INÍCIO DA CORREÇÃO ---
+# Importa a Base e todos os modelos para garantir que o SQLAlchemy
+# os conheça quando a aplicação iniciar.
+from app.db.base import Base
+from app.models import user, product, customer, supplier, sale, cash_register, ingredient, recipe, additional, batch, table, order
+# --- FIM DA CORREÇÃO ---
 
 from app.api.api import api_router
 
@@ -12,27 +17,20 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# --- INÍCIO DO NOVO CÓDIGO ---
-
 # Configuração do CORS
-# Lista de origens que têm permissão para fazer requisições
-# Para desenvolvimento, você pode usar a porta padrão do Vite (5173) ou um wildcard.
 origins = [
-    "http://localhost:5173", # Endereço do seu app React/Vite
-    "http://localhost:3000", # Endereço comum para Create React App
+    "http://localhost:5173",
+    "http://localhost:3000",
     "http://localhost",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,       # Permite as origens listadas
-    allow_credentials=True,      # Permite cookies (importante para autenticação)
-    allow_methods=["*"],         # Permite todos os métodos (GET, POST, etc.)
-    allow_headers=["*"],         # Permite todos os cabeçalhos
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-
-# --- FIM DO NOVO CÓDIGO ---
-
 
 # Inclui o roteador principal da API, prefixado com /api/v1
 app.include_router(api_router, prefix="/api/v1")
