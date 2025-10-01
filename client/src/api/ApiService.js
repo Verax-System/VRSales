@@ -66,7 +66,13 @@ const ApiService = {
   
   getTopSellingProducts: (limit = 5) => 
     apiClient.get(`/reports/top-selling-products?limit=${limit}`),
+// Adicione estas funções dentro do objeto ApiService
 
+  // --- CONTROLE DE VALIDADE (LOTES) ---
+  getProductBatches: () => apiClient.get('/batches/'),
+  createProductBatch: (batchData) => apiClient.post('/batches/', batchData),
+
+// ... (mantenha o resto do código)
 };
 
 export default ApiService;
