@@ -1,6 +1,6 @@
 import React from 'react';
 import { Layout, Menu } from 'antd';
-import ProductPage from './pages/ProductPage';
+import ProductPage from './pages/ProductPage.jsx';
 import './App.css';
 
 const { Header, Content, Footer } = Layout;
