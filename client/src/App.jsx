@@ -1,35 +1,31 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react';
+import { Layout, Menu } from 'antd';
+import ProductPage from './pages/ProductPage';
+import './App.css';
+
+const { Header, Content, Footer } = Layout;
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Layout className="layout">
+      <Header>
+        <div className="logo" />
+        <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['1']}>
+          <Menu.Item key="1">Produtos</Menu.Item>
+          {/* Adicione outros itens de menu aqui no futuro (Vendas, Clientes, etc) */}
+        </Menu>
+      </Header>
+      <Content style={{ padding: '0 50px' }}>
+        <div className="site-layout-content" style={{ padding: 24, minHeight: 280, background: '#fff' }}>
+          <h1>Gestão de Vendas</h1>
+          <ProductPage />
+        </div>
+      </Content>
+      <Footer style={{ textAlign: 'center' }}>
+        VR Sales ©2025 Criado com Ant Design
+      </Footer>
+    </Layout>
+  );
 }
 
-export default App
+export default App;
