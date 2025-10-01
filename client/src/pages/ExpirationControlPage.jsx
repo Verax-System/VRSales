@@ -1,11 +1,23 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Table, Button, Modal, message, Space, Input, Typography, Tag, DatePicker, Select, Form, InputNumber, notification } from 'antd';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Table,
+  Button,
+  Modal,
+  message,
+  Space,
+  Typography,
+  Tag,
+  DatePicker,
+  Select,
+  Form,
+  InputNumber,
+  notification
+} from 'antd';
 import { PlusOutlined, CalendarOutlined, WarningFilled } from '@ant-design/icons';
 import ApiService from '../api/ApiService';
 import dayjs from 'dayjs';
 
 const { Title } = Typography;
-const { Search } = Input;
 const { Option } = Select;
 
 // Função para determinar o status do lote
@@ -28,63 +40,64 @@ const getExpirationStatus = (expirationDate) => {
 
 
 const ExpirationControlPage = () => {
-  const [batches, setBatches] = useState([]); // Lotes de produtos
-  const [products, setProducts] = useState([]); // Lista de produtos para o formulário
+  const [batches, setBatches] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
-  
-  // Função para buscar os dados
-  const fetchData = async () => {
+
+  // Função para buscar os dados da API
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // Usaremos dados MOCK enquanto o backend não está pronto
-      const mockBatches = [
-          { id: 1, product: { id: 1, name: 'Leite Integral 1L' }, quantity: 50, expiration_date: dayjs().add(5, 'day').toISOString() },
-          { id: 2, product: { id: 2, name: 'Pão de Forma' }, quantity: 30, expiration_date: dayjs().subtract(2, 'day').toISOString() },
-          { id: 3, product: { id: 1, name: 'Leite Integral 1L' }, quantity: 100, expiration_date: dayjs().add(25, 'day').toISOString() },
-          { id: 4, product: { id: 3, name: 'Queijo Minas' }, quantity: 20, expiration_date: dayjs().add(90, 'day').toISOString() },
-      ];
-      setBatches(mockBatches);
+      const [batchesResponse, productsResponse] = await Promise.all([
+        ApiService.getProductBatches(),
+        ApiService.getProducts()
+      ]);
       
-      // A busca de produtos continua real
-      const productsResponse = await ApiService.getProducts();
-      setProducts(productsResponse.data);
+      const fetchedBatches = batchesResponse.data || [];
+      setBatches(fetchedBatches);
+      setProducts(productsResponse.data || []);
+
+      // Lógica para notificação
+      const nearExpirationCount = fetchedBatches.filter(b => getExpirationStatus(b.expiration_date).days <= 7).length;
+      if (nearExpirationCount > 0) {
+        notification.warning({
+          message: 'Produtos Próximos do Vencimento',
+          description: `Você tem ${nearExpirationCount} lote(s) de produtos vencendo nos próximos 7 dias.`,
+          icon: <WarningFilled />,
+          duration: 10,
+        });
+      }
 
     } catch (error) {
-      message.error('Falha ao carregar dados.');
+      message.error('Falha ao carregar dados. O backend para lotes pode não estar pronto.');
+      // Inicializa com arrays vazios em caso de erro para não quebrar a página
+      setBatches([]);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-    // Lógica para notificação
-    const nearExpirationCount = batches.filter(b => getExpirationStatus(b.expiration_date).days <= 7).length;
-    if (nearExpirationCount > 0) {
-      notification.warning({
-        message: 'Produtos Próximos do Vencimento',
-        description: `Você tem ${nearExpirationCount} lote(s) de produtos vencendo em 7 dias ou menos.`,
-        icon: <WarningFilled />,
-        duration: 10, // 10 segundos
-      });
-    }
-  }, []);
+  }, [fetchData]);
 
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields();
+      // Formata a data para o padrão ISO que a API espera
       values.expiration_date = values.expiration_date.toISOString();
-      console.log('Dados do Lote:', values);
-      // Aqui iria a chamada real da API
-      // await ApiService.createProductBatch(values);
+      
+      await ApiService.createProductBatch(values);
       message.success('Lote adicionado com sucesso!');
       setIsModalVisible(false);
       form.resetFields();
       fetchData(); // Recarrega os dados
-    } catch (info) {
-      console.log('Validate Failed:', info);
+    } catch (error) {
+        const errorMsg = error.response?.data?.detail || 'Erro ao salvar o lote.';
+        message.error(errorMsg);
     }
   };
 
@@ -143,7 +156,7 @@ const ExpirationControlPage = () => {
               {products.map(p => <Option key={p.id} value={p.id}>{p.name}</Option>)}
             </Select>
           </Form.Item>
-          <Form.Item name="quantity" label="Quantidade" rules={[{ required: true, message: 'Insira a quantidade!' }]}>
+          <Form.Item name="quantity" label="Quantidade de pacotes" rules={[{ required: true, message: 'Insira a quantidade!' }]}>
             <InputNumber style={{ width: '100%' }} min={1} />
           </Form.Item>
           <Form.Item name="expiration_date" label="Data de Validade" rules={[{ required: true, message: 'Selecione a data!' }]}>
