@@ -14,6 +14,8 @@ import DashboardPage from './pages/DashboardPage.jsx';
 import './App.css';
 import { CalendarOutlined } from '@ant-design/icons';
 import ExpirationControlPage from './pages/ExpirationControlPage.jsx'; // <-- Nova importação
+import { TeamOutlined } from '@ant-design/icons'; // <-- Importe o novo ícone
+import SupplierPage from './pages/SupplierPage.jsx'; // <-- Importe a nova página
 
 
 const { Header, Content, Footer, Sider } = Layout;
@@ -22,6 +24,7 @@ const { Title } = Typography;
 const menuItems = [
   { key: '/', icon: <AreaChartOutlined />, label: 'Análise' },
   { key: '/expiration', icon: <CalendarOutlined />, label: 'Validade' }, // <-- Novo item
+  { key: '/suppliers', icon: <TeamOutlined />, label: 'Fornecedores' },
   { key: '/products', icon: <AppstoreOutlined />, label: 'Produtos' },
 ];
 
@@ -78,6 +81,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<DashboardPage />} />
               <Route path="/products" element={<ProductPage />} />
+              <Route path="/suppliers" element={<SupplierPage />} />
               <Route path="/expiration" element={<ExpirationControlPage />} /> 
             </Routes>
           </div>

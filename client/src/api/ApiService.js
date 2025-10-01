@@ -73,6 +73,11 @@ const ApiService = {
   createProductBatch: (batchData) => apiClient.post('/batches/', batchData),
 
 // ... (mantenha o resto do código)
+ getSuppliers: () => apiClient.get('/suppliers/'),
+ createSupplier: (supplierData) => apiClient.post('/suppliers/', supplierData),
+ updateSupplier: (id, supplierData) => apiClient.put(`/suppliers/${id}`, supplierData),
+ deleteSupplier: (id) => apiClient.delete(`/suppliers/${id}`),
+
 };
 
 export default ApiService;
