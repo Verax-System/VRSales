@@ -1,5 +1,5 @@
 from sqlalchemy import String, Float, Integer, DateTime, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship # <-- CORREÇÃO AQUI: adicionado 'relationship'
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 from typing import List
 
@@ -23,6 +23,7 @@ class Product(Base):
     # Campos de data e hora com valores padrão automáticos
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
+    batches: Mapped[List["ProductBatch"]] = relationship(back_populates="product", cascade="all, delete-orphan")
 
     # Relação: Um produto pode ter vários itens em sua ficha técnica
     recipe_items: Mapped[List["RecipeItem"]] = relationship()
