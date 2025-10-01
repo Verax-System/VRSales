@@ -1,7 +1,8 @@
 import os
 import sys
 from logging.config import fileConfig
-
+from app.db.base import Base
+from app.core.config import settings
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
@@ -25,7 +26,7 @@ config = context.config
 # Sobrescreve a URL do banco de dados no objeto de configuração do Alembic
 # com a URL vinda das nossas configurações centrais.
 # Isso garante que o Alembic se conecte ao mesmo banco de dados que a aplicação.
-config.set_main_option('sqlalchemy.url', settings.DATABASE_URL)
+config.set_main_option('sqlalchemy.url', os.getenv("SYNC_DATABASE_URL"))
 # --- Fim da Seção Modificada ---
 
 

@@ -8,7 +8,7 @@ class Base(DeclarativeBase):
     """
     pass
 
-# Importamos o modelo de Produto aqui para que o Alembic possa "encontrá-lo"
+# Importamos os modelos aqui para que o Alembic possa "encontrá-los"
 # quando estiver procurando por metadados para autogerar as migrations.
-# Todos os futuros modelos deverão ser importados aqui também.
 from app.models.product import Product
+from app.models.user import User # <-- ADICIONE ESTA LINHA

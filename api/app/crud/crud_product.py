@@ -17,9 +17,31 @@ async def get_products(db: AsyncSession, skip: int = 0, limit: int = 100) -> Lis
 
 # Função para criar um novo produto no banco de dados
 async def create_product(db: AsyncSession, product: ProductCreate) -> Product:
-    # Cria uma nova instância do modelo Product com os dados do schema
     db_product = Product(**product.model_dump())
     db.add(db_product)
-    await db.commit() # Salva a transação no banco
-    await db.refresh(db_product) # Atualiza o objeto com os dados do banco (como o ID gerado)
+    await db.commit()
+    await db.refresh(db_product)
     return db_product
+
+# --- INÍCIO DO NOVO CÓDIGO ---
+
+# Função para atualizar um produto existente
+async def update_product(db: AsyncSession, db_product: Product, product_in: ProductUpdate) -> Product:
+    update_data = product_in.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_product, key, value)
+    db.add(db_product)
+    await db.commit()
+    await db.refresh(db_product)
+    return db_product
+
+# Função para remover um produto
+async def remove_product(db: AsyncSession, product_id: int) -> Optional[Product]:
+    result = await db.execute(select(Product).filter(Product.id == product_id))
+    db_product = result.scalars().first()
+    if db_product:
+        await db.delete(db_product)
+        await db.commit()
+    return db_product
+
+# --- FIM DO NOVO CÓDIGO ---
