@@ -12,3 +12,5 @@ class Base(DeclarativeBase):
 # quando estiver procurando por metadados para autogerar as migrations.
 from app.models.product import Product
 from app.models.user import User # <-- ADICIONE ESTA LINHA
+from app.models.customer import Customer # <-- ADICIONE
+from app.models.sale import Sale, SaleItem # <-- ADICIONE
