@@ -21,6 +21,8 @@ class Sale(Base):
     user: Mapped["User"] = relationship()
     items: Mapped[List["SaleItem"]] = relationship(back_populates="sale", cascade="all, delete-orphan")
     cash_register_session: Mapped["CashRegisterSession"] = relationship(back_populates="sales")
+    payments: Mapped[List["Payment"]] = relationship(back_populates="sale", cascade="all, delete-orphan")
+
 
 class SaleItem(Base):
     __tablename__ = "sale_items"

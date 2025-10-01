@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import List, Optional
+from sqlalchemy import or_
 
 from app.models.product import Product
 from app.schemas.product import ProductCreate, ProductUpdate
@@ -22,6 +23,26 @@ async def create_product(db: AsyncSession, product: ProductCreate) -> Product:
     await db.commit()
     await db.refresh(db_product)
     return db_product
+async def lookup_product(db: AsyncSession, query: str) -> List[Product]:
+    """
+    Busca rápida de produtos por nome (case-insensitive) ou código de barras exato.
+    Otimizado para a tela de PDV.
+    """
+    if not query:
+        return []
+
+    # A busca é feita no nome (usando ilike para ser case-insensitive)
+    # OU no código de barras (usando == para uma correspondência exata e rápida)
+    search_query = select(Product).where(
+        or_(
+            Product.name.ilike(f"%{query}%"),
+            Product.barcode == query
+        )
+    ).limit(10) # Limita a 10 resultados para performance
+
+    result = await db.execute(search_query)
+    return result.scalars().all()
+# --- FIM DA NOVA FUNÇÃO ---
 
 # --- INÍCIO DO NOVO CÓDIGO ---
 

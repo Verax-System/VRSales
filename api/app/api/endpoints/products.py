@@ -88,3 +88,17 @@ async def update_product_recipe_endpoint(
     product_with_recipe = await crud_recipe.get_product_with_recipe(db, product_id=updated_product.id)
     
     return product_with_recipe
+
+@router.get("/lookup/", response_model=List[Product])
+async def lookup_products_endpoint(
+    query: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Endpoint de busca rápida para a tela de PDV.
+    Busca por nome ou código de barras.
+    """
+    return await crud_product.lookup_product(db=db, query=query)
+
+# --- FIM DO NOVO ENDPOINT ---

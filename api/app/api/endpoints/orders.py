@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from typing import List
 
 # --- INÍCIO DA CORREÇÃO ---
@@ -7,6 +8,9 @@ from app import crud
 # Importa os schemas e dependências necessários diretamente
 from app.schemas.order import Order, OrderItemCreate, OrderCreateTable, OrderCreateDelivery
 from app.schemas.user import User
+from app.schemas.payment import OrderPaymentRequest
+from app.schemas.sale import Sale
+from app.models.order import Order as OrderModel # Importa o modelo ORM com um alias
 from app.api.dependencies import get_db, get_current_user
 # --- FIM DA CORREÇÃO ---
 
@@ -47,33 +51,41 @@ async def get_open_order(
     order = await crud.get_open_order_by_table(db, table_id=table_id)
     if not order:
         raise HTTPException(status_code=404, detail="Nenhuma comanda aberta encontrada para esta mesa")
-    # Precisamos carregar o objeto ORM Order para que o Pydantic possa usá-lo
-    # A função get_open_order_by_table já faz isso com os relacionamentos.
     return order
 
 
 @router.post("/{order_id}/items", response_model=Order)
-async def add_item_to_order_endpoint( # Renomeado para evitar conflito
+async def add_item_to_order_endpoint(
     order_id: int,
     item_in: OrderItemCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Adiciona um produto a uma comanda existente."""
-    order = await db.get(crud.Order, order_id) # Usando o modelo ORM diretamente
+    order = await db.get(OrderModel, order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Comanda não encontrada")
     return await crud.add_item_to_order(db=db, order=order, item_in=item_in)
 
 
-@router.post("/{order_id}/pay", response_model=Order)
+@router.post("/{order_id}/pay", response_model=Sale)
 async def pay_order(
     order_id: int,
+    payment_in: OrderPaymentRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Finaliza e paga uma comanda, registrando-a como uma venda."""
-    order = await db.get(crud.Order, order_id) # Usando o modelo ORM diretamente
+    """
+    Finaliza e paga uma comanda com múltiplos métodos de pagamento,
+    registrando-a como uma venda.
+    """
+    order = await db.get(OrderModel, order_id, options=[selectinload(OrderModel.items)])
     if not order:
         raise HTTPException(status_code=404, detail="Comanda não encontrada")
-    return await crud.finalize_order_payment(db=db, order=order, user_id=current_user.id)
+    
+    result = await crud.finalize_order_payment(db=db, order=order, payment_in=payment_in, user_id=current_user.id)
+    
+    final_sale = result["sale"]
+    final_sale.change_amount = result["change_amount"]
+    
+    return final_sale

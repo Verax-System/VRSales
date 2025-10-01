@@ -27,3 +27,10 @@ class OrderType(str, enum.Enum):
     DINE_IN = "dine_in"
     DELIVERY = "delivery"
     TAKEOUT = "takeout"
+
+class PaymentMethod(str, enum.Enum):
+    CASH = "cash"
+    CREDIT_CARD = "credit_card"
+    DEBIT_CARD = "debit_card"
+    PIX = "pix"
+    OTHER = "other"

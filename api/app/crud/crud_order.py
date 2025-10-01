@@ -1,5 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from app.schemas.payment import OrderPaymentRequest # <-- Adicione
+from app.models.payment import Payment # <-- Adicione
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, status
 from app.models.order import Order, OrderItem, OrderStatus, OrderType # <-- Adiciona OrderType
@@ -104,25 +106,48 @@ async def add_item_to_order(db: AsyncSession, order: Order, item_in: OrderItemCr
     
     return order
 
-async def finalize_order_payment(db: AsyncSession, order: Order, user_id: int) -> Order:
+async def finalize_order_payment(db: AsyncSession, order: Order, payment_in: OrderPaymentRequest, user_id: int) -> dict:
     """
-    Finaliza o pagamento de uma comanda, transformando-a em uma Venda (Sale),
-    dando baixa no estoque e liberando a mesa.
+    Finaliza o pagamento de uma comanda com múltiplos métodos de pagamento,
+    transformando-a em uma Venda (Sale), dando baixa no estoque e liberando a mesa.
     """
     if order.status == OrderStatus.PAID:
         raise HTTPException(status_code=400, detail="Esta comanda já foi paga")
 
-    # 1. Monta o schema de criação de venda a partir da comanda
+    # 1. Calcula o total da comanda
+    order_total = sum(item.price_at_order * item.quantity for item in order.items)
+    
+    # 2. Calcula o total pago e valida
+    total_paid = sum(p.amount for p in payment_in.payments)
+    if total_paid < order_total:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Valor pago (R$ {total_paid:.2f}) é menor que o total da comanda (R$ {order_total:.2f})."
+        )
+    
+    change_amount = total_paid - order_total
+
+    # 3. Monta o schema de criação de venda
     sale_items_create = [
         SaleItemCreate(product_id=item.product_id, quantity=item.quantity)
         for item in order.items
     ]
-    sale_create = SaleCreate(items=sale_items_create) # Customer ID pode ser adicionado aqui futuramente
+    sale_create = SaleCreate(items=sale_items_create, customer_id=payment_in.customer_id)
 
-    # 2. Chama a função de criar venda (que já é transacional e baixa o estoque)
-    await crud_sale.create_sale(db=db, sale_in=sale_create, user_id=user_id)
+    # 4. Chama a função de criar venda (que já baixa o estoque)
+    # Precisamos ajustar create_sale para receber o total calculado e não recalcular
+    # Por enquanto, vamos manter assim e refatorar create_sale depois.
+    created_sale = await crud_sale.create_sale(db=db, sale_in=sale_create, user_id=user_id)
 
-    # 3. Atualiza o status da comanda e da mesa
+    # 5. Cria os registros de pagamento associados à nova venda
+    for payment_data in payment_in.payments:
+        db_payment = Payment(
+            **payment_data.model_dump(),
+            sale_id=created_sale.id
+        )
+        db.add(db_payment)
+
+    # 6. Atualiza o status da comanda e da mesa
     order.status = OrderStatus.PAID
     order.closed_at = func.now()
     
@@ -131,5 +156,7 @@ async def finalize_order_payment(db: AsyncSession, order: Order, user_id: int) -
         table.status = TableStatus.AVAILABLE
 
     await db.commit()
-    await db.refresh(order)
-    return order
+    await db.refresh(created_sale, ["payments", "items"]) # Recarrega a venda com pagamentos e itens
+    
+    # 7. Retorna um dicionário com a venda e o troco
+    return {"sale": created_sale, "change_amount": change_amount}

@@ -28,6 +28,8 @@ from app.models.additional import Additional, OrderItemAdditional
 from app.models.batch import ProductBatch
 from app.models.table import Table
 from app.models.order import Order, OrderItem
+from app.models.payment import Payment # <-- ADICIONE
+
 # --- FIM DA CORREÇÃO ---
 
 
