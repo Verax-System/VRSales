@@ -18,3 +18,7 @@ from app.models.cash_register import CashRegisterSession # <-- ADICIONE
 from app.models.supplier import Supplier # <-- ADICIONE ESTA LINHA
 from app.models.ingredient import Ingredient # <-- ADICIONE
 from app.models.recipe import RecipeItem
+from app.models.table import Table       # <-- ADICIONE
+from app.models.order import Order, OrderItem
+from app.models.additional import Additional, OrderItemAdditional # <-- ADICIONE
+from app.models.batch import ProductBatch # <-- ADICIONE
