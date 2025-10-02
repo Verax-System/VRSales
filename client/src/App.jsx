@@ -9,9 +9,10 @@ import {
   LogoutOutlined,
   TeamOutlined,
   CalendarOutlined,
+  BarcodeOutlined, // NOVO ÍCONE ADICIONADO
 } from '@ant-design/icons';
 import { Routes, Route, useNavigate, useLocation, Outlet } from 'react-router-dom';
-import { useAuth } from './context/AuthContext'; // Importa nosso hook
+import { useAuth } from './context/AuthContext';
 
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import LoginPage from './pages/LoginPage.jsx';
@@ -19,6 +20,7 @@ import ProductPage from './pages/ProductPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import SupplierPage from './pages/SupplierPage.jsx';
 import ExpirationControlPage from './pages/ExpirationControlPage.jsx';
+import POSPage from './pages/POSPage.jsx'; // NOVA PÁGINA IMPORTADA
 
 import './App.css';
 
@@ -29,7 +31,7 @@ const MainLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth(); // Pega a função logout do contexto
+  const { logout } = useAuth();
 
   const handleMenuClick = ({ key }) => {
     if (key === 'logout') {
@@ -49,6 +51,8 @@ const MainLayout = () => {
   );
   
   const menuItems = [
+    { key: '/pos', icon: <BarcodeOutlined />, label: 'Frente de Caixa' }, // NOVO ITEM DE MENU
+    { type: 'divider' }, // Divisor para separar o PDV das áreas de gestão
     { key: '/', icon: <AreaChartOutlined />, label: 'Análise' },
     { key: '/products', icon: <AppstoreOutlined />, label: 'Produtos' },
     { key: '/suppliers', icon: <TeamOutlined />, label: 'Fornecedores' },
@@ -66,7 +70,7 @@ const MainLayout = () => {
       </Sider>
       <Layout className="site-layout">
         <Header className="site-header">
-          <div /> {/* Espaçador para alinhar à direita */}
+          <div />
           <Dropdown overlay={userMenuItems}>
             <a onClick={(e) => e.preventDefault()} style={{ color: 'white' }}>
               <Space>
@@ -77,7 +81,7 @@ const MainLayout = () => {
           </Dropdown>
         </Header>
         <Content style={{ margin: '16px', overflow: 'auto' }}>
-            <Outlet /> {/* As rotas filhas (protegidas) serão renderizadas aqui */}
+            <Outlet />
         </Content>
       </Layout>
     </Layout>
@@ -91,6 +95,7 @@ const App = () => {
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
             <Route path="/" element={<DashboardPage />} />
+            <Route path="/pos" element={<POSPage />} /> {/* NOVA ROTA ADICIONADA */}
             <Route path="/products" element={<ProductPage />} />
             <Route path="/suppliers" element={<SupplierPage />} />
             <Route path="/expiration" element={<ExpirationControlPage />} />

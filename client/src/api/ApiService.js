@@ -58,6 +58,7 @@ const ApiService = {
   updateProduct: (id, productData) => apiClient.put(`/products/${id}`, productData),
   deleteProduct: (id) => apiClient.delete(`/products/${id}`),
   getLowStockProducts: () => apiClient.get('/products/low-stock/'),
+  lookupProduct: (query) => apiClient.get(`/products/lookup/?query=${query}`),
 
   // --- VENDAS ---
   createSale: (saleData) => apiClient.post('/sales/', saleData),
