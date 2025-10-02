@@ -57,6 +57,7 @@ const ApiService = {
   createProduct: (productData) => apiClient.post('/products/', productData),
   updateProduct: (id, productData) => apiClient.put(`/products/${id}`, productData),
   deleteProduct: (id) => apiClient.delete(`/products/${id}`),
+  getLowStockProducts: () => apiClient.get('/products/low-stock/'),
 
   // --- VENDAS ---
   createSale: (saleData) => apiClient.post('/sales/', saleData),
