@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Layout, Menu, Typography, Avatar, Space, Dropdown } from 'antd';
 import {
   DesktopOutlined,
@@ -10,31 +10,52 @@ import {
   TeamOutlined,
   CalendarOutlined,
   BarcodeOutlined,
-  TableOutlined, // Novo ícone
-  LineChartOutlined, // Novo ícone
+  TableOutlined,
+  LineChartOutlined,
+  SafetyCertificateOutlined, // Novo ícone
 } from '@ant-design/icons';
-import { Routes, Route, useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 
-import ProtectedRoute from './components/ProtectedRoute.jsx';
-import LoginPage from './pages/LoginPage.jsx';
-import ProductPage from './pages/ProductPage.jsx';
-import DashboardPage from './pages/DashboardPage.jsx';
-import SupplierPage from './pages/SupplierPage.jsx';
-import ExpirationControlPage from './pages/ExpirationControlPage.jsx';
-import POSPage from './pages/POSPage.jsx';
-import TableManagementPage from './pages/TableManagementPage.jsx'; // Nova página
-import ReportsPage from './pages/ReportsPage.jsx'; // Nova página
+import RoleBasedRoute from './components/RoleBasedRoute';
+import LoginPage from './pages/LoginPage';
+import ProductPage from './pages/ProductPage';
+import DashboardPage from './pages/DashboardPage';
+import SupplierPage from './pages/SupplierPage';
+import ExpirationControlPage from './pages/ExpirationControlPage';
+import POSPage from './pages/POSPage';
+import TableManagementPage from './pages/TableManagementPage';
+import ReportsPage from './pages/ReportsPage';
+import UnauthorizedPage from './pages/UnauthorizedPage';
 
 import './App.css';
 
 const { Header, Content, Sider } = Layout;
 
+// Definição centralizada de todas as rotas e suas permissões
+const allMenuItems = [
+    { key: '/pos', icon: <BarcodeOutlined />, label: 'Frente de Caixa', roles: ['admin', 'manager', 'cashier'] },
+    { key: '/tables', icon: <TableOutlined />, label: 'Gestão de Mesas', roles: ['admin', 'manager', 'cashier'] },
+    { type: 'divider', roles: ['admin', 'manager'] },
+    { key: '/', icon: <AreaChartOutlined />, label: 'Análise', roles: ['admin', 'manager'] },
+    { key: '/reports', icon: <LineChartOutlined />, label: 'Relatórios', roles: ['admin', 'manager'] },
+    { key: '/products', icon: <AppstoreOutlined />, label: 'Produtos', roles: ['admin', 'manager'] },
+    { key: '/suppliers', icon: <TeamOutlined />, label: 'Fornecedores', roles: ['admin', 'manager'] },
+    { key: '/expiration', icon: <CalendarOutlined />, label: 'Validade', roles: ['admin', 'manager'] },
+    { key: '/users', icon: <SafetyCertificateOutlined />, label: 'Usuários', roles: ['admin'] },
+];
+
 const MainLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+
+  // Filtra o menu com base na função do usuário
+  const accessibleMenuItems = useMemo(() => {
+    if (!user) return [];
+    return allMenuItems.filter(item => item.roles.includes(user.role));
+  }, [user]);
 
   const handleMenuClick = ({ key }) => {
     if (key === 'logout') {
@@ -52,17 +73,10 @@ const MainLayout = () => {
       <Menu.Item key="logout" icon={<LogoutOutlined />} danger>Sair</Menu.Item>
     </Menu>
   );
-  
-  const menuItems = [
-    { key: '/pos', icon: <BarcodeOutlined />, label: 'Frente de Caixa' },
-    { key: '/tables', icon: <TableOutlined />, label: 'Gestão de Mesas' },
-    { type: 'divider' },
-    { key: '/', icon: <AreaChartOutlined />, label: 'Análise' },
-    { key: '/reports', icon: <LineChartOutlined />, label: 'Relatórios' },
-    { key: '/products', icon: <AppstoreOutlined />, label: 'Produtos' },
-    { key: '/suppliers', icon: <TeamOutlined />, label: 'Fornecedores' },
-    { key: '/expiration', icon: <CalendarOutlined />, label: 'Validade' },
-  ];
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -71,16 +85,16 @@ const MainLayout = () => {
           <DesktopOutlined style={{ fontSize: '24px', color: '#fff' }} />
           {!collapsed && <span className="logo-text">VR Sales</span>}
         </div>
-        <Menu theme="dark" selectedKeys={[location.pathname]} mode="inline" items={menuItems} onClick={handleMenuClick} />
+        <Menu theme="dark" selectedKeys={[location.pathname]} mode="inline" items={accessibleMenuItems} onClick={handleMenuClick} />
       </Sider>
       <Layout className="site-layout">
         <Header className="site-header">
           <div />
-          <Dropdown overlay={userMenuItems}>
-            <a onClick={(e) => e.preventDefault()} style={{ color: 'white' }}>
+          <Dropdown overlay={userMenuItems} trigger={['click']}>
+            <a onClick={(e) => e.preventDefault()} style={{ color: 'white', cursor: 'pointer' }}>
               <Space>
                 <Avatar style={{ backgroundColor: '#1890ff' }} icon={<UserOutlined />} />
-                <span>Usuário</span>
+                <span>{user.name}</span>
               </Space>
             </a>
           </Dropdown>
@@ -97,17 +111,31 @@ const App = () => {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route element={<ProtectedRoute />}>
-        <Route element={<MainLayout />}>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/pos" element={<POSPage />} />
-            <Route path="/tables" element={<TableManagementPage />} />
-            <Route path="/reports" element={<ReportsPage />} />
-            <Route path="/products" element={<ProductPage />} />
-            <Route path="/suppliers" element={<SupplierPage />} />
-            <Route path="/expiration" element={<ExpirationControlPage />} />
+      <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+      {/* Rotas Protegidas por Função */}
+      <Route element={<MainLayout />}>
+        <Route element={<RoleBasedRoute allowedRoles={['admin', 'manager']} />}>
+          <Route path="/" element={<DashboardPage />} />
+          <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/products" element={<ProductPage />} />
+          <Route path="/suppliers" element={<SupplierPage />} />
+          <Route path="/expiration" element={<ExpirationControlPage />} />
+        </Route>
+        
+        <Route element={<RoleBasedRoute allowedRoles={['admin']} />}>
+          {/* Adicione aqui a futura página de gestão de usuários */}
+          {/* <Route path="/users" element={<UsersPage />} /> */}
+        </Route>
+
+        <Route element={<RoleBasedRoute allowedRoles={['admin', 'manager', 'cashier']} />}>
+          <Route path="/pos" element={<POSPage />} />
+          <Route path="/tables" element={<TableManagementPage />} />
         </Route>
       </Route>
+
+      {/* Rota de fallback para qualquer outra URL */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };

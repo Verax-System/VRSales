@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Card, message, Typography, Space } from 'antd';
-import { UserOutlined, LockOutlined, DesktopOutlined, ForwardOutlined } from '@ant-design/icons';
+import { UserOutlined, LockOutlined, DesktopOutlined } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 
 const { Title } = Typography;
@@ -8,36 +8,25 @@ const { Title } = Typography;
 const LoginPage = () => {
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [form] = Form.useForm(); // Adiciona referência ao formulário
+  const [form] = Form.useForm();
 
   const onFinish = async (values) => {
     setLoading(true);
     try {
       await login(values.email, values.password);
-      message.success('Login realizado com sucesso!');
+      // O redirecionamento é feito dentro do AuthContext agora
     } catch {
       message.error('Falha no login. Verifique seu e-mail e senha.');
     } finally {
       setLoading(false);
     }
   };
-  
-  // --- INÍCIO DO NOVO CÓDIGO ---
 
-  // Função para o botão de pular login
-  const handleSkipLogin = () => {
-    // IMPORTANTE: Substitua com um usuário válido do seu ambiente de desenvolvimento
-    const devCredentials = {
-      email: 'admin@example.com',
-      password: 'admin',
-    };
-    
-    // Preenche o formulário e o submete programaticamente
-    form.setFieldsValue(devCredentials);
-    onFinish(devCredentials);
+  // Função para lidar com os cliques nos botões de login de desenvolvimento
+  const handleDevLogin = (credentials) => {
+    form.setFieldsValue(credentials);
+    onFinish(credentials);
   };
-  
-  // --- FIM DO NOVO CÓDIGO ---
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '100%', background: '#f0f2f5' }}>
@@ -46,7 +35,7 @@ const LoginPage = () => {
             <DesktopOutlined style={{ fontSize: '48px', color: '#1890ff' }}/>
             <Title level={2}>VR Sales</Title>
         </div>
-        <Form form={form} name="login" onFinish={onFinish}>
+        <Form form={form} name="login" onFinish={onFinish} initialValues={{ email: 'admin@example.com' }}>
           <Form.Item name="email" rules={[{ required: true, message: 'Por favor, insira seu e-mail!' }, { type: 'email', message: 'E-mail inválido!' }]}>
             <Input prefix={<UserOutlined />} placeholder="E-mail" size="large" />
           </Form.Item>
@@ -59,19 +48,23 @@ const LoginPage = () => {
                 Entrar
               </Button>
               
-              {/* --- INÍCIO DO NOVO CÓDIGO --- */}
-              {/* Este botão só será renderizado em ambiente de desenvolvimento */}
+              {/* Botões de login rápido que só aparecem em ambiente de desenvolvimento */}
               {import.meta.env.DEV && (
-                <Button 
-                  type="link" 
-                  icon={<ForwardOutlined />} 
-                  onClick={handleSkipLogin} 
-                  style={{ width: '100%' }}
-                >
-                  Pular Login (Desenvolvimento)
-                </Button>
+                <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                    <Typography.Text type="secondary">Logins de Desenvolvimento:</Typography.Text>
+                    <Space style={{width: '100%', justifyContent: 'center', marginTop: '8px'}}>
+                        <Button type="link" onClick={() => handleDevLogin({ email: 'admin@example.com', password: 'admin'})}>
+                            Admin
+                        </Button>
+                         <Button type="link" onClick={() => handleDevLogin({ email: 'gerente@example.com', password: 'admin'})}>
+                            Gerente
+                        </Button>
+                         <Button type="link" onClick={() => handleDevLogin({ email: 'caixa@example.com', password: 'admin'})}>
+                            Caixa
+                        </Button>
+                    </Space>
+                </div>
               )}
-              {/* --- FIM DO NOVO CÓDIGO --- */}
               
             </Space>
           </Form.Item>
