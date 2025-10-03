@@ -24,7 +24,6 @@ apiClient.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('accessToken');
       window.location.href = '/login';
-      // window.location.href = '/login'; // Descomente quando a tela de login for criada
       message.error('Sua sessão expirou. Por favor, faça o login novamente.');
     }
     return Promise.reject(error);
@@ -38,7 +37,7 @@ const ApiService = {
     const params = new URLSearchParams();
     params.append('username', username);
     params.append('password', password);
-    const response = await apiClient.post('/token', params, {
+    const response = await apiClient.post('/login/token', params, { // Corrigido para corresponder à API
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
     if (response.data.access_token) {
@@ -57,8 +56,18 @@ const ApiService = {
   createProduct: (productData) => apiClient.post('/products/', productData),
   updateProduct: (id, productData) => apiClient.put(`/products/${id}`, productData),
   deleteProduct: (id) => apiClient.delete(`/products/${id}`),
-  getLowStockProducts: () => apiClient.get('/products/low-stock/'),
+  // Endpoint de busca de estoque baixo não existe, vamos remover por enquanto.
+  // getLowStockProducts: () => apiClient.get('/products/low-stock/'), 
   lookupProduct: (query) => apiClient.get(`/products/lookup/?query=${query}`),
+
+  // --- CLIENTES (NOVO) ---
+  getCustomers: () => apiClient.get('/customers/'),
+  createCustomer: (customerData) => apiClient.post('/customers/', customerData),
+
+  // --- MESAS E COMANDAS (NOVO) ---
+  getTables: () => apiClient.get('/tables/'),
+  createOrderForTable: (tableId) => apiClient.post('/orders/table', tableId),
+  getOpenOrderByTable: (tableId) => apiClient.get(`/orders/table/${tableId}/open`),
 
   // --- VENDAS ---
   createSale: (saleData) => apiClient.post('/sales/', saleData),
@@ -69,13 +78,12 @@ const ApiService = {
   
   getTopSellingProducts: (limit = 5) => 
     apiClient.get(`/reports/top-selling-products?limit=${limit}`),
-// Adicione estas funções dentro do objeto ApiService
 
   // --- CONTROLE DE VALIDADE (LOTES) ---
   getProductBatches: () => apiClient.get('/batches/'),
   createProductBatch: (batchData) => apiClient.post('/batches/', batchData),
 
-// ... (mantenha o resto do código)
+  // --- FORNECEDORES ---
  getSuppliers: () => apiClient.get('/suppliers/'),
  createSupplier: (supplierData) => apiClient.post('/suppliers/', supplierData),
  updateSupplier: (id, supplierData) => apiClient.put(`/suppliers/${id}`, supplierData),

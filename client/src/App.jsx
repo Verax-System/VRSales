@@ -9,7 +9,9 @@ import {
   LogoutOutlined,
   TeamOutlined,
   CalendarOutlined,
-  BarcodeOutlined, // NOVO ÍCONE ADICIONADO
+  BarcodeOutlined,
+  TableOutlined, // Novo ícone
+  LineChartOutlined, // Novo ícone
 } from '@ant-design/icons';
 import { Routes, Route, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
@@ -20,12 +22,13 @@ import ProductPage from './pages/ProductPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import SupplierPage from './pages/SupplierPage.jsx';
 import ExpirationControlPage from './pages/ExpirationControlPage.jsx';
-import POSPage from './pages/POSPage.jsx'; // NOVA PÁGINA IMPORTADA
+import POSPage from './pages/POSPage.jsx';
+import TableManagementPage from './pages/TableManagementPage.jsx'; // Nova página
+import ReportsPage from './pages/ReportsPage.jsx'; // Nova página
 
 import './App.css';
 
 const { Header, Content, Sider } = Layout;
-const { Title } = Typography;
 
 const MainLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -51,9 +54,11 @@ const MainLayout = () => {
   );
   
   const menuItems = [
-    { key: '/pos', icon: <BarcodeOutlined />, label: 'Frente de Caixa' }, // NOVO ITEM DE MENU
-    { type: 'divider' }, // Divisor para separar o PDV das áreas de gestão
+    { key: '/pos', icon: <BarcodeOutlined />, label: 'Frente de Caixa' },
+    { key: '/tables', icon: <TableOutlined />, label: 'Gestão de Mesas' },
+    { type: 'divider' },
     { key: '/', icon: <AreaChartOutlined />, label: 'Análise' },
+    { key: '/reports', icon: <LineChartOutlined />, label: 'Relatórios' },
     { key: '/products', icon: <AppstoreOutlined />, label: 'Produtos' },
     { key: '/suppliers', icon: <TeamOutlined />, label: 'Fornecedores' },
     { key: '/expiration', icon: <CalendarOutlined />, label: 'Validade' },
@@ -95,7 +100,9 @@ const App = () => {
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
             <Route path="/" element={<DashboardPage />} />
-            <Route path="/pos" element={<POSPage />} /> {/* NOVA ROTA ADICIONADA */}
+            <Route path="/pos" element={<POSPage />} />
+            <Route path="/tables" element={<TableManagementPage />} />
+            <Route path="/reports" element={<ReportsPage />} />
             <Route path="/products" element={<ProductPage />} />
             <Route path="/suppliers" element={<SupplierPage />} />
             <Route path="/expiration" element={<ExpirationControlPage />} />
