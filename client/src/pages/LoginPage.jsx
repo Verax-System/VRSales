@@ -15,7 +15,7 @@ const LoginPage = () => {
     try {
       await login(values.email, values.password);
       message.success('Login realizado com sucesso!');
-    } catch (error) {
+    } catch {
       message.error('Falha no login. Verifique seu e-mail e senha.');
     } finally {
       setLoading(false);

@@ -10,7 +10,16 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Verifica se já existe um token no carregamento da aplicação
+    // --- INÍCIO DA MODIFICAÇÃO ---
+    // Em modo de desenvolvimento, pula a autenticação
+    if (import.meta.env.DEV) {
+      setIsAuthenticated(true);
+      setLoading(false);
+      return;
+    }
+    // --- FIM DA MODIFICAÇÃO ---
+
+    // Lógica original para produção
     const token = localStorage.getItem('accessToken');
     if (token) {
       setIsAuthenticated(true);
