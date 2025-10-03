@@ -1,52 +1,53 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, Row, Col, Statistic, Select, InputNumber, Button, Form, message, Divider } from 'antd';
-import { DollarCircleOutlined, CreditCardOutlined, QrcodeOutlined } from '@ant-design/icons';
-import ApiService from '../api/ApiService';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Modal, Row, Col, Statistic, Select, InputNumber, Button, Form, message, Divider, Space } from 'antd';
+import { DollarCircleOutlined, CreditCardOutlined, QrcodeOutlined, CloseCircleOutlined } from '@ant-design/icons';
+// import ApiService from '../api/ApiService'; // Será usado quando o backend estiver pronto
 
 const { Option } = Select;
 
 const PaymentModal = ({ open, onCancel, onOk, cartItems, totalAmount }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [amountPaid, setAmountPaid] = useState(0);
+  // Agora controlamos uma lista de pagamentos
+  const [payments, setPayments] = useState([{ method: 'cash', amount: 0 }]);
 
-  const change = amountPaid > totalAmount ? amountPaid - totalAmount : 0;
+  // Calcula o total pago e o valor restante
+  const totalPaid = useMemo(() => payments.reduce((acc, p) => acc + (p.amount || 0), 0), [payments]);
+  const remainingAmount = totalAmount - totalPaid;
+  const change = totalPaid > totalAmount ? totalPaid - totalAmount : 0;
 
-  // Reseta o formulário sempre que o modal for fechado/aberto
   useEffect(() => {
     if (open) {
-      form.resetFields();
-      setAmountPaid(0);
+      // Começa com um único pagamento em dinheiro, com o valor restante
+      setPayments([{ method: 'cash', amount: totalAmount > 0 ? totalAmount : 0 }]);
+      form.setFieldsValue({ payments: [{ method: 'cash', amount: totalAmount > 0 ? totalAmount : 0 }] });
     }
-  }, [open, form]);
+  }, [open, totalAmount, form]);
 
-  const handleFinishSale = async (values) => {
-    if (amountPaid < totalAmount) {
+  const handleFinishSale = async () => {
+    if (totalPaid < totalAmount) {
       message.error('O valor pago é menor que o total da venda.');
       return;
     }
     
     setLoading(true);
-    try {
-      const saleData = {
-        items: cartItems.map(item => ({
-          product_id: item.id,
-          quantity: item.quantity,
-        })),
-        // Futuramente, podemos adicionar um campo para selecionar o cliente
-        customer_id: null, 
-      };
-
-      await ApiService.createSale(saleData);
+    // SIMULAÇÃO: No futuro, aqui chamaríamos a API real
+    setTimeout(() => {
+      // const saleData = {
+      //   items: cartItems.map(item => ({ product_id: item.id, quantity: item.quantity })),
+      //   payments: payments.filter(p => p.amount > 0), // Envia apenas pagamentos com valor
+      // };
+      // await ApiService.createSaleWithPayments(saleData);
       
-      message.success(`Venda finalizada com sucesso! Troco: R$ ${change.toFixed(2)}`);
-      onOk(); // Chama a função de sucesso para limpar o PDV
-    } catch (error) {
-      const errorMsg = error.response?.data?.detail || 'Erro ao finalizar a venda.';
-      message.error(errorMsg);
-    } finally {
+      console.log('Dados que seriam enviados para a API:', {
+        items: cartItems.map(item => ({ product_id: item.id, quantity: item.quantity })),
+        payments: payments.filter(p => p.amount > 0),
+      });
+
       setLoading(false);
-    }
+      message.success(`Venda finalizada! Troco: R$ ${change.toFixed(2)}`);
+      onOk();
+    }, 1000); // Simula 1 segundo de espera
   };
 
   return (
@@ -55,49 +56,74 @@ const PaymentModal = ({ open, onCancel, onOk, cartItems, totalAmount }) => {
       title="Finalizar Venda"
       onCancel={onCancel}
       footer={null}
-      width={600}
+      width={800}
     >
-      <Row gutter={16}>
+      <Row gutter={32}>
         <Col span={12}>
           <Statistic title="Total a Pagar" value={totalAmount} prefix="R$" precision={2} />
         </Col>
         <Col span={12}>
-          <Statistic title="Troco" value={change} prefix="R$" precision={2} valueStyle={{ color: '#3f8600' }} />
+          <Statistic
+            title={remainingAmount > 0 ? "Faltam" : "Troco"}
+            value={remainingAmount > 0 ? remainingAmount : change}
+            prefix="R$"
+            precision={2}
+            valueStyle={{ color: remainingAmount > 0 ? '#cf1322' : '#3f8600' }}
+          />
         </Col>
       </Row>
       <Divider />
-      <Form form={form} layout="vertical" onFinish={handleFinishSale}>
-        <Form.Item label="Forma de Pagamento">
-          <Select defaultValue="cash" size="large">
-            <Option value="cash"><DollarCircleOutlined /> Dinheiro</Option>
-            <Option value="credit_card"><CreditCardOutlined /> Cartão de Crédito</Option>
-            <Option value="debit_card"><CreditCardOutlined /> Cartão de Débito</Option>
-            <Option value="pix"><QrcodeOutlined /> PIX</Option>
-          </Select>
-        </Form.Item>
-        <Form.Item label="Valor Recebido">
-          <InputNumber
-            size="large"
-            style={{ width: '100%' }}
-            prefix="R$"
-            precision={2}
-            step={0.01}
-            min={0}
-            onChange={(value) => setAmountPaid(value || 0)}
-            autoFocus
-          />
-        </Form.Item>
+      
+      <Form form={form} onFinish={handleFinishSale}>
+        <Form.List name="payments">
+          {(fields, { add, remove }) => (
+            <>
+              {fields.map(({ key, name, ...restField }) => (
+                <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
+                  <Form.Item {...restField} name={[name, 'method']} initialValue="cash">
+                    <Select style={{ width: 180 }}>
+                      <Option value="cash"><DollarCircleOutlined /> Dinheiro</Option>
+                      <Option value="credit_card"><CreditCardOutlined /> Crédito</Option>
+                      <Option value="debit_card"><CreditCardOutlined /> Débito</Option>
+                      <Option value="pix"><QrcodeOutlined /> PIX</Option>
+                    </Select>
+                  </Form.Item>
+                  <Form.Item {...restField} name={[name, 'amount']}>
+                    <InputNumber prefix="R$" style={{ width: 200 }} precision={2} />
+                  </Form.Item>
+                  {fields.length > 1 ? <CloseCircleOutlined onClick={() => remove(name)} /> : null}
+                </Space>
+              ))}
+              <Form.Item>
+                <Button type="dashed" onClick={() => add({ amount: remainingAmount > 0 ? remainingAmount : 0 })} block>
+                  Adicionar outro pagamento
+                </Button>
+              </Form.Item>
+            </>
+          )}
+        </Form.List>
+
+        <Divider />
+
         <Button
           type="primary"
           htmlType="submit"
           size="large"
           loading={loading}
           block
+          disabled={totalPaid < totalAmount}
           style={{ height: '50px', fontSize: '1.1rem' }}
         >
           Confirmar Pagamento
         </Button>
       </Form>
+      {/* Atualiza o estado 'payments' sempre que o formulário mudar */}
+      <Form.Item shouldUpdate>
+        {() => {
+          setPayments(form.getFieldValue('payments') || []);
+          return null;
+        }}
+      </Form.Item>
     </Modal>
   );
 };
