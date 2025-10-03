@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Card, message, Typography, Space } from 'antd';
-import { UserOutlined, LockOutlined, DesktopOutlined } from '@ant-design/icons';
+import { Form, Input, Button, Card, message, Typography, Space, Divider } from 'antd';
+import { UserOutlined, LockOutlined, DesktopOutlined, ForwardOutlined } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 
 const { Title } = Typography;
@@ -14,7 +14,6 @@ const LoginPage = () => {
     setLoading(true);
     try {
       await login(values.email, values.password);
-      // O redirecionamento é feito dentro do AuthContext agora
     } catch {
       message.error('Falha no login. Verifique seu e-mail e senha.');
     } finally {
@@ -22,7 +21,6 @@ const LoginPage = () => {
     }
   };
 
-  // Função para lidar com os cliques nos botões de login de desenvolvimento
   const handleDevLogin = (credentials) => {
     form.setFieldsValue(credentials);
     onFinish(credentials);
@@ -48,23 +46,29 @@ const LoginPage = () => {
                 Entrar
               </Button>
               
-              {/* Botões de login rápido que só aparecem em ambiente de desenvolvimento */}
+              {/* --- INÍCIO DAS MODIFICAÇÕES --- */}
               {import.meta.env.DEV && (
-                <div style={{ textAlign: 'center', marginTop: '16px' }}>
-                    <Typography.Text type="secondary">Logins de Desenvolvimento:</Typography.Text>
-                    <Space style={{width: '100%', justifyContent: 'center', marginTop: '8px'}}>
-                        <Button type="link" onClick={() => handleDevLogin({ email: 'admin@example.com', password: 'admin'})}>
-                            Admin
-                        </Button>
-                         <Button type="link" onClick={() => handleDevLogin({ email: 'gerente@example.com', password: 'admin'})}>
-                            Gerente
-                        </Button>
-                         <Button type="link" onClick={() => handleDevLogin({ email: 'caixa@example.com', password: 'admin'})}>
-                            Caixa
-                        </Button>
-                    </Space>
-                </div>
+                <>
+                  <Button 
+                    icon={<ForwardOutlined />} 
+                    onClick={() => handleDevLogin({ email: 'admin@example.com', password: 'admin' })} 
+                    style={{ width: '100%' }}
+                    size="large"
+                  >
+                    Pular Login (Desenvolvimento)
+                  </Button>
+                  <Divider>Outras Funções</Divider>
+                  <Space style={{width: '100%', justifyContent: 'center'}}>
+                      <Button type="link" onClick={() => handleDevLogin({ email: 'gerente@example.com', password: 'admin'})}>
+                          Logar como Gerente
+                      </Button>
+                      <Button type="link" onClick={() => handleDevLogin({ email: 'caixa@example.com', password: 'admin'})}>
+                          Logar como Caixa
+                      </Button>
+                  </Space>
+                </>
               )}
+              {/* --- FIM DAS MODIFICAÇÕES --- */}
               
             </Space>
           </Form.Item>

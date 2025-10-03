@@ -14,6 +14,7 @@ import {
   LineChartOutlined,
   SafetyCertificateOutlined, // Novo ícone
 } from '@ant-design/icons';
+import UsersPage from './pages/UsersPage'; // Importe a nova página
 import { Routes, Route, useNavigate, useLocation, Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 
@@ -123,10 +124,11 @@ const App = () => {
           <Route path="/expiration" element={<ExpirationControlPage />} />
         </Route>
         
+        {/* --- INÍCIO DA MODIFICAÇÃO --- */}
         <Route element={<RoleBasedRoute allowedRoles={['admin']} />}>
-          {/* Adicione aqui a futura página de gestão de usuários */}
-          {/* <Route path="/users" element={<UsersPage />} /> */}
+          <Route path="/users" element={<UsersPage />} />
         </Route>
+        {/* --- FIM DA MODIFICAÇÃO --- */}
 
         <Route element={<RoleBasedRoute allowedRoles={['admin', 'manager', 'cashier']} />}>
           <Route path="/pos" element={<POSPage />} />
