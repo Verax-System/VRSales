@@ -12,9 +12,11 @@ import {
   BarcodeOutlined,
   TableOutlined,
   LineChartOutlined,
-  SafetyCertificateOutlined, // Novo ícone
+  SafetyCertificateOutlined,
+  FireOutlined,
+  RocketOutlined,
 } from '@ant-design/icons';
-import UsersPage from './pages/UsersPage'; // Importe a nova página
+import UsersPage from './pages/UsersPage';
 import { Routes, Route, useNavigate, useLocation, Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 
@@ -28,6 +30,8 @@ import POSPage from './pages/POSPage';
 import TableManagementPage from './pages/TableManagementPage';
 import ReportsPage from './pages/ReportsPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
+import KDSPage from './pages/KDSPage';
+import MarketingPage from './pages/MarketingPage';
 
 import './App.css';
 
@@ -37,12 +41,16 @@ const { Header, Content, Sider } = Layout;
 const allMenuItems = [
     { key: '/pos', icon: <BarcodeOutlined />, label: 'Frente de Caixa', roles: ['admin', 'manager', 'cashier'] },
     { key: '/tables', icon: <TableOutlined />, label: 'Gestão de Mesas', roles: ['admin', 'manager', 'cashier'] },
+    { key: '/kds', icon: <FireOutlined />, label: 'Painel da Cozinha', roles: ['admin', 'manager'] },
     { type: 'divider', roles: ['admin', 'manager'] },
     { key: '/', icon: <AreaChartOutlined />, label: 'Análise', roles: ['admin', 'manager'] },
     { key: '/reports', icon: <LineChartOutlined />, label: 'Relatórios', roles: ['admin', 'manager'] },
+    { key: '/marketing', icon: <RocketOutlined />, label: 'Marketing', roles: ['admin', 'manager'] },
+    { type: 'divider', roles: ['admin', 'manager'] },
     { key: '/products', icon: <AppstoreOutlined />, label: 'Produtos', roles: ['admin', 'manager'] },
     { key: '/suppliers', icon: <TeamOutlined />, label: 'Fornecedores', roles: ['admin', 'manager'] },
     { key: '/expiration', icon: <CalendarOutlined />, label: 'Validade', roles: ['admin', 'manager'] },
+    { type: 'divider', roles: ['admin'] },
     { key: '/users', icon: <SafetyCertificateOutlined />, label: 'Usuários', roles: ['admin'] },
 ];
 
@@ -52,10 +60,9 @@ const MainLayout = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
 
-  // Filtra o menu com base na função do usuário
   const accessibleMenuItems = useMemo(() => {
     if (!user) return [];
-    return allMenuItems.filter(item => item.roles.includes(user.role));
+    return allMenuItems.filter(item => !item.roles || item.roles.includes(user.role));
   }, [user]);
 
   const handleMenuClick = ({ key }) => {
@@ -111,32 +118,37 @@ const MainLayout = () => {
 const App = () => {
   return (
     <Routes>
+      {/* Rotas públicas que não usam o layout principal */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-      {/* Rotas Protegidas por Função */}
-      <Route element={<MainLayout />}>
+      {/* Rota do KDS, que também não usa o layout principal mas é protegida */}
+      <Route element={<RoleBasedRoute allowedRoles={['admin', 'manager']} />}>
+        <Route path="/kds" element={<KDSPage />} />
+      </Route>
+
+      {/* Rotas que usam o MainLayout (com menu lateral, etc.) */}
+      <Route path="/" element={<MainLayout />}>
         <Route element={<RoleBasedRoute allowedRoles={['admin', 'manager']} />}>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/reports" element={<ReportsPage />} />
-          <Route path="/products" element={<ProductPage />} />
-          <Route path="/suppliers" element={<SupplierPage />} />
-          <Route path="/expiration" element={<ExpirationControlPage />} />
+          <Route index element={<DashboardPage />} /> {/* "index" torna esta a rota padrão para "/" */}
+          <Route path="reports" element={<ReportsPage />} />
+          <Route path="products" element={<ProductPage />} />
+          <Route path="suppliers" element={<SupplierPage />} />
+          <Route path="expiration" element={<ExpirationControlPage />} />
+          <Route path="marketing" element={<MarketingPage />} />
         </Route>
         
-        {/* --- INÍCIO DA MODIFICAÇÃO --- */}
         <Route element={<RoleBasedRoute allowedRoles={['admin']} />}>
-          <Route path="/users" element={<UsersPage />} />
+          <Route path="users" element={<UsersPage />} />
         </Route>
-        {/* --- FIM DA MODIFICAÇÃO --- */}
 
         <Route element={<RoleBasedRoute allowedRoles={['admin', 'manager', 'cashier']} />}>
-          <Route path="/pos" element={<POSPage />} />
-          <Route path="/tables" element={<TableManagementPage />} />
+          <Route path="pos" element={<POSPage />} />
+          <Route path="tables" element={<TableManagementPage />} />
         </Route>
       </Route>
 
-      {/* Rota de fallback para qualquer outra URL */}
+      {/* Rota de fallback para qualquer outro URL não encontrado */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
