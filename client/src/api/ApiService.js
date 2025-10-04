@@ -78,12 +78,12 @@ const ApiService = {
     // Simula uma chamada de API com um pequeno atraso
     return new Promise(resolve => setTimeout(() => resolve({ data: mockUsers }), 500));
   },
-  
+
   createUser: async (userData) => {
     console.log("MOCK: Criando usuário...", userData);
-    const newUser = { 
-        ...userData, 
-        id: nextUserId++, 
+    const newUser = {
+        ...userData,
+        id: nextUserId++,
         is_active: true,
         created_at: new Date().toISOString()
     };
@@ -93,7 +93,7 @@ const ApiService = {
 
   updateUser: async (id, userData) => {
     console.log("MOCK: Atualizando usuário...", id, userData);
-    mockUsers = mockUsers.map(user => 
+    mockUsers = mockUsers.map(user =>
         user.id === id ? { ...user, ...userData } : user
     );
     const updatedUser = mockUsers.find(u => u.id === id);
@@ -112,6 +112,7 @@ const ApiService = {
   updateProduct: (id, productData) => apiClient.put(`/products/${id}`, productData),
   deleteProduct: (id) => apiClient.delete(`/products/${id}`),
   lookupProduct: (query) => apiClient.get(`/products/lookup/?query=${query}`),
+  getLowStockProducts: () => apiClient.get('/products/low-stock'),
 
   // --- CLIENTES ---
   getCustomers: () => apiClient.get('/customers/'),
@@ -124,12 +125,12 @@ const ApiService = {
 
   // --- VENDAS ---
   createSale: (saleData) => apiClient.post('/sales/', saleData),
-  
+
   // --- RELATÓRIOS ---
-  getSalesByPeriod: (startDate, endDate) => 
+  getSalesByPeriod: (startDate, endDate) =>
     apiClient.get(`/reports/sales-by-period?start_date=${startDate}&end_date=${endDate}`),
-  
-  getTopSellingProducts: (limit = 5) => 
+
+  getTopSellingProducts: (limit = 5) =>
     apiClient.get(`/reports/top-selling-products?limit=${limit}`),
 
   // --- CONTROLE DE VALIDADE (LOTES) ---

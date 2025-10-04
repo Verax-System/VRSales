@@ -30,7 +30,7 @@ const DashboardPage = () => {
           ApiService.getTopSellingProducts(5),
           ApiService.getLowStockProducts()
         ]);
-        
+
         setStats(salesResponse.data);
         setRanking(rankingResponse.data);
         setLowStockProducts(lowStockResponse.data);
@@ -61,7 +61,7 @@ const DashboardPage = () => {
   return (
     <div style={{ padding: '0 16px' }}>
       <Title level={2} style={{ marginBottom: '24px' }}>Análise Geral</Title>
-      
+
       <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} md={12} lg={6}>
           <Card>
@@ -129,7 +129,7 @@ const DashboardPage = () => {
                   />
             </Card>
         </Col>
-        
+
         {/* NOVO CARD COM A LISTA DE PRODUTOS COM ESTOQUE BAIXO */}
         <Col xs={24} lg={12}>
             <Card title="Produtos com Estoque Baixo">

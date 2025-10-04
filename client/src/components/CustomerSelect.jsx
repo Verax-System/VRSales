@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Select, Button, Modal, Form, Input, message, Spin } from 'antd';
-import { UserOutlined, PlusOutlined } from '@ant-design/icons';
+import { Select, Button, Modal, Form, Input, message, Spin, Typography } from 'antd';
+import { UserOutlined, PlusOutlined, StarFilled } from '@ant-design/icons';
 import ApiService from '../api/ApiService';
+
+const { Text } = Typography;
 
 const CustomerForm = ({ form, onFinish }) => (
   <Form form={form} layout="vertical" onFinish={onFinish}>
@@ -73,7 +75,13 @@ const CustomerSelect = ({ onSelectCustomer }) => {
       >
         {customers.map(customer => (
           <Select.Option key={customer.id} value={customer.id} customer={customer}>
-            {customer.full_name}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>{customer.full_name}</span>
+              <Text type="secondary">
+                <StarFilled style={{ color: '#FFD700', marginRight: 4 }} />
+                {customer.points || 0}
+              </Text>
+            </div>
           </Select.Option>
         ))}
       </Select>
