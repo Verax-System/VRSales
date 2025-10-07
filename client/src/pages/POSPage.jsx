@@ -30,6 +30,7 @@ import ApiService from '../api/ApiService';
 import dayjs from 'dayjs';
 import PaymentModal from '../components/PaymentModal';
 import CustomerSelect from '../components/CustomerSelect'; // Importe o novo componente
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const { Header, Content, Sider } = Layout;
 const { Title, Text } = Typography;
@@ -43,6 +44,16 @@ const POSPage = () => {
   const [lastAddedItem, setLastAddedItem] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null); // Novo estado para o cliente
   const searchInputRef = useRef(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (location.state?.orderItems) {
+      setCartItems(location.state.orderItems);
+      // Limpa o state da navegação para não carregar o carrinho novamente ao recarregar a página
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
 
   useEffect(() => {
     searchInputRef.current?.focus();

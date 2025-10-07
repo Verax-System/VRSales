@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, Row, Col, Typography, Tag, Modal, Button, message, Spin, Empty, List, Avatar, Divider, Form, Input } from 'antd';
-import { TableOutlined, PlusOutlined } from '@ant-design/icons';
+import { TableOutlined, PlusOutlined, DollarCircleOutlined } from '@ant-design/icons';
 import ApiService from '../api/ApiService';
 import dayjs from 'dayjs';
 import AddItemModal from '../components/AddItemModal';
+import { useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
@@ -16,6 +17,7 @@ const TableManagementPage = () => {
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [addForm] = Form.useForm();
   const [isAddItemModalVisible, setIsAddItemModalVisible] = useState(false);
+  const navigate = useNavigate();
 
   // Função para buscar e atualizar a lista de mesas
   const fetchTables = useCallback(async () => {
@@ -35,6 +37,30 @@ const TableManagementPage = () => {
     const interval = setInterval(fetchTables, 15000); // Atualiza a cada 15 segundos
     return () => clearInterval(interval);
   }, [fetchTables]);
+
+  // Agrupa os itens do pedido por produto
+  const groupedOrderItems = useMemo(() => {
+    if (!selectedOrder?.items) return [];
+
+    const itemsMap = new Map();
+    selectedOrder.items.forEach(item => {
+      // Uma chave única para o item, considerando o produto.
+      // Futuramente, pode incluir adicionais para agrupar "Coca com Gelo" separado de "Coca sem Gelo".
+      const key = item.product_id;
+      
+      if (itemsMap.has(key)) {
+        // Se o item já existe, apenas soma a quantidade
+        const existingItem = itemsMap.get(key);
+        existingItem.quantity += item.quantity;
+      } else {
+        // Se não existe, adiciona uma cópia ao Map
+        itemsMap.set(key, { ...item });
+      }
+    });
+
+    return Array.from(itemsMap.values());
+  }, [selectedOrder]);
+
 
   // Função central que lida com o clique em QUALQUER mesa
   const handleTableClick = async (table) => {
@@ -106,6 +132,23 @@ const TableManagementPage = () => {
     }
   };
 
+  const handleGoToPayment = () => {
+    if (!selectedOrder || selectedOrder.items.length === 0) {
+      message.warning('Adicione pelo menos um item à comanda antes de ir para o pagamento.');
+      return;
+    }
+
+    const itemsForPOS = groupedOrderItems.map(item => ({
+      ...item.product,
+      id: item.product_id,
+      quantity: item.quantity,
+      price: item.price_at_order,
+    }));
+
+    navigate('/pos', { state: { orderItems: itemsForPOS, fromTable: true } });
+  };
+
+
   if (loading) {
     return <Spin tip="Carregando mesas..." size="large" style={{ display: 'block', marginTop: 50 }} />;
   }
@@ -150,7 +193,7 @@ const TableManagementPage = () => {
         footer={[
           <Button key="back" onClick={() => setIsOrderModalVisible(false)}>Fechar</Button>,
           <Button key="add" type="dashed" onClick={() => setIsAddItemModalVisible(true)}>Adicionar Item</Button>,
-          <Button key="pay" type="primary">Fechar e Pagar</Button>,
+          <Button key="pay" type="primary" icon={<DollarCircleOutlined />} onClick={handleGoToPayment}>Finalizar e Pagar</Button>,
         ]}
       >
         {modalLoading || !selectedOrder ? <Spin /> : (
@@ -159,7 +202,7 @@ const TableManagementPage = () => {
             <Divider />
             <List
               itemLayout="horizontal"
-              dataSource={selectedOrder.items}
+              dataSource={groupedOrderItems}
               locale={{ emptyText: "Nenhum item na comanda." }}
               renderItem={item => (
                 <List.Item>
