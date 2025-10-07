@@ -19,9 +19,17 @@ class Sale(Base):
     # Relações usando strings para evitar importações circulares
     customer: Mapped["Customer"] = relationship(back_populates="sales")
     user: Mapped["User"] = relationship()
-    items: Mapped[List["SaleItem"]] = relationship(back_populates="sale", cascade="all, delete-orphan")
+    items: Mapped[List["SaleItem"]] = relationship(
+        back_populates="sale", 
+        cascade="all, delete-orphan", 
+        lazy="selectin"
+    )
     cash_register_session: Mapped["CashRegisterSession"] = relationship(back_populates="sales")
-    payments: Mapped[List["Payment"]] = relationship(back_populates="sale", cascade="all, delete-orphan")
+    payments: Mapped[List["Payment"]] = relationship(
+        back_populates="sale", 
+        cascade="all, delete-orphan", 
+        lazy="selectin"
+    )
 
 
 class SaleItem(Base):

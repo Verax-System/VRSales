@@ -71,9 +71,11 @@ const ApiService = {
   // --- MESAS E COMANDAS ---
   getTables: () => apiClient.get('/tables/'),
   createTable: (tableData) => apiClient.post('/tables/', tableData),
+  updateTableLayout: (layoutData) => apiClient.put('/tables/layout', layoutData),
   createOrderForTable: (tableId) => apiClient.post('/orders/table', tableId),
   getOpenOrderByTable: (tableId) => apiClient.get(`/orders/table/${tableId}/open`),
-  addItemToOrder: (orderId, itemData) => apiClient.post(`/orders/${orderId}/items`, itemData), // <-- ADICIONE ESTA LINHA
+  addItemToOrder: (orderId, itemData) => apiClient.post(`/orders/${orderId}/items`, itemData),
+  cancelOrder: (orderId) => apiClient.delete(`/orders/${orderId}`),
   getKitchenOrders: () => apiClient.get('/orders/kitchen/'),
   updateOrderItemStatus: (itemId, status) => apiClient.put(`/orders/items/${itemId}/status?status=${status}`),
 

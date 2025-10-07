@@ -200,3 +200,30 @@ async def update_order_item_status(db: AsyncSession, item_id: int, status: Order
     # 7. Retorna um dicionário com a venda e o troco
     return {"sale": created_sale, "change_amount": change_amount}
 
+
+async def cancel_open_order(db: AsyncSession, order_id: int) -> Order | None:
+    """
+    Cancela uma comanda aberta, geralmente criada por engano.
+    Libera a mesa associada, definindo seu status de volta para 'disponível'.
+    """
+    # Carrega a comanda e a mesa associada em uma única consulta
+    result = await db.execute(
+        select(Order).where(Order.id == order_id).options(selectinload(Order.table))
+    )
+    order_to_cancel = result.scalars().first()
+
+    if not order_to_cancel:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comanda não encontrada")
+
+    if order_to_cancel.status != OrderStatus.OPEN:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Apenas comandas abertas podem ser canceladas.")
+
+    # Se a comanda estiver associada a uma mesa, libera a mesa
+    if order_to_cancel.table:
+        order_to_cancel.table.status = TableStatus.AVAILABLE
+
+    # Exclui a comanda (e seus itens, devido ao 'cascade' no modelo)
+    await db.delete(order_to_cancel)
+    await db.commit()
+
+    return order_to_cancel

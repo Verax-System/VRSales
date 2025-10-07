@@ -9,7 +9,10 @@ class ProductCategory(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
 
-    subcategories: Mapped[List["ProductSubcategory"]] = relationship(back_populates="category")
+    subcategories: Mapped[List["ProductSubcategory"]] = relationship(
+        back_populates="category",
+        lazy="selectin"
+    )
 
 class ProductSubcategory(Base):
     __tablename__ = "product_subcategories"

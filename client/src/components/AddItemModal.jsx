@@ -1,22 +1,24 @@
-import React, { useState } from 'react';
-import { Modal, Input, List, Avatar, Button, message, Spin, Empty, InputNumber } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Modal, Input, List, Avatar, Button, message, Spin, Empty, InputNumber, Space } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import ApiService from '../api/ApiService';
-import { useDebounce } from '../hooks/useDebounce'; // Criaremos este hook a seguir
+import { useDebounce } from '../hooks/useDebounce';
 
 const AddItemModal = ({ open, onCancel, orderId, onSuccess }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [quantities, setQuantities] = useState({});
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const searchProducts = async () => {
       if (debouncedSearchTerm) {
         setLoading(true);
         try {
           const response = await ApiService.lookupProduct(debouncedSearchTerm);
           setProducts(response.data);
+          setQuantities({}); // Reseta as quantidades a cada nova busca
         } catch (error) {
           message.error('Erro ao buscar produtos.');
         } finally {
@@ -29,15 +31,26 @@ const AddItemModal = ({ open, onCancel, orderId, onSuccess }) => {
     searchProducts();
   }, [debouncedSearchTerm]);
 
-  const handleAddItem = async (product) => {
+  const handleQuantityChange = (productId, quantity) => {
+    setQuantities(prevQuantities => ({
+      ...prevQuantities,
+      [productId]: quantity,
+    }));
+  };
+
+  const handleAddItem = async (product, quantity) => {
+    if (!quantity || quantity < 1) {
+      message.error('A quantidade deve ser de pelo menos 1.');
+      return;
+    }
     try {
       const itemData = {
         product_id: product.id,
-        quantity: 1, // Adiciona 1 por padrão, pode ser aprimorado com InputNumber
+        quantity: quantity,
       };
       await ApiService.addItemToOrder(orderId, itemData);
-      message.success(`"${product.name}" adicionado à comanda!`);
-      onSuccess(); // Sinaliza para a página principal que o pedido foi atualizado
+      message.success(`${quantity}x "${product.name}" adicionado(s) à comanda!`);
+      onSuccess();
     } catch (error) {
       message.error(error.response?.data?.detail || 'Erro ao adicionar item.');
     }
@@ -60,7 +73,7 @@ const AddItemModal = ({ open, onCancel, orderId, onSuccess }) => {
         enterButton
       />
       {loading && products.length === 0 ? (
-        <Spin />
+        <Spin style={{ display: 'block', margin: '20px 0' }} />
       ) : (
         <List
           itemLayout="horizontal"
@@ -69,13 +82,21 @@ const AddItemModal = ({ open, onCancel, orderId, onSuccess }) => {
           renderItem={(product) => (
             <List.Item
               actions={[
-                <Button 
-                  type="primary" 
-                  icon={<PlusOutlined />} 
-                  onClick={() => handleAddItem(product)}
-                >
-                  Adicionar
-                </Button>
+                <Space key={`action-${product.id}`}>
+                  <InputNumber
+                    min={1}
+                    defaultValue={1}
+                    value={quantities[product.id] || 1}
+                    onChange={(value) => handleQuantityChange(product.id, value)}
+                  />
+                  <Button 
+                    type="primary" 
+                    icon={<PlusOutlined />} 
+                    onClick={() => handleAddItem(product, quantities[product.id] || 1)}
+                  >
+                    Adicionar
+                  </Button>
+                </Space>
               ]}
             >
               <List.Item.Meta

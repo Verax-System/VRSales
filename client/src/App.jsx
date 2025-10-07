@@ -15,6 +15,7 @@ import {
   SafetyCertificateOutlined,
   FireOutlined,
   RocketOutlined,
+  LayoutOutlined, // Adicione este ícone
 } from '@ant-design/icons';
 import UsersPage from './pages/UsersPage';
 import { Routes, Route, useNavigate, useLocation, Outlet, Navigate } from 'react-router-dom';
@@ -32,6 +33,7 @@ import ReportsPage from './pages/ReportsPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import KDSPage from './pages/KDSPage';
 import MarketingPage from './pages/MarketingPage';
+import FloorPlanSettingsPage from './pages/FloorPlanSettingsPage'; // Importe a nova página
 
 import './App.css';
 
@@ -52,6 +54,7 @@ const allMenuItems = [
     { key: '/expiration', icon: <CalendarOutlined />, label: 'Validade', roles: ['admin', 'manager'] },
     { type: 'divider', roles: ['admin'] },
     { key: '/users', icon: <SafetyCertificateOutlined />, label: 'Usuários', roles: ['admin'] },
+    { key: '/settings/floor-plan', icon: <LayoutOutlined />, label: 'Layout do Salão', roles: ['admin'] }, // Nova rota no menu
 ];
 
 const MainLayout = () => {
@@ -118,38 +121,30 @@ const MainLayout = () => {
 const App = () => {
   return (
     <Routes>
-      {/* Rotas públicas que não usam o layout principal */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
-
-      {/* Rota do KDS, que também não usa o layout principal mas é protegida */}
       <Route element={<RoleBasedRoute allowedRoles={['admin', 'manager']} />}>
         <Route path="/kds" element={<KDSPage />} />
       </Route>
-
-      {/* Rotas que usam o MainLayout (com menu lateral, etc.) */}
       <Route path="/" element={<MainLayout />}>
         <Route element={<RoleBasedRoute allowedRoles={['admin', 'manager']} />}>
-          <Route index element={<DashboardPage />} /> {/* "index" torna esta a rota padrão para "/" */}
+          <Route index element={<DashboardPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="products" element={<ProductPage />} />
           <Route path="suppliers" element={<SupplierPage />} />
           <Route path="expiration" element={<ExpirationControlPage />} />
           <Route path="marketing" element={<MarketingPage />} />
         </Route>
-        
         <Route element={<RoleBasedRoute allowedRoles={['admin']} />}>
           <Route path="users" element={<UsersPage />} />
+          <Route path="settings/floor-plan" element={<FloorPlanSettingsPage />} /> {/* Nova rota */}
         </Route>
-
         <Route element={<RoleBasedRoute allowedRoles={['admin', 'manager', 'cashier']} />}>
           <Route path="pos" element={<POSPage />} />
           <Route path="tables" element={<TableManagementPage />} />
         </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
-
-      {/* Rota de fallback para qualquer outro URL não encontrado */}
-      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };

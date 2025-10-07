@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from typing import List
@@ -120,3 +120,16 @@ async def update_item_status_endpoint(
     Atualiza o status de um item de pedido (pending -> preparing -> ready).
     """
     return await crud.update_order_item_status(db=db, item_id=item_id, status=status)
+
+@router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def cancel_order_endpoint(
+    order_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Cancela uma comanda aberta, liberando a mesa associada.
+    Ideal para comandas abertas por engano.
+    """
+    await crud_order.cancel_open_order(db=db, order_id=order_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

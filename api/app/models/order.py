@@ -33,7 +33,11 @@ class Order(Base):
     
     table: Mapped["Table"] = relationship(back_populates="orders")
     customer: Mapped["Customer"] = relationship()
-    items: Mapped[List["OrderItem"]] = relationship(back_populates="order", cascade="all, delete-orphan")
+    items: Mapped[List["OrderItem"]] = relationship(
+        back_populates="order", 
+        cascade="all, delete-orphan",
+        lazy="selectin"  # Garante que os itens sejam carregados junto com a comanda
+    )
 
 class OrderItem(Base):
     __tablename__ = "order_items"
@@ -53,11 +57,9 @@ class OrderItem(Base):
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
 
     order: Mapped["Order"] = relationship(back_populates="items")
-    product: Mapped["Product"] = relationship(lazy="selectin") # Manter lazy="selectin" aqui também é uma boa prática
+    product: Mapped["Product"] = relationship(lazy="selectin") 
 
-    # --- CORREÇÃO AQUI ---
     additionals: Mapped[List["Additional"]] = relationship(
         secondary="order_item_additionals",
-        lazy="selectin" # Adicione esta linha
+        lazy="selectin"
     )
-    # --- FIM DA CORREÇÃO ---

@@ -20,6 +20,10 @@ class Table(Base):
         nullable=False, 
         default=TableStatus.AVAILABLE
     )
+    # --- NOVOS CAMPOS ---
+    pos_x: Mapped[int] = mapped_column(Integer, nullable=True, default=0)
+    pos_y: Mapped[int] = mapped_column(Integer, nullable=True, default=0)
+    # --- FIM DOS NOVOS CAMPOS ---
 
     # Relação: Uma mesa pode ter várias comandas/pedidos
     orders: Mapped[List["Order"]] = relationship(back_populates="table")
