@@ -1,35 +1,37 @@
+# /api/app/schemas/product.py
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional, List
-from .category import Category, Subcategory # <-- Adicione esta importação
-from .variation import ProductVariation # <-- Adicione esta importação
+from typing import Optional, List # Adicione List
+from .category import Category, Subcategory
+from .variation import ProductVariation
 
 
-# Schema base com os campos que um produto sempre terá
 class ProductBase(BaseModel):
     name: str
     description: Optional[str] = None
     price: float
     stock: int
+    low_stock_threshold: int = 10 # <-- ADICIONE ESTA LINHA
     category_id: Optional[int] = None
     subcategory_id: Optional[int] = None
     image_url: Optional[str] = None
     barcode: Optional[str] = None
 
-# Schema para a criação de um produto (o que a API recebe no POST)
+
 class ProductCreate(ProductBase):
     pass
 
-# Schema para a atualização de um produto (o que a API recebe no PUT/PATCH)
+
 class ProductUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     price: Optional[float] = None
     stock: Optional[int] = None
+    low_stock_threshold: Optional[int] = None # <-- ADICIONE ESTA LINHA
     image_url: Optional[str] = None
     barcode: Optional[str] = None
 
-# Propriedades que são lidas do banco de dados
+
 class ProductInDBBase(ProductBase):
     id: int
     created_at: datetime
@@ -38,9 +40,9 @@ class ProductInDBBase(ProductBase):
     class Config:
         from_attributes = True
 
-# Schema final para retornar um produto da API para o cliente
+
 class Product(ProductInDBBase):
     category: Optional[Category] = None
-    variations: List[ProductVariation] = [] # Para retornar o produto com suas variações
+    variations: List[ProductVariation] = [] 
     subcategory: Optional[Subcategory] = None
     pass

@@ -121,28 +121,29 @@ const KDSPage = () => {
     return () => clearInterval(interval);
   }, [fetchKitchenOrders]);
 
-  const handleStatusChange = async (orderId, itemId, status) => {
-    console.log(`Atualizando status: orderId=${orderId}, itemId=${itemId}, status=${status}`);
-    // Lógica Mock: Atualiza o estado localmente para simular a resposta da API
-    setOrders(currentOrders => {
-        return currentOrders.map(order => {
-            if (order.id === orderId) {
-                let updatedItems;
-                if(status === 'ready_all') {
-                    updatedItems = order.items.map(item => ({...item, status: 'ready'}));
-                } else {
-                    updatedItems = order.items.map(item =>
-                        item.id === itemId ? { ...item, status: status } : item
-                    );
-                }
-                return { ...order, items: updatedItems };
+const handleStatusChange = async (orderId, itemId, newStatus) => {
+    try {
+        if (newStatus === 'ready_all') {
+            // Lógica para marcar todos os itens como prontos
+            const orderToUpdate = orders.find(o => o.id === orderId);
+            if (orderToUpdate) {
+                // Cria uma lista de promessas para atualizar cada item
+                const updatePromises = orderToUpdate.items
+                    .filter(item => item.status !== 'ready')
+                    .map(item => ApiService.updateOrderItemStatus(item.id, 'ready'));
+                
+                await Promise.all(updatePromises);
             }
-            return order;
-        // Filtra os pedidos que já estão 100% prontos para removê-los da tela
-        }).filter(order => !order.items.every(item => item.status === 'ready'));
-    });
-    message.success('Status do item atualizado!');
-  };
+        } else {
+            // Lógica para um único item
+            await ApiService.updateOrderItemStatus(itemId, newStatus);
+        }
+        message.success('Status atualizado!');
+        fetchKitchenOrders(); // Recarrega os dados da API
+    } catch (error) {
+        message.error('Falha ao atualizar o status.');
+    }
+};
 
   if (loading) {
     return <Spin tip="Carregando pedidos..." size="large" fullscreen />;

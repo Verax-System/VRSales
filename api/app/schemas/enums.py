@@ -39,3 +39,9 @@ class UserRole(str, enum.Enum):
     ADMIN = "admin"
     MANAGER = "manager"
     CASHIER = "cashier"
+
+class OrderItemStatus(str, enum.Enum):
+    PENDING = "pending"
+    PREPARING = "preparing"
+    READY = "ready"
+    DELIVERED = "delivered" # Adicionamos um status final

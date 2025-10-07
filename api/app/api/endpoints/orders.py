@@ -13,6 +13,9 @@ from app.schemas.sale import Sale
 from app.models.order import Order as OrderModel # Importa o modelo ORM com um alias
 from app.api.dependencies import get_db, get_current_user
 # --- FIM DA CORREÇÃO ---
+from app.schemas.enums import OrderItemStatus # Adicione
+from app.schemas.order import OrderItem # Adicione
+
 
 
 router = APIRouter()
@@ -89,3 +92,26 @@ async def pay_order(
     final_sale.change_amount = result["change_amount"]
     
     return final_sale
+
+
+@router.get("/kitchen/", response_model=List[Order])
+async def get_kitchen_orders_endpoint(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Retorna uma lista de pedidos ativos para o painel da cozinha (KDS).
+    """
+    return await crud.get_kitchen_orders(db)
+
+@router.put("/items/{item_id}/status", response_model=OrderItem)
+async def update_item_status_endpoint(
+    item_id: int,
+    status: OrderItemStatus, # Recebe o status diretamente no corpo da requisição
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Atualiza o status de um item de pedido (pending -> preparing -> ready).
+    """
+    return await crud.update_order_item_status(db=db, item_id=item_id, status=status)

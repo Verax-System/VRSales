@@ -6,6 +6,7 @@ from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, status
 from app.models.order import Order, OrderItem, OrderStatus, OrderType # <-- Adiciona OrderType
 from app.models.additional import Additional, OrderItemAdditional # <-- ADICIONE
+from app.schemas.enums import OrderItemStatus # Adicione a importação
 
 from app.models.table import Table, TableStatus
 from app.models.order import Order, OrderItem, OrderStatus
@@ -157,6 +158,37 @@ async def finalize_order_payment(db: AsyncSession, order: Order, payment_in: Ord
 
     await db.commit()
     await db.refresh(created_sale, ["payments", "items"]) # Recarrega a venda com pagamentos e itens
+async def get_kitchen_orders(db: AsyncSession) -> List[Order]:
+    """
+    Busca todas as comandas abertas que tenham itens pendentes ou em preparação.
+    """
+    result = await db.execute(
+        select(Order)
+        .join(Order.items)
+        .where(
+            Order.status == OrderStatus.OPEN,
+            OrderItem.status.in_([OrderItemStatus.PENDING, OrderItemStatus.PREPARING])
+        )
+        .options(
+            selectinload(Order.items)
+            .selectinload(OrderItem.product) # Carrega os detalhes do produto
+        )
+        .distinct()
+    )
+    return result.scalars().all()
+
+async def update_order_item_status(db: AsyncSession, item_id: int, status: OrderItemStatus) -> OrderItem:
+    """
+    Atualiza o status de um item de pedido específico.
+    """
+    db_item = await db.get(OrderItem, item_id)
+    if not db_item:
+        raise HTTPException(status_code=404, detail="Item do pedido não encontrado")
     
+    db_item.status = status
+    await db.commit()
+    await db.refresh(db_item)
+    return db_item
     # 7. Retorna um dicionário com a venda e o troco
     return {"sale": created_sale, "change_amount": change_amount}
+

@@ -69,10 +69,13 @@ const ApiService = {
   createCustomer: (customerData) => apiClient.post('/customers/', customerData),
 
   // --- MESAS E COMANDAS ---
-  getTables: () => apiClient.get('/tables/'),
+getTables: () => apiClient.get('/tables/'),
+  createTable: (tableData) => apiClient.post('/tables/', tableData), // <-- ADICIONE ESTA LINHA
   createOrderForTable: (tableId) => apiClient.post('/orders/table', tableId),
   getOpenOrderByTable: (tableId) => apiClient.get(`/orders/table/${tableId}/open`),
-  getKitchenOrders: () => apiClient.get('/orders/kitchen'), // Assumindo que haverá um endpoint real
+  getKitchenOrders: () => apiClient.get('/orders/kitchen/'),
+  updateOrderItemStatus: (itemId, status) => apiClient.put(`/orders/items/${itemId}/status?status=${status}`),
+
 
   // --- VENDAS ---
   createSale: (saleData) => apiClient.post('/sales/', saleData),

@@ -128,3 +128,13 @@ async def lookup_products_endpoint(
     return await crud_product.lookup_product(db=db, query=query)
 
 # --- FIM DO NOVO ENDPOINT ---
+
+@router.get("/low-stock/", response_model=List[Product])
+async def read_low_stock_products(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Endpoint para listar produtos com estoque baixo.
+    """
+    return await crud_product.get_low_stock_products(db=db)

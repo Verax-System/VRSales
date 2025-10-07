@@ -14,7 +14,7 @@ class Table(Base):
     __tablename__ = "tables"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    number: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)
+    number: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     status: Mapped[TableStatus] = mapped_column(
         SQLAlchemyEnum(TableStatus), 
         nullable=False, 

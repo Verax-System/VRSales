@@ -4,8 +4,10 @@ from typing import List, Optional
 
 # --- INÍCIO DA CORREÇÃO ---
 # Importa do arquivo de Enums, não do modelo
-from app.schemas.enums import OrderStatus, OrderType 
+from app.schemas.enums import OrderStatus, OrderType, OrderItemStatus # Adicione OrderItemStatus
 from app.schemas.additional import Additional
+from .product import Product # Importe o schema do Produto
+
 # --- FIM DA CORREÇÃO ---
 
 
@@ -22,11 +24,12 @@ class OrderItemCreate(OrderItemBase):
 class OrderItem(OrderItemBase):
     id: int
     price_at_order: float
+    status: OrderItemStatus # <-- Adicione esta linha
     additionals: List[Additional] = []
+    product: Product # Adicione para que os detalhes do produto sejam enviados
 
     class Config:
-        orm_mode = True
-
+        from_attributes = True # Altere de orm_mode para from_attributes
 # --- Pedido/Comanda ---
 class OrderCreateTable(BaseModel):
     table_id: int

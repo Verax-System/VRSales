@@ -6,7 +6,7 @@ from typing import List
 from app.db.base import Base
 # --- INÍCIO DA CORREÇÃO ---
 # Importa os Enums do arquivo centralizado
-from app.schemas.enums import OrderStatus, OrderType
+from app.schemas.enums import OrderStatus, OrderType, OrderItemStatus # Adicione OrderItemStatus
 # --- FIM DA CORREÇÃO ---
 
 
@@ -43,6 +43,15 @@ class OrderItem(Base):
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     price_at_order: Mapped[float] = mapped_column(Float, nullable=False)
     notes: Mapped[str] = mapped_column(String(255), nullable=True)
+
+    # --- NOVO CAMPO ---
+    status: Mapped[OrderItemStatus] = mapped_column(
+        SQLAlchemyEnum(OrderItemStatus, name="orderitemstatus"),
+        nullable=False,
+        default=OrderItemStatus.PENDING,
+        server_default=OrderItemStatus.PENDING.value
+    )
+    # --- FIM DO NOVO CAMPO ---
 
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"))
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))

@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import List, Optional
-from sqlalchemy import or_, desc
+from sqlalchemy import or_, desc, text
 
 from app.models.product import Product
 from app.schemas.product import ProductCreate, ProductUpdate
@@ -68,3 +68,13 @@ async def remove_product(db: AsyncSession, product_id: int) -> Optional[Product]
     return db_product
 
 # --- FIM DO NOVO CÓDIGO ---
+
+async def get_low_stock_products(db: AsyncSession) -> List[Product]:
+    """
+    Retorna uma lista de produtos cujo estoque atual é menor ou igual ao 
+    nível mínimo de estoque definido.
+    """
+    result = await db.execute(
+        select(Product).where(Product.stock <= Product.low_stock_threshold)
+    )
+    return result.scalars().all()   
