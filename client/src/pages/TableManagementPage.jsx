@@ -1,36 +1,45 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Row, Col, Typography, Tag, Modal, Button, message, Spin, Empty, List, Avatar, Divider, Form, Input } from 'antd';
 import { TableOutlined, PlusOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import ApiService from '../api/ApiService';
 import dayjs from 'dayjs';
+import AddItemModal from '../components/AddItemModal';
 
 const { Title, Text } = Typography;
 
 const TableManagementPage = () => {
+  const navigate = useNavigate();
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isOrderModalVisible, setIsOrderModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
-  
-  // --- NOVOS ESTADOS PARA O MODAL DE ADICIONAR ---
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [addForm] = Form.useForm();
-
+  const [isAddItemModalVisible, setIsAddItemModalVisible] = useState(false);
 
   const fetchTables = useCallback(async () => {
-    if (!isAddModalVisible) { // Evita recarregar enquanto o modal de adicionar está aberto
-      setLoading(true);
-    }
+    if (tables.length === 0) { setLoading(true); }
     try {
       const response = await ApiService.getTables();
       setTables(response.data);
+    } catch (error) { message.error('Erro ao carregar mesas.'); } 
+    finally { setLoading(false); }
+  }, [tables.length]);
+
+  const refreshSelectedOrder = async () => {
+    if (!selectedOrder) return;
+    setModalLoading(true);
+    try {
+      const response = await ApiService.getOpenOrderByTable(selectedOrder.table_id);
+      setSelectedOrder(response.data);
     } catch (error) {
-      message.error('Erro ao carregar mesas.');
+      message.error('Não foi possível atualizar a comanda.');
     } finally {
-      setLoading(false);
+      setModalLoading(false);
     }
-  }, [isAddModalVisible]);
+  };
 
   useEffect(() => {
     fetchTables();
@@ -39,24 +48,19 @@ const TableManagementPage = () => {
   }, [fetchTables]);
 
   const handleTableClick = async (table) => {
-    if (table.status === 'OCCUPIED') {
+    if (table.status === 'occupied') {
       setModalLoading(true);
       setIsOrderModalVisible(true);
       try {
-        const order = await ApiService.getOpenOrderByTable(table.id);
-        setSelectedOrder(order.data);
+        const response = await ApiService.getOpenOrderByTable(table.id);
+        setSelectedOrder(response.data);
       } catch (error) {
         message.error('Não foi possível carregar a comanda desta mesa.');
-        setIsOrderModalVisible(false);
+        setIsOrderModalVisible(false); // Fecha o modal se der erro
       } finally {
         setModalLoading(false);
       }
-    } else if (table.status === 'AVAILABLE') {
-      handleOpenOrder(table);
-    }
-  };
-  
-  const handleOpenOrder = (table) => {
+    } else if (table.status === 'available') {
       Modal.confirm({
         title: `Abrir comanda na Mesa ${table.number}?`,
         icon: <PlusOutlined />,
@@ -65,49 +69,61 @@ const TableManagementPage = () => {
         cancelText: 'Cancelar',
         onOk: async () => {
           try {
-            await ApiService.createOrderForTable({ table_id: table.id });
+            const response = await ApiService.createOrderForTable({ table_id: table.id });
             message.success(`Comanda aberta para a Mesa ${table.number}!`);
+            setSelectedOrder(response.data);
+            setIsOrderModalVisible(true);
             fetchTables();
           } catch (error) {
             message.error(error.response?.data?.detail || 'Erro ao abrir comanda.');
           }
         },
       });
+    }
   };
 
-  // --- NOVAS FUNÇÕES PARA ADICIONAR MESA ---
-  const showAddModal = () => {
-    setIsAddModalVisible(true);
+  const handleGoToPayment = () => {
+    if (!selectedOrder || selectedOrder.items.length === 0) {
+      message.warn('A comanda está vazia. Adicione itens antes de pagar.');
+      return;
+    }
+    const cartItemsForPOS = selectedOrder.items.map(item => ({
+      ...item.product,
+      quantity: item.quantity,
+      // Se houver observações ou adicionais, você pode passá-los aqui também
+      notes: item.notes,
+      additionals: item.additionals,
+    }));
+    
+    localStorage.setItem('posCartFromTable', JSON.stringify(cartItemsForPOS));
+    navigate('/pos');
   };
 
+  const showAddModal = () => setIsAddModalVisible(true);
   const handleAddCancel = () => {
     setIsAddModalVisible(false);
     addForm.resetFields();
   };
-
   const handleAddSubmit = async (values) => {
     setModalLoading(true);
     try {
       await ApiService.createTable({ number: values.number });
       message.success(`Mesa "${values.number}" criada com sucesso!`);
       handleAddCancel();
-      fetchTables(); // Recarrega a lista de mesas
+      fetchTables();
     } catch (error) {
       message.error(error.response?.data?.detail || 'Erro ao criar a mesa.');
     } finally {
       setModalLoading(false);
     }
   };
-  // --- FIM DAS NOVAS FUNÇÕES ---
 
   const getStatusProps = (status) => {
     switch (status) {
-      case 'OCCUPIED':
-        return { color: 'error', label: 'Ocupada' };
-      case 'RESERVED':
-        return { color: 'warning', label: 'Reservada' };
-      default:
-        return { color: 'success', label: 'Livre' };
+      case 'occupied': return { color: 'error', label: 'Ocupada' };
+      case 'reserved': return { color: 'warning', label: 'Reservada' };
+      case 'available': return { color: 'success', label: 'Livre' };
+      default: return { color: 'default', label: 'Desconhecido' };
     }
   };
 
@@ -119,31 +135,23 @@ const TableManagementPage = () => {
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <Title level={2} style={{ margin: 0 }}><TableOutlined /> Gestão de Mesas</Title>
-        {/* Adiciona o onClick ao botão */}
         <Button type="primary" icon={<PlusOutlined />} onClick={showAddModal}>Adicionar Mesa</Button>
       </div>
       
       {tables.length > 0 ? (
         <Row gutter={[16, 16]}>
-          {tables.map(table => {
-            const status = getStatusProps(table.status);
-            return (
-              <Col xs={12} sm={8} md={6} lg={4} key={table.id}>
-                <Card
-                  hoverable
-                  onClick={() => handleTableClick(table)}
-                  bodyStyle={{ padding: 0 }}
-                >
-                    <div style={{ padding: '16px', textAlign: 'center' }}>
-                        <Title level={3} style={{ margin: 0 }}>{table.number}</Title>
-                    </div>
-                    <div style={{ padding: '8px', textAlign: 'center', borderTop: '1px solid #f0f0f0', backgroundColor: status.color === 'success' ? '#f6ffed' : status.color === 'error' ? '#fff1f0' : '#fffbe6' }}>
-                        <Tag color={status.color}>{status.label}</Tag>
-                    </div>
-                </Card>
-              </Col>
-            )
-          })}
+          {tables.map(table => (
+            <Col xs={12} sm={8} md={6} lg={4} key={table.id}>
+              <Card hoverable onClick={() => handleTableClick(table)} bodyStyle={{ padding: 0 }}>
+                <div style={{ padding: '16px', textAlign: 'center' }}>
+                  <Title level={3} style={{ margin: 0 }}>{table.number}</Title>
+                </div>
+                <div style={{ padding: '8px', textAlign: 'center', borderTop: '1px solid #f0f0f0', backgroundColor: getStatusProps(table.status).color === 'success' ? '#f6ffed' : getStatusProps(table.status).color === 'error' ? '#fff1f0' : '#fffbe6' }}>
+                  <Tag color={getStatusProps(table.status).color}>{getStatusProps(table.status).label}</Tag>
+                </div>
+              </Card>
+            </Col>
+          ))}
         </Row>
       ) : (
         <Empty description="Nenhuma mesa cadastrada.">
@@ -151,22 +159,15 @@ const TableManagementPage = () => {
         </Empty>
       )}
 
-      {/* Modal de Detalhes da Comanda (já existente) */}
       <Modal
         title={`Comanda - Mesa ${selectedOrder?.table_id ? tables.find(t => t.id === selectedOrder.table_id)?.number : ''}`}
         open={isOrderModalVisible}
         onCancel={() => setIsOrderModalVisible(false)}
         width={600}
         footer={[
-          <Button key="back" onClick={() => setIsOrderModalVisible(false)}>
-            Fechar
-          </Button>,
-          <Button key="add" type="dashed">
-            Adicionar Item
-          </Button>,
-          <Button key="pay" type="primary">
-            Fechar e Pagar
-          </Button>,
+          <Button key="back" onClick={() => setIsOrderModalVisible(false)}>Fechar</Button>,
+          <Button key="add" type="dashed" onClick={() => setIsAddItemModalVisible(true)}>Adicionar Item</Button>,
+          <Button key="pay" type="primary" onClick={handleGoToPayment}>Fechar e Pagar</Button>,
         ]}
       >
         {modalLoading || !selectedOrder ? <Spin /> : (
@@ -196,7 +197,6 @@ const TableManagementPage = () => {
         )}
       </Modal>
 
-      {/* --- NOVO MODAL PARA ADICIONAR MESA --- */}
       <Modal
         title="Adicionar Nova Mesa"
         open={isAddModalVisible}
@@ -207,15 +207,23 @@ const TableManagementPage = () => {
         cancelText="Cancelar"
       >
         <Form form={addForm} layout="vertical" onFinish={handleAddSubmit} name="add_table_form">
-          <Form.Item
-            name="number"
-            label="Número ou Nome da Mesa"
-            rules={[{ required: true, message: 'Por favor, insira o número/nome da mesa!' }]}
-          >
+          <Form.Item name="number" label="Número ou Nome da Mesa" rules={[{ required: true, message: 'Por favor, insira o número/nome da mesa!' }]}>
             <Input placeholder="Ex: 01, Varanda 2, etc." />
           </Form.Item>
         </Form>
       </Modal>
+
+      {selectedOrder && (
+        <AddItemModal
+          open={isAddItemModalVisible}
+          onCancel={() => setIsAddItemModalVisible(false)}
+          orderId={selectedOrder.id}
+          onSuccess={() => {
+            setIsAddItemModalVisible(false);
+            refreshSelectedOrder();
+          }}
+        />
+      )}
     </>
   );
 };

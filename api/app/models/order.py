@@ -35,7 +35,6 @@ class Order(Base):
     customer: Mapped["Customer"] = relationship()
     items: Mapped[List["OrderItem"]] = relationship(back_populates="order", cascade="all, delete-orphan")
 
-
 class OrderItem(Base):
     __tablename__ = "order_items"
 
@@ -43,22 +42,22 @@ class OrderItem(Base):
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     price_at_order: Mapped[float] = mapped_column(Float, nullable=False)
     notes: Mapped[str] = mapped_column(String(255), nullable=True)
-
-    # --- NOVO CAMPO ---
     status: Mapped[OrderItemStatus] = mapped_column(
         SQLAlchemyEnum(OrderItemStatus, name="orderitemstatus"),
         nullable=False,
         default=OrderItemStatus.PENDING,
         server_default=OrderItemStatus.PENDING.value
     )
-    # --- FIM DO NOVO CAMPO ---
 
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"))
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
 
     order: Mapped["Order"] = relationship(back_populates="items")
-    product: Mapped["Product"] = relationship()
-    
+    product: Mapped["Product"] = relationship(lazy="selectin") # Manter lazy="selectin" aqui também é uma boa prática
+
+    # --- CORREÇÃO AQUI ---
     additionals: Mapped[List["Additional"]] = relationship(
-        secondary="order_item_additionals"
+        secondary="order_item_additionals",
+        lazy="selectin" # Adicione esta linha
     )
+    # --- FIM DA CORREÇÃO ---

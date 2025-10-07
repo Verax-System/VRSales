@@ -7,7 +7,7 @@ from fastapi import HTTPException, status
 from app.models.order import Order, OrderItem, OrderStatus, OrderType # <-- Adiciona OrderType
 from app.models.additional import Additional, OrderItemAdditional # <-- ADICIONE
 from app.schemas.enums import OrderItemStatus # Adicione a importação
-
+from typing import List
 from app.models.table import Table, TableStatus
 from app.models.order import Order, OrderItem, OrderStatus
 from app.models.product import Product
@@ -71,7 +71,6 @@ async def add_item_to_order(db: AsyncSession, order: Order, item_in: OrderItemCr
     if not product:
         raise HTTPException(status_code=404, detail=f"Produto com ID {item_in.product_id} não encontrado")
     
-    # --- LÓGICA DE ADICIONAIS ---
     total_additionals_price = 0.0
     additionals_to_associate = []
     if item_in.additional_ids:
@@ -85,27 +84,36 @@ async def add_item_to_order(db: AsyncSession, order: Order, item_in: OrderItemCr
             total_additionals_price += add_on.price
             additionals_to_associate.append(add_on)
 
-    # O preço total do item é o preço base + a soma dos adicionais
     total_item_price = product.price + total_additionals_price
 
     new_item = OrderItem(
         order_id=order.id,
         product_id=product.id,
         quantity=item_in.quantity,
-        price_at_order=total_item_price, # <-- Preço atualizado
-        notes=item_in.notes # <-- Adiciona as observações
+        price_at_order=total_item_price,
+        notes=item_in.notes
     )
     
-    # Associa os adicionais ao novo item
     new_item.additionals.extend(additionals_to_associate)
-    
     db.add(new_item)
-    
     await db.commit()
-    # Recarrega a comanda com os novos itens e seus detalhes
-    await db.refresh(order, ['items.additionals'])
-    
-    return order
+
+    # --- CORREÇÃO AQUI ---
+    # Em vez de db.refresh, vamos buscar novamente a comanda completa.
+    # Isso garante que todas as relações aninhadas sejam carregadas corretamente.
+    result = await db.execute(
+        select(Order)
+        .where(Order.id == order.id)
+        .options(
+            selectinload(Order.items)
+            .selectinload(OrderItem.product),
+            selectinload(Order.items)
+            .selectinload(OrderItem.additionals)
+        )
+    )
+    updated_order = result.scalars().first()
+    return updated_order
+    # --- FIM DA CORREÇÃO ---
 
 async def finalize_order_payment(db: AsyncSession, order: Order, payment_in: OrderPaymentRequest, user_id: int) -> dict:
     """

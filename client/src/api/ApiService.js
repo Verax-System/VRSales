@@ -69,13 +69,13 @@ const ApiService = {
   createCustomer: (customerData) => apiClient.post('/customers/', customerData),
 
   // --- MESAS E COMANDAS ---
-getTables: () => apiClient.get('/tables/'),
-  createTable: (tableData) => apiClient.post('/tables/', tableData), // <-- ADICIONE ESTA LINHA
+  getTables: () => apiClient.get('/tables/'),
+  createTable: (tableData) => apiClient.post('/tables/', tableData),
   createOrderForTable: (tableId) => apiClient.post('/orders/table', tableId),
   getOpenOrderByTable: (tableId) => apiClient.get(`/orders/table/${tableId}/open`),
+  addItemToOrder: (orderId, itemData) => apiClient.post(`/orders/${orderId}/items`, itemData), // <-- ADICIONE ESTA LINHA
   getKitchenOrders: () => apiClient.get('/orders/kitchen/'),
   updateOrderItemStatus: (itemId, status) => apiClient.put(`/orders/items/${itemId}/status?status=${status}`),
-
 
   // --- VENDAS ---
   createSale: (saleData) => apiClient.post('/sales/', saleData),
