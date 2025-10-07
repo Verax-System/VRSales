@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Row, Col, Typography, Tag, Modal, Button, message, Spin, Empty, List, Avatar, Divider, Form, Input } from 'antd';
 import { TableOutlined, PlusOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
 import ApiService from '../api/ApiService';
 import dayjs from 'dayjs';
 import AddItemModal from '../components/AddItemModal';
@@ -9,7 +8,6 @@ import AddItemModal from '../components/AddItemModal';
 const { Title, Text } = Typography;
 
 const TableManagementPage = () => {
-  const navigate = useNavigate();
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isOrderModalVisible, setIsOrderModalVisible] = useState(false);
@@ -19,86 +17,56 @@ const TableManagementPage = () => {
   const [addForm] = Form.useForm();
   const [isAddItemModalVisible, setIsAddItemModalVisible] = useState(false);
 
+  // Função para buscar e atualizar a lista de mesas
   const fetchTables = useCallback(async () => {
-    if (tables.length === 0) { setLoading(true); }
     try {
       const response = await ApiService.getTables();
       setTables(response.data);
-    } catch (error) { message.error('Erro ao carregar mesas.'); } 
-    finally { setLoading(false); }
-  }, [tables.length]);
-
-  const refreshSelectedOrder = async () => {
-    if (!selectedOrder) return;
-    setModalLoading(true);
-    try {
-      const response = await ApiService.getOpenOrderByTable(selectedOrder.table_id);
-      setSelectedOrder(response.data);
     } catch (error) {
-      message.error('Não foi possível atualizar a comanda.');
+      message.error('Erro ao carregar mesas.');
     } finally {
-      setModalLoading(false);
+      setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    setLoading(true);
     fetchTables();
-    const interval = setInterval(fetchTables, 15000);
+    const interval = setInterval(fetchTables, 15000); // Atualiza a cada 15 segundos
     return () => clearInterval(interval);
   }, [fetchTables]);
 
+  // Função central que lida com o clique em QUALQUER mesa
   const handleTableClick = async (table) => {
-    if (table.status === 'occupied') {
-      setModalLoading(true);
-      setIsOrderModalVisible(true);
+    setModalLoading(true);
+    
+    if (table.status === 'available') {
+      // Se a mesa está livre, cria uma nova comanda e abre o modal
+      try {
+        message.loading({ content: 'Abrindo comanda...', key: 'opening_order' });
+        const response = await ApiService.createOrderForTable({ table_id: table.id });
+        setSelectedOrder(response.data);
+        setIsOrderModalVisible(true);
+        fetchTables(); // Atualiza o status da mesa para "Ocupada"
+        message.success({ content: `Comanda aberta para a Mesa ${table.number}!`, key: 'opening_order' });
+      } catch (error) {
+        message.error({ content: error.response?.data?.detail || 'Erro ao abrir comanda.', key: 'opening_order' });
+      }
+    } else if (table.status === 'occupied') {
+      // Se a mesa está ocupada, busca a comanda existente e abre o modal
       try {
         const response = await ApiService.getOpenOrderByTable(table.id);
         setSelectedOrder(response.data);
+        setIsOrderModalVisible(true);
       } catch (error) {
         message.error('Não foi possível carregar a comanda desta mesa.');
-        setIsOrderModalVisible(false); // Fecha o modal se der erro
-      } finally {
-        setModalLoading(false);
       }
-    } else if (table.status === 'available') {
-      Modal.confirm({
-        title: `Abrir comanda na Mesa ${table.number}?`,
-        icon: <PlusOutlined />,
-        content: 'Isso marcará a mesa como ocupada e iniciará uma nova comanda.',
-        okText: 'Sim, Abrir',
-        cancelText: 'Cancelar',
-        onOk: async () => {
-          try {
-            const response = await ApiService.createOrderForTable({ table_id: table.id });
-            message.success(`Comanda aberta para a Mesa ${table.number}!`);
-            setSelectedOrder(response.data);
-            setIsOrderModalVisible(true);
-            fetchTables();
-          } catch (error) {
-            message.error(error.response?.data?.detail || 'Erro ao abrir comanda.');
-          }
-        },
-      });
     }
-  };
-
-  const handleGoToPayment = () => {
-    if (!selectedOrder || selectedOrder.items.length === 0) {
-      message.warn('A comanda está vazia. Adicione itens antes de pagar.');
-      return;
-    }
-    const cartItemsForPOS = selectedOrder.items.map(item => ({
-      ...item.product,
-      quantity: item.quantity,
-      // Se houver observações ou adicionais, você pode passá-los aqui também
-      notes: item.notes,
-      additionals: item.additionals,
-    }));
     
-    localStorage.setItem('posCartFromTable', JSON.stringify(cartItemsForPOS));
-    navigate('/pos');
+    setModalLoading(false);
   };
 
+  // Funções para o modal de ADICIONAR MESA
   const showAddModal = () => setIsAddModalVisible(true);
   const handleAddCancel = () => {
     setIsAddModalVisible(false);
@@ -118,6 +86,17 @@ const TableManagementPage = () => {
     }
   };
 
+  // Função para atualizar o modal da comanda após adicionar um item
+  const refreshSelectedOrder = async () => {
+    if (!selectedOrder) return;
+    try {
+      const response = await ApiService.getOpenOrderByTable(selectedOrder.table_id);
+      setSelectedOrder(response.data);
+    } catch (error) {
+      message.error('Não foi possível atualizar a comanda.');
+    }
+  };
+
   const getStatusProps = (status) => {
     switch (status) {
       case 'occupied': return { color: 'error', label: 'Ocupada' };
@@ -127,7 +106,7 @@ const TableManagementPage = () => {
     }
   };
 
-  if (loading && tables.length === 0) {
+  if (loading) {
     return <Spin tip="Carregando mesas..." size="large" style={{ display: 'block', marginTop: 50 }} />;
   }
 
@@ -140,18 +119,21 @@ const TableManagementPage = () => {
       
       {tables.length > 0 ? (
         <Row gutter={[16, 16]}>
-          {tables.map(table => (
-            <Col xs={12} sm={8} md={6} lg={4} key={table.id}>
-              <Card hoverable onClick={() => handleTableClick(table)} bodyStyle={{ padding: 0 }}>
-                <div style={{ padding: '16px', textAlign: 'center' }}>
-                  <Title level={3} style={{ margin: 0 }}>{table.number}</Title>
-                </div>
-                <div style={{ padding: '8px', textAlign: 'center', borderTop: '1px solid #f0f0f0', backgroundColor: getStatusProps(table.status).color === 'success' ? '#f6ffed' : getStatusProps(table.status).color === 'error' ? '#fff1f0' : '#fffbe6' }}>
-                  <Tag color={getStatusProps(table.status).color}>{getStatusProps(table.status).label}</Tag>
-                </div>
-              </Card>
-            </Col>
-          ))}
+          {tables.map(table => {
+            const status = getStatusProps(table.status);
+            return (
+              <Col xs={12} sm={8} md={6} lg={4} key={table.id}>
+                <Card hoverable onClick={() => handleTableClick(table)} bodyStyle={{ padding: 0 }}>
+                  <div style={{ padding: '16px', textAlign: 'center' }}>
+                    <Title level={3} style={{ margin: 0 }}>{table.number}</Title>
+                  </div>
+                  <div style={{ padding: '8px', textAlign: 'center', borderTop: '1px solid #f0f0f0', backgroundColor: status.color === 'success' ? '#f6ffed' : status.color === 'error' ? '#fff1f0' : '#fffbe6' }}>
+                    <Tag color={status.color}>{status.label}</Tag>
+                  </div>
+                </Card>
+              </Col>
+            );
+          })}
         </Row>
       ) : (
         <Empty description="Nenhuma mesa cadastrada.">
@@ -159,6 +141,7 @@ const TableManagementPage = () => {
         </Empty>
       )}
 
+      {/* MODAL PRINCIPAL DA COMANDA */}
       <Modal
         title={`Comanda - Mesa ${selectedOrder?.table_id ? tables.find(t => t.id === selectedOrder.table_id)?.number : ''}`}
         open={isOrderModalVisible}
@@ -167,7 +150,7 @@ const TableManagementPage = () => {
         footer={[
           <Button key="back" onClick={() => setIsOrderModalVisible(false)}>Fechar</Button>,
           <Button key="add" type="dashed" onClick={() => setIsAddItemModalVisible(true)}>Adicionar Item</Button>,
-          <Button key="pay" type="primary" onClick={handleGoToPayment}>Fechar e Pagar</Button>,
+          <Button key="pay" type="primary">Fechar e Pagar</Button>,
         ]}
       >
         {modalLoading || !selectedOrder ? <Spin /> : (
@@ -197,6 +180,7 @@ const TableManagementPage = () => {
         )}
       </Modal>
 
+      {/* MODAL PARA ADICIONAR MESA */}
       <Modal
         title="Adicionar Nova Mesa"
         open={isAddModalVisible}
@@ -213,6 +197,7 @@ const TableManagementPage = () => {
         </Form>
       </Modal>
 
+      {/* MODAL PARA ADICIONAR ITEM À COMANDA */}
       {selectedOrder && (
         <AddItemModal
           open={isAddItemModalVisible}
