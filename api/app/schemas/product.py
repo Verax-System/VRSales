@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from .category import Category, Subcategory # <-- Adicione esta importação
 from .variation import ProductVariation # <-- Adicione esta importação
 

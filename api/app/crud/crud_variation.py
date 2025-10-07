@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import List
 
-from app.models.product_variation import ProductVariation
+from app.models.variation import ProductVariation
 from app.models.variation import AttributeOption
 from app.schemas.variation import ProductVariationCreate
 

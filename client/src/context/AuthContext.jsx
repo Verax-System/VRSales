@@ -2,27 +2,8 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import ApiService from '../api/ApiService';
 import { useNavigate } from 'react-router-dom';
 import { Spin } from 'antd';
-import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext(null);
-
-// Esta função simula a obtenção de dados do usuário a partir de um token.
-// Quando o backend estiver pronto, você substituirá isso por uma chamada de API real.
-const mockGetCurrentUser = (token) => {
-  try {
-    const decoded = jwtDecode(token);
-    if (decoded.sub === 'admin@example.com') {
-      return { name: 'Admin Dev', email: 'admin@example.com', role: 'admin' };
-    }
-    if (decoded.sub === 'gerente@example.com') {
-      return { name: 'João Gerente', email: 'gerente@example.com', role: 'manager' };
-    }
-    return { name: 'Ana Caixa', email: 'caixa@example.com', role: 'cashier' };
-  } catch (error) {
-    // Se o token for inválido (como o nosso mock 'dev-token'), criamos um usuário padrão
-    return { name: 'Admin Dev', email: 'admin@example.com', role: 'admin' };
-  }
-};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -31,20 +12,14 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      // --- INÍCIO DA MODIFICAÇÃO: LÓGICA DE LOGIN AUTOMÁTICO ---
-      if (import.meta.env.DEV && !localStorage.getItem('accessToken')) {
-        // Em modo de desenvolvimento, se não houver token, criamos um falso
-        // e logamos como admin para pular a tela de login.
-        localStorage.setItem('accessToken', 'dev-token');
-      }
-      // --- FIM DA MODIFICAÇÃO ---
-
       const token = localStorage.getItem('accessToken');
       if (token) {
         try {
-          const userData = mockGetCurrentUser(token);
-          setUser(userData);
+          // Busca os dados reais do usuário no backend
+          const response = await ApiService.getMe();
+          setUser(response.data);
         } catch (error) {
+          // Se o token for inválido, limpa tudo
           localStorage.removeItem('accessToken');
           setUser(null);
         }
@@ -57,13 +32,15 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const { access_token } = await ApiService.login(username, password);
-      localStorage.setItem('accessToken', access_token);
+      // 1. Faz o login e obtém o token
+      await ApiService.login(username, password);
       
-      const userData = mockGetCurrentUser(access_token);
-      setUser(userData);
+      // 2. Com o token salvo, busca os dados do usuário
+      const response = await ApiService.getMe();
+      setUser(response.data);
 
-      if (userData.role === 'cashier') {
+      // 3. Redireciona com base na ROLE REAL do usuário
+      if (response.data.role === 'cashier') {
         navigate('/pos');
       } else {
         navigate('/');

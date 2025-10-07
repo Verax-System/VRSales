@@ -1,9 +1,11 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+from .enums import UserRole # <-- Adicione esta importação
 
 class UserBase(BaseModel):
     email: EmailStr
     full_name: Optional[str] = None
+    role: UserRole = UserRole.ADMIN # <-- ALTERE ESTA LINHA
 
 class UserCreate(UserBase):
     password: str

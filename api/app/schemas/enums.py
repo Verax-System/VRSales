@@ -34,3 +34,8 @@ class PaymentMethod(str, enum.Enum):
     DEBIT_CARD = "debit_card"
     PIX = "pix"
     OTHER = "other"
+
+class UserRole(str, enum.Enum):
+    ADMIN = "admin"
+    MANAGER = "manager"
+    CASHIER = "cashier"
