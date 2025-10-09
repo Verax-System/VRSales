@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Card, Typography, Tag, Modal, Button, message, Spin, Empty, List, Avatar, Divider, Form, Input, Popconfirm, Space } from 'antd';
+import { Card, Row, Col, Typography, Tag, Modal, Button, message, Spin, Empty, List, Avatar, Divider, Form, Input, Popconfirm, Space } from 'antd';
 import { TableOutlined, PlusOutlined, DollarCircleOutlined, CloseCircleOutlined, QuestionCircleOutlined, EditOutlined } from '@ant-design/icons';
 import ApiService from '../api/ApiService';
 import dayjs from 'dayjs';
@@ -96,19 +96,43 @@ const TableManagementPage = () => {
     setIsAddModalVisible(false);
     addForm.resetFields();
   };
-  const handleAddSubmit = async (values) => {
-    setModalLoading(true);
+
+  // --- INÍCIO DA CORREÇÃO DEFINITIVA ---
+  const handleAddOk = async () => {
     try {
-      await ApiService.createTable({ number: values.number });
+      // 1. Valida os campos do formulário. Se falhar, vai para o 'catch'.
+      const values = await addForm.validateFields();
+      
+      // 2. Se a validação passar, inicia o loading e chama a API.
+      setModalLoading(true);
+      await ApiService.createTable(values);
+      
+      // 3. Se a API responder com sucesso, mostra mensagem e atualiza a tela.
       message.success(`Mesa "${values.number}" criada com sucesso!`);
-      handleAddCancel();
+      setIsAddModalVisible(false);
+      addForm.resetFields();
       fetchTables();
+
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Erro ao criar a mesa.');
+      // 4. Se qualquer passo acima falhar, este bloco será executado.
+      console.error("Falha ao adicionar mesa:", error); // Loga o erro completo no console do navegador (F12)
+
+      if (error.response) {
+        // Erro vindo do backend (ex: número de mesa duplicado)
+        message.error(error.response.data?.detail || 'Erro ao salvar no servidor.');
+      } else if (error.errorFields) {
+        // Erro de validação do formulário Ant Design
+        message.error('Por favor, preencha todos os campos corretamente.');
+      } else {
+        // Outro erro qualquer (ex: rede)
+        message.error('Ocorreu um erro inesperado ao tentar salvar.');
+      }
     } finally {
+      // 5. Garante que o loading seja desativado, não importa o que aconteça.
       setModalLoading(false);
     }
   };
+  // --- FIM DA CORREÇÃO DEFINITIVA ---
 
   const refreshSelectedOrder = async () => {
     if (!selectedOrder) return;
@@ -285,12 +309,13 @@ const TableManagementPage = () => {
         title="Adicionar Nova Mesa"
         open={isAddModalVisible}
         onCancel={handleAddCancel}
-        onOk={addForm.submit}
+        onOk={handleAddOk}
         confirmLoading={modalLoading}
         okText="Salvar"
         cancelText="Cancelar"
+        destroyOnClose
       >
-        <Form form={addForm} layout="vertical" onFinish={handleAddSubmit} name="add_table_form">
+        <Form form={addForm} layout="vertical" name="add_table_form_unique">
           <Form.Item name="number" label="Número ou Nome da Mesa" rules={[{ required: true, message: 'Por favor, insira o número/nome da mesa!' }]}>
             <Input placeholder="Ex: 01, Varanda 2, etc." />
           </Form.Item>

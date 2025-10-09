@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button, message, Spin, Typography, Card, Tag, Empty, Alert, Space } from 'antd';
-import { SaveOutlined, LayoutOutlined } from '@ant-design/icons';
+import { SaveOutlined, LayoutOutlined, PlusOutlined } from '@ant-design/icons';
 import Draggable from 'react-draggable';
 import ApiService from '../api/ApiService';
+import { useNavigate } from 'react-router-dom';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 const FloorPlanSettingsPage = () => {
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const navigate = useNavigate();
 
   const fetchTables = useCallback(async () => {
     setLoading(true);
@@ -58,7 +60,7 @@ const FloorPlanSettingsPage = () => {
     <Space direction="vertical" style={{ width: '100%' }} size="large">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Title level={2} style={{ margin: 0 }}><LayoutOutlined /> Editor de Layout do Salão</Title>
-        <Button type="primary" icon={<SaveOutlined />} loading={saving} onClick={handleSaveLayout}>
+        <Button type="primary" icon={<SaveOutlined />} loading={saving} onClick={handleSaveLayout} disabled={tables.length === 0}>
           Salvar Layout
         </Button>
       </div>
@@ -99,7 +101,20 @@ const FloorPlanSettingsPage = () => {
             </Draggable>
           ))
         ) : (
-          <Empty description="Nenhuma mesa cadastrada." style={{ paddingTop: '20vh' }}/>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+            <Empty
+              description={
+                <span>
+                  Nenhuma mesa encontrada. <br />
+                  Você precisa primeiro cadastrar as mesas.
+                </span>
+              }
+            >
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/tables')}>
+                Cadastrar Mesas Agora
+              </Button>
+            </Empty>
+          </div>
         )}
       </div>
     </Space>
