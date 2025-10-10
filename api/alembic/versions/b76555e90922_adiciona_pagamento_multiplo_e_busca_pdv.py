@@ -24,7 +24,10 @@ def upgrade() -> None:
     op.create_table('payments',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('amount', sa.Float(), nullable=False),
+    # --- INÍCIO DA CORREÇÃO ---
+    # Altera os valores do Enum para minúsculas, igual ao código da aplicação
     sa.Column('payment_method', sa.Enum('cash', 'credit_card', 'debit_card', 'pix', 'other', name='paymentmethod'), nullable=False),
+    # --- FIM DA CORREÇÃO ---
     sa.Column('sale_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['sale_id'], ['sales.id'], ),
     sa.PrimaryKeyConstraint('id')

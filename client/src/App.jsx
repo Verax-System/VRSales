@@ -15,9 +15,8 @@ import {
   SafetyCertificateOutlined,
   FireOutlined,
   RocketOutlined,
-  LayoutOutlined, // Adicione este ícone
+  LayoutOutlined,
 } from '@ant-design/icons';
-import UsersPage from './pages/UsersPage';
 import { Routes, Route, useNavigate, useLocation, Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 
@@ -33,13 +32,14 @@ import ReportsPage from './pages/ReportsPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import KDSPage from './pages/KDSPage';
 import MarketingPage from './pages/MarketingPage';
-import FloorPlanSettingsPage from './pages/FloorPlanSettingsPage'; // Importe a nova página
+import FloorPlanSettingsPage from './pages/FloorPlanSettingsPage';
+import UsersPage from './pages/UsersPage';
+import OpenCashRegisterPage from './pages/OpenCashRegisterPage'; // Importe a nova página
 
 import './App.css';
 
 const { Header, Content, Sider } = Layout;
 
-// Definição centralizada de todas as rotas e suas permissões
 const allMenuItems = [
     { key: '/pos', icon: <BarcodeOutlined />, label: 'Frente de Caixa', roles: ['admin', 'manager', 'cashier'] },
     { key: '/tables', icon: <TableOutlined />, label: 'Gestão de Mesas', roles: ['admin', 'manager', 'cashier'] },
@@ -54,7 +54,7 @@ const allMenuItems = [
     { key: '/expiration', icon: <CalendarOutlined />, label: 'Validade', roles: ['admin', 'manager'] },
     { type: 'divider', roles: ['admin'] },
     { key: '/users', icon: <SafetyCertificateOutlined />, label: 'Usuários', roles: ['admin'] },
-    { key: '/settings/floor-plan', icon: <LayoutOutlined />, label: 'Layout do Salão', roles: ['admin'] }, // Nova rota no menu
+    { key: '/settings/floor-plan', icon: <LayoutOutlined />, label: 'Layout do Salão', roles: ['admin'] },
 ];
 
 const MainLayout = () => {
@@ -122,6 +122,7 @@ const App = () => {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/open-cash-register" element={<OpenCashRegisterPage />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
       <Route element={<RoleBasedRoute allowedRoles={['admin', 'manager']} />}>
         <Route path="/kds" element={<KDSPage />} />
@@ -137,7 +138,7 @@ const App = () => {
         </Route>
         <Route element={<RoleBasedRoute allowedRoles={['admin']} />}>
           <Route path="users" element={<UsersPage />} />
-          <Route path="settings/floor-plan" element={<FloorPlanSettingsPage />} /> {/* Nova rota */}
+          <Route path="settings/floor-plan" element={<FloorPlanSettingsPage />} />
         </Route>
         <Route element={<RoleBasedRoute allowedRoles={['admin', 'manager', 'cashier']} />}>
           <Route path="pos" element={<POSPage />} />

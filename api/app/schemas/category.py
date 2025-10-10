@@ -11,7 +11,7 @@ class Subcategory(SubcategoryBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True # Correção aqui
 
 class CategoryBase(BaseModel):
     name: str
@@ -24,4 +24,4 @@ class Category(CategoryBase):
     subcategories: List[Subcategory] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True # Correção aqui

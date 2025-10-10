@@ -19,18 +19,15 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # ### Início da Correção ###
-    order_item_status_enum = sa.Enum('PENDING', 'PREPARING', 'READY', 'DELIVERED', name='orderitemstatus')
+    # --- CORREÇÃO AQUI: Valores em minúsculas ---
+    order_item_status_enum = sa.Enum('pending', 'preparing', 'ready', 'delivered', name='orderitemstatus')
     order_item_status_enum.create(op.get_bind())
-    # ### Fim da Correção ###
 
-    op.add_column('order_items', sa.Column('status', sa.Enum('PENDING', 'PREPARING', 'READY', 'DELIVERED', name='orderitemstatus'), server_default='PENDING', nullable=False))
+    op.add_column('order_items', sa.Column('status', sa.Enum('pending', 'preparing', 'ready', 'delivered', name='orderitemstatus'), server_default='pending', nullable=False))
 
 
 def downgrade() -> None:
     op.drop_column('order_items', 'status')
 
-    # ### Início da Correção ###
-    order_item_status_enum = sa.Enum('PENDING', 'PREPARING', 'READY', 'DELIVERED', name='orderitemstatus')
+    order_item_status_enum = sa.Enum('pending', 'preparing', 'ready', 'delivered', name='orderitemstatus')
     order_item_status_enum.drop(op.get_bind())
-    # ### Fim da Correção ###

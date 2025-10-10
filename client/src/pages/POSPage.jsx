@@ -13,6 +13,7 @@ import {
   Modal,
   Image,
   Card,
+  Spin,
 } from 'antd';
 import {
   BarcodeOutlined,
@@ -22,35 +23,55 @@ import {
   DeleteOutlined,
   DollarCircleOutlined,
   CloseCircleOutlined,
-  CheckCircleOutlined,
   CameraOutlined,
-  UserOutlined, // Ícone de usuário
+  UserOutlined,
 } from '@ant-design/icons';
-import ApiService from '../api/ApiService'; 
+import ApiService from '../api/ApiService';
 import dayjs from 'dayjs';
 import PaymentModal from '../components/PaymentModal';
-import CustomerSelect from '../components/CustomerSelect'; // Importe o novo componente
+import CustomerSelect from '../components/CustomerSelect';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const { Header, Content, Sider } = Layout;
 const { Title, Text } = Typography;
 
 const POSPage = () => {
+  const [cashRegisterStatus, setCashRegisterStatus] = useState(null);
+  const [pageLoading, setPageLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkCashRegister = async () => {
+      try {
+        const status = await ApiService.getCashRegisterStatus();
+        setCashRegisterStatus(status.data);
+      } catch (error) {
+        if (error.response && error.response.status === 404) {
+          message.warning('Nenhum caixa aberto. Por favor, abra o caixa para começar.');
+          navigate('/open-cash-register');
+        } else {
+          message.error('Erro ao verificar status do caixa.');
+        }
+      } finally {
+        setPageLoading(false);
+      }
+    };
+    checkCashRegister();
+  }, [navigate]);
+
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(dayjs().format('DD/MM/YYYY HH:mm:ss'));
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [lastAddedItem, setLastAddedItem] = useState(null);
-  const [selectedCustomer, setSelectedCustomer] = useState(null); // Novo estado para o cliente
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
   const searchInputRef = useRef(null);
   const location = useLocation();
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (location.state?.orderItems) {
       setCartItems(location.state.orderItems);
-      // Limpa o state da navegação para não carregar o carrinho novamente ao recarregar a página
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location, navigate]);
@@ -93,7 +114,7 @@ const POSPage = () => {
     });
     message.success(`${product.name} adicionado!`);
   };
-  
+
   const updateQuantity = (productId, amount) => {
     setCartItems(currentItems => {
       return currentItems.map(item => {
@@ -105,24 +126,23 @@ const POSPage = () => {
       }).filter(Boolean);
     });
   };
-  
+
   const handleSearch = async (value) => {
     if (!value) return;
     setLoading(true);
     try {
-        const response = await ApiService.lookupProduct(value);
-        if (response.data.length > 0) {
-            // Se encontrar, adiciona o primeiro resultado ao carrinho
-            addProductToCart(response.data[0]);
-        } else {
-            message.warning('Produto não encontrado.');
-        }
+      const response = await ApiService.lookupProduct(value);
+      if (response.data.length > 0) {
+        addProductToCart(response.data[0]);
+      } else {
+        message.warning('Produto não encontrado.');
+      }
     } catch (error) {
-        message.error('Erro ao buscar o produto.');
+      message.error('Erro ao buscar o produto.');
     } finally {
-        setSearchValue('');
-        searchInputRef.current?.focus();
-        setLoading(false);
+      setSearchValue('');
+      searchInputRef.current?.focus();
+      setLoading(false);
     }
   };
 
@@ -136,7 +156,7 @@ const POSPage = () => {
       onOk: () => {
         setCartItems([]);
         setLastAddedItem(null);
-        setSelectedCustomer(null); // Limpa o cliente selecionado
+        setSelectedCustomer(null);
         message.warning('Venda cancelada.');
         searchInputRef.current?.focus();
       }
@@ -155,9 +175,8 @@ const POSPage = () => {
     setIsPaymentModalOpen(false);
     setCartItems([]);
     setLastAddedItem(null);
-    setSelectedCustomer(null); // Limpa o cliente selecionado
+    setSelectedCustomer(null);
     searchInputRef.current?.focus();
-    // Mensagem de sucesso já é mostrada no PaymentModal
   };
 
   const { subtotal, totalItems } = useMemo(() => {
@@ -215,6 +234,10 @@ const POSPage = () => {
     }
   ];
 
+  if (pageLoading) {
+    return <Spin size="large" tip="Verificando status do caixa..." fullscreen />;
+  }
+
   return (
     <>
       <Layout style={{ height: '100vh', overflow: 'hidden' }}>
@@ -226,7 +249,7 @@ const POSPage = () => {
           padding: '0 24px',
           borderBottom: '1px solid #f0f0f0'
         }}>
-          <Text strong>Operador: ADMIN</Text>
+          <Text strong>Operador: {cashRegisterStatus?.user?.full_name || 'N/A'}</Text>
           <Title level={4} style={{ margin: 0 }}>FRENTE DE CAIXA</Title>
           <Text strong>{currentTime}</Text>
         </Header>
@@ -243,7 +266,6 @@ const POSPage = () => {
               onChange={(e) => setSearchValue(e.target.value)}
               loading={loading}
             />
-            {/* Bloco do Cliente */}
             <Card style={{ marginBottom: '16px' }} bodyStyle={{padding: '16px'}}>
               {selectedCustomer ? (
                 <Space>
@@ -325,7 +347,7 @@ const POSPage = () => {
         onOk={handleSaleSuccess}
         cartItems={cartItems}
         totalAmount={subtotal}
-        customerId={selectedCustomer?.id} // Passa o ID do cliente para o modal
+        customerId={selectedCustomer?.id}
       />
     </>
   );

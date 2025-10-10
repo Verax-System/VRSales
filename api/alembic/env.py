@@ -6,6 +6,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
+from app.models.cash_register_transaction import CashRegisterTransaction
 
 # Adiciona o diretório raiz da aplicação ao path do Python
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))

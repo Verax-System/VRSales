@@ -8,7 +8,7 @@ const { Option } = Select;
 const PaymentModal = ({ open, onCancel, onOk, cartItems, totalAmount, customerId }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [payments, setPayments] = useState([{ method: 'cash', amount: 0 }]);
+  const [payments, setPayments] = useState([{ payment_method: 'cash', amount: 0 }]);
 
   const totalPaid = useMemo(() => payments.reduce((acc, p) => acc + (p.amount || 0), 0), [payments]);
   const remainingAmount = totalAmount - totalPaid;
@@ -17,7 +17,7 @@ const PaymentModal = ({ open, onCancel, onOk, cartItems, totalAmount, customerId
   useEffect(() => {
     if (open) {
       const initialAmount = totalAmount > 0 ? parseFloat(totalAmount.toFixed(2)) : 0;
-      const initialPayments = [{ method: 'cash', amount: initialAmount }];
+      const initialPayments = [{ payment_method: 'cash', amount: initialAmount }];
       setPayments(initialPayments);
       form.setFieldsValue({ payments: initialPayments });
     }
@@ -37,7 +37,7 @@ const PaymentModal = ({ open, onCancel, onOk, cartItems, totalAmount, customerId
       const saleData = {
         items: cartItems.map(item => ({ product_id: item.id, quantity: item.quantity })),
         payments: finalPayments,
-        customer_id: customerId, // Inclui o ID do cliente
+        customer_id: customerId,
       };
       
       await ApiService.createSale(saleData);
@@ -46,8 +46,13 @@ const PaymentModal = ({ open, onCancel, onOk, cartItems, totalAmount, customerId
       message.success(`Venda finalizada! Troco: R$ ${finalChange.toFixed(2)}`);
       onOk();
     } catch (error) {
-        const errorMsg = error.response?.data?.detail || 'Erro ao finalizar a venda.';
-        message.error(errorMsg);
+        // --- INÍCIO DA MUDANÇA ---
+        // Adicionamos um console.error para ver o objeto de erro completo no navegador
+        console.error("ERRO DETALHADO RECEBIDO PELO FRONTEND:", error.response);
+        
+        const errorMsg = error.response?.data?.detail || 'Erro ao finalizar a venda. Verifique o console para detalhes (F12).';
+        message.error(errorMsg, 5); // Aumenta a duração da mensagem para 5 segundos
+        // --- FIM DA MUDANÇA ---
     } finally {
         setLoading(false);
     }
@@ -84,7 +89,7 @@ const PaymentModal = ({ open, onCancel, onOk, cartItems, totalAmount, customerId
             <>
               {fields.map(({ key, name, ...restField }) => (
                 <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
-                  <Form.Item {...restField} name={[name, 'method']} initialValue="cash">
+                  <Form.Item {...restField} name={[name, 'payment_method']} initialValue="cash">
                     <Select style={{ width: 180 }}>
                       <Option value="cash"><DollarCircleOutlined /> Dinheiro</Option>
                       <Option value="credit_card"><CreditCardOutlined /> Crédito</Option>
@@ -99,7 +104,7 @@ const PaymentModal = ({ open, onCancel, onOk, cartItems, totalAmount, customerId
                 </Space>
               ))}
               <Form.Item>
-                <Button type="dashed" onClick={() => add({ method: 'credit_card', amount: remainingAmount > 0 ? parseFloat(remainingAmount.toFixed(2)) : 0 })} block>
+                <Button type="dashed" onClick={() => add({ payment_method: 'credit_card', amount: remainingAmount > 0 ? parseFloat(remainingAmount.toFixed(2)) : 0 })} block>
                   Adicionar outro pagamento
                 </Button>
               </Form.Item>

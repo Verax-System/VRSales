@@ -2,14 +2,9 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Optional
 
-# --- INÍCIO DA CORREÇÃO ---
-# Importa do arquivo de Enums, não do modelo
-from app.schemas.enums import OrderStatus, OrderType, OrderItemStatus # Adicione OrderItemStatus
+from app.schemas.enums import OrderStatus, OrderType, OrderItemStatus
 from app.schemas.additional import Additional
-from .product import Product # Importe o schema do Produto
-
-# --- FIM DA CORREÇÃO ---
-
+from .product import Product
 
 # --- Item do Pedido ---
 class OrderItemBase(BaseModel):
@@ -24,12 +19,13 @@ class OrderItemCreate(OrderItemBase):
 class OrderItem(OrderItemBase):
     id: int
     price_at_order: float
-    status: OrderItemStatus # <-- Adicione esta linha
+    status: OrderItemStatus
     additionals: List[Additional] = []
-    product: Product # Adicione para que os detalhes do produto sejam enviados
+    product: Product
 
     class Config:
-        from_attributes = True # Altere de orm_mode para from_attributes
+        from_attributes = True
+
 # --- Pedido/Comanda ---
 class OrderCreateTable(BaseModel):
     table_id: int
@@ -53,4 +49,4 @@ class Order(BaseModel):
     total_amount: float = 0.0
 
     class Config:
-        orm_mode = True
+        from_attributes = True # Correção aqui

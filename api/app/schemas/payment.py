@@ -15,7 +15,7 @@ class Payment(PaymentBase):
     sale_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True # Correção aqui
 
 # Novo schema para o corpo da requisição de pagamento
 class OrderPaymentRequest(BaseModel):

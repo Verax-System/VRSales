@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.models import cash_register_transaction
 
 # --- INÍCIO DA CORREÇÃO ---
 # Importa a Base e todos os modelos para garantir que o SQLAlchemy

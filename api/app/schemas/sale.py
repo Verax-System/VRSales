@@ -1,7 +1,10 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Optional
-from app.schemas.payment import Payment # <-- Adicione esta importação
+# --- INÍCIO DA CORREÇÃO ---
+# Importa o schema de criação de pagamento
+from app.schemas.payment import Payment, PaymentCreate
+# --- FIM DA CORREÇÃO ---
 
 # --- Schemas para Itens da Venda ---
 class SaleItemBase(BaseModel):
@@ -24,6 +27,11 @@ class SaleBase(BaseModel):
 
 class SaleCreate(SaleBase):
     items: List[SaleItemCreate]
+    # --- INÍCIO DA CORREÇÃO ---
+    # Adiciona o campo para receber os pagamentos do frontend
+    payments: List[PaymentCreate]
+    # --- FIM DA CORREÇÃO ---
+
 
 class Sale(SaleBase):
     id: int
@@ -32,10 +40,8 @@ class Sale(SaleBase):
     created_at: datetime
     items: List[SaleItem] = []
     
-    # --- INÍCIO DAS NOVAS LINHAS ---
     payments: List[Payment] = []
     change_amount: float = 0.0 # Campo para o troco
-    # --- FIM DAS NOVAS LINHAS ---
 
     class Config:
-        orm_mode = True
+        from_attributes = True # Alterado de orm_mode para from_attributes

@@ -18,23 +18,19 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
-
 def upgrade() -> None:
     """Upgrade schema."""
-    # ### Início da Correção ###
-    user_role_enum = sa.Enum('ADMIN', 'MANAGER', 'CASHIER', name='userrole')
+    # --- CORREÇÃO AQUI: Valores em minúsculas ---
+    user_role_enum = sa.Enum('admin', 'manager', 'cashier', name='userrole')
     user_role_enum.create(op.get_bind())
-    # ### Fim da Correção ###
 
-    op.add_column('users', sa.Column('role', sa.Enum('ADMIN', 'MANAGER', 'CASHIER', name='userrole'), nullable=False, server_default='CASHIER'))
-    op.alter_column('users', 'role', server_default=None) # Remove o default após a inserção inicial para não travar futuras alterações
+    op.add_column('users', sa.Column('role', sa.Enum('admin', 'manager', 'cashier', name='userrole'), nullable=False, server_default='cashier'))
+    op.alter_column('users', 'role', server_default=None)
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     op.drop_column('users', 'role')
 
-    # ### Início da Correção ###
-    user_role_enum = sa.Enum('ADMIN', 'MANAGER', 'CASHIER', name='userrole')
+    user_role_enum = sa.Enum('admin', 'manager', 'cashier', name='userrole')
     user_role_enum.drop(op.get_bind())
-    # ### Fim da Correção ###
