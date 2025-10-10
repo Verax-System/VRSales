@@ -12,8 +12,8 @@ from app.crud import crud_product, crud_recipe
 from app.schemas.product import Product, ProductCreate, ProductUpdate
 from app.schemas.user import User
 from app.schemas.recipe import RecipeUpdate
+# A dependência get_db agora é importada do local correto e a SessionLocal não é mais necessária aqui
 from app.api.dependencies import get_db, get_current_user
-from app.db.session import SessionLocal # Adicionado para a dependência get_db
 # --- FIM DA CORREÇÃO ---
 
 
@@ -41,11 +41,7 @@ async def create_product_variation(
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
-
-# A dependência get_db estava faltando a importação de SessionLocal
-async def get_db():
-    async with SessionLocal() as session:
-        yield session
+# A função get_db duplicada foi removida daqui
 
 @router.post("/", response_model=Product)
 async def create_product(

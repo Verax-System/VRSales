@@ -24,7 +24,7 @@ def upgrade() -> None:
     op.create_table('payments',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('amount', sa.Float(), nullable=False),
-    sa.Column('payment_method', sa.Enum('CASH', 'CREDIT_CARD', 'DEBIT_CARD', 'PIX', 'OTHER', name='paymentmethod'), nullable=False),
+    sa.Column('payment_method', sa.Enum('cash', 'credit_card', 'debit_card', 'pix', 'other', name='paymentmethod'), nullable=False),
     sa.Column('sale_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['sale_id'], ['sales.id'], ),
     sa.PrimaryKeyConstraint('id')

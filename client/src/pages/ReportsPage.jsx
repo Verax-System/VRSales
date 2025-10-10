@@ -21,24 +21,19 @@ const ReportsPage = () => {
       setLoading(true);
       setError(null);
       try {
-        // O ideal seria o backend fornecer os dados já agrupados por dia.
-        // Como não temos esse endpoint, vamos simular os dados para o gráfico de linha.
-        const [topProductsRes] = await Promise.all([
-          ApiService.getTopSellingProducts(10)
-        ]);
+        const startDate = dateRange[0].format('YYYY-MM-DD');
+        const endDate = dateRange[1].format('YYYY-MM-DD');
         
-        const mockSales = [];
-        let currentDate = dateRange[0].clone();
-        while (currentDate.isBefore(dateRange[1]) || currentDate.isSame(dateRange[1])) {
-            mockSales.push({
-                date: currentDate.format('DD/MM'),
-                value: Math.floor(Math.random() * (500 - 50 + 1) + 50) // Valor aleatório entre 50 e 500
-            });
-            currentDate = currentDate.add(1, 'day');
-        }
+        // --- INÍCIO DA CORREÇÃO ---
+        // Agora busca os dados reais da API em paralelo
+        const [topProductsRes, salesEvolutionRes] = await Promise.all([
+          ApiService.getTopSellingProducts(10),
+          ApiService.getSalesEvolution(startDate, endDate)
+        ]);
 
-        setSalesData(mockSales);
+        setSalesData(salesEvolutionRes.data);
         setTopProducts(topProductsRes.data);
+        // --- FIM DA CORREÇÃO ---
 
       } catch (err) {
         setError('Falha ao buscar dados para os relatórios.');
@@ -66,8 +61,10 @@ const ReportsPage = () => {
   
   const productsConfig = {
     data: topProducts,
+    // --- CORREÇÃO DO NOME DO CAMPO ---
     xField: 'product_name',
-    yField: 'total_quantity_sold',
+    yField: 'total_quantity', // O backend retorna 'total_quantity'
+    // --- FIM DA CORREÇÃO ---
     height: 300,
     label: {
         position: 'middle',
@@ -83,7 +80,9 @@ const ReportsPage = () => {
     yAxis: { title: { text: 'Quantidade Vendida', style: { fontSize: 14 } } },
     meta: {
         product_name: { alias: 'Produto' },
-        total_quantity_sold: { alias: 'Quantidade Vendida' },
+        // --- CORREÇÃO DO NOME DO CAMPO ---
+        total_quantity: { alias: 'Quantidade Vendida' },
+        // --- FIM DA CORREÇÃO ---
     },
   };
 

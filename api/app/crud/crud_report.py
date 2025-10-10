@@ -1,11 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func, desc
-from datetime import date
+from datetime import date, timedelta # Adicione timedelta
 
 from app.models.sale import Sale, SaleItem
 from app.models.product import Product
 from app.models.user import User
+
+# ... (funções existentes get_sales_by_period, get_top_selling_products, get_sales_by_user) ...
 
 async def get_sales_by_period(db: AsyncSession, start_date: date, end_date: date):
     """
@@ -73,3 +75,34 @@ async def get_sales_by_user(db: AsyncSession, start_date: date, end_date: date):
         .order_by(desc("total_sales_amount"))
     )
     return result.mappings().all()
+
+# --- INÍCIO DO NOVO CÓDIGO ---
+async def get_sales_evolution_by_period(db: AsyncSession, start_date: date, end_date: date):
+    """
+    Retorna o total de vendas agrupado por dia para um gráfico de evolução.
+    """
+    result = await db.execute(
+        select(
+            func.date(Sale.created_at).label("date"),
+            func.sum(Sale.total_amount).label("value")
+        ).where(
+            func.date(Sale.created_at) >= start_date,
+            func.date(Sale.created_at) <= end_date
+        )
+        .group_by(func.date(Sale.created_at))
+        .order_by(func.date(Sale.created_at))
+    )
+    
+    # Preenche os dias sem vendas com valor 0
+    sales_data = {item.date: item.value for item in result.mappings().all()}
+    all_dates = []
+    current_date = start_date
+    while current_date <= end_date:
+        all_dates.append({
+            "date": current_date.strftime("%d/%m"),
+            "value": sales_data.get(current_date, 0.0)
+        })
+        current_date += timedelta(days=1)
+        
+    return all_dates
+# --- FIM DO NOVO CÓDIGO ---

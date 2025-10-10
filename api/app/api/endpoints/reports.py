@@ -5,7 +5,8 @@ from typing import List
 
 # --- CORREÇÃO AQUI ---
 from app.crud import crud_report
-from app.schemas.report import SalesByPeriod, TopSellingProduct, SalesByUser
+# Adicione SalesEvolutionItem ao import
+from app.schemas.report import SalesByPeriod, TopSellingProduct, SalesByUser, SalesEvolutionItem
 from app.schemas.user import User
 from app.api.dependencies import get_db, get_current_user
 
@@ -38,3 +39,15 @@ async def report_sales_by_user(
     current_user: User = Depends(get_current_user)
 ):
     return await crud_report.get_sales_by_user(db, start_date=start_date, end_date=end_date)
+
+# --- INÍCIO DO NOVO ENDPOINT ---
+@router.get("/sales-evolution", response_model=List[SalesEvolutionItem])
+async def report_sales_evolution(
+    start_date: date,
+    end_date: date,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """ Retorna dados de vendas diárias para o gráfico de evolução. """
+    return await crud_report.get_sales_evolution_by_period(db, start_date=start_date, end_date=end_date)
+# --- FIM DO NOVO ENDPOINT ---

@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
-from app.api.endpoints import attributes ,categories  ,batches, products, login, users, sales, cash_register, reports, additionals, customers, suppliers, ingredients, tables, orders
+# Adicione 'marketing' à lista de importação
+from app.api.endpoints import attributes ,categories  ,batches, products, login, users, sales, cash_register, reports, additionals, customers, suppliers, ingredients, tables, orders, marketing
 
 api_router = APIRouter()
 
@@ -21,3 +22,8 @@ api_router.include_router(additionals.router, prefix="/additionals", tags=["Addi
 api_router.include_router(batches.router, prefix="/batches", tags=["Batches"]) # <-- ADICIONE
 api_router.include_router(categories.router, prefix="/categories", tags=["Categorias de Produtos"]) # <-- ADICIONE
 api_router.include_router(attributes.router, prefix="/attributes", tags=["Atributos de Variação"]) # <-- ADICIONE
+
+# --- INÍCIO DA CORREÇÃO ---
+# Adiciona o roteador de marketing
+api_router.include_router(marketing.router, prefix="/marketing", tags=["Marketing"])
+# --- FIM DA CORREÇÃO ---

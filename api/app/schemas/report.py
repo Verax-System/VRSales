@@ -21,3 +21,10 @@ class SalesByUser(BaseModel):
     user_full_name: str
     total_sales_amount: float
     number_of_transactions: int
+
+# --- INÍCIO DO NOVO CÓDIGO ---
+class SalesEvolutionItem(BaseModel):
+    """ Representa um ponto de dados no gráfico de evolução de vendas. """
+    date: str
+    value: float
+# --- FIM DO NOVO CÓDIGO ---

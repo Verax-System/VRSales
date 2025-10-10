@@ -85,6 +85,7 @@ const ApiService = {
   // --- RELATÓRIOS ---
   getSalesByPeriod: (startDate, endDate) => apiClient.get(`/reports/sales-by-period?start_date=${startDate}&end_date=${endDate}`),
   getTopSellingProducts: (limit = 5) => apiClient.get(`/reports/top-selling-products?limit=${limit}`),
+  getSalesEvolution: (startDate, endDate) => apiClient.get(`/reports/sales-evolution?start_date=${startDate}&end_date=${endDate}`),
   
   // --- MARKETING ---
   getMarketingCampaigns: () => apiClient.get('/marketing/campaigns'), // Assumindo que haverá um endpoint real
