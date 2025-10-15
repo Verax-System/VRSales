@@ -1,27 +1,79 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import Field, EmailStr, validator
 from typing import Optional
-from .enums import UserRole # <-- Adicione esta importação
+from datetime import datetime
 
-class UserBase(BaseModel):
-    email: EmailStr
-    full_name: Optional[str] = None
-    role: UserRole = UserRole.ADMIN # <-- ALTERE ESTA LINHA
+# Importa o nosso BaseSchema e os enums necessários
+from .base_schema import BaseSchema
+from .enums import UserRole
 
+# =====================================================================================
+# Schema Base para Usuário
+# =====================================================================================
+class UserBase(BaseSchema):
+    """Schema base contendo os campos comuns de um usuário."""
+    full_name: str = Field(
+        ..., 
+        min_length=3, 
+        max_length=100,
+        description="Nome completo do usuário."
+    )
+    email: EmailStr = Field(
+        ...,
+        description="E-mail de login do usuário. Deve ser um e-mail válido e único."
+    )
+    role: UserRole = Field(
+        UserRole.CASHIER, # Define 'cashier' como o cargo padrão
+        description="Define o nível de permissão do usuário no sistema."
+    )
+    is_active: bool = Field(
+        True,
+        description="Indica se o usuário está ativo no sistema. Inativos não podem logar."
+    )
+
+# =====================================================================================
+# Schema para Criação de Usuário
+# =====================================================================================
 class UserCreate(UserBase):
-    password: str
+    """Schema usado para criar um novo usuário."""
+    password: str = Field(
+        ..., 
+        min_length=8,
+        description="Senha do usuário. Deve ter no mínimo 8 caracteres."
+    )
 
-class UserUpdate(BaseModel):
-    full_name: Optional[str] = None
+    @validator('password')
+    def validate_password_strength(cls, v):
+        """Validador para garantir uma senha minimamente segura."""
+        if len(v) < 8:
+            raise ValueError('A senha deve ter pelo menos 8 caracteres.')
+        # Você pode adicionar mais regras aqui (ex: letras maiúsculas, números, símbolos)
+        # if not any(char.isdigit() for char in v):
+        #     raise ValueError('A senha deve conter pelo menos um número.')
+        # if not any(char.isupper() for char in v):
+        #     raise ValueError('A senha deve conter pelo menos uma letra maiúscula.')
+        return v
+
+# =====================================================================================
+# Schema para Atualização de Usuário
+# =====================================================================================
+class UserUpdate(BaseSchema):
+    """
+    Schema para atualizar um usuário. Todos os campos são opcionais.
+    Não permite a atualização direta da senha por este schema por segurança.
+    """
+    full_name: Optional[str] = Field(None, min_length=3, max_length=100)
     email: Optional[EmailStr] = None
-    password: Optional[str] = None
+    role: Optional[UserRole] = None
+    is_active: Optional[bool] = None
+    store_id: int = Field(..., description="ID da loja à qual o usuário pertence.")
 
-class UserInDB(UserBase):
+# =====================================================================================
+# Schema para Leitura/Retorno de Usuário da API
+# =====================================================================================
+class User(UserBase):
+    """Schema completo do usuário, usado para retornar dados da API."""
     id: int
-    is_active: bool
-    is_superuser: bool
+    created_at: datetime
 
     class Config:
-        from_attributes = True
-
-class User(UserInDB):
-    pass
+        orm_mode = True

@@ -1,136 +1,163 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 from typing import List
-from fastapi import HTTPException
-from app.crud import crud_variation
-from app.schemas.variation import ProductVariation, ProductVariationCreate
 
 # --- INÍCIO DA CORREÇÃO ---
-# Importa o módulo CRUD específico para produtos
-from app.crud import crud_product, crud_recipe
-# Importa todos os schemas necessários diretamente
-from app.schemas.product import Product, ProductCreate, ProductUpdate
-from app.schemas.user import User
-from app.schemas.recipe import RecipeUpdate
-# A dependência get_db agora é importada do local correto e a SessionLocal não é mais necessária aqui
-from app.api.dependencies import get_db, get_current_user
-# --- FIM DA CORREÇÃO ---
-
+# Importações explícitas e diretas para cada módulo necessário
+from app import crud
+from app.models.user import User as UserModel # Importa o modelo User diretamente
+from app.schemas.product import Product as ProductSchema, ProductCreate, ProductUpdate
+from app.schemas.stock import StockAdjustment
+from app.api.dependencies import get_db, RoleChecker, get_current_active_user
+from app.schemas.enums import UserRole
+from app.services.stock_service import stock_service
+# --- FIM DA CORREGE ---
 
 router = APIRouter()
 
-@router.post("/{product_id}/variations", response_model=ProductVariation)
-async def create_product_variation(
-    product_id: int,
-    variation_in: ProductVariationCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+# Define as permissões necessárias.
+manager_permissions = RoleChecker([UserRole.ADMIN, UserRole.MANAGER])
+
+@router.post(
+    "/",
+    response_model=ProductSchema,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(manager_permissions)],
+    summary="Criar um novo produto"
+)
+def create_product(
+    *,
+    db: Session = Depends(get_db),
+    product_in: ProductCreate,
+    current_user: UserModel = Depends(get_current_active_user) # Usa o UserModel importado
 ):
     """
-    Cria uma nova variação (SKU) para um produto específico.
+    Cria um novo produto na loja do usuário autenticado.
+    A CRUDBase irá associar automaticamente o produto à `store_id` correta.
     """
-    # Verifica se o produto "pai" existe
-    db_product = await crud_product.get_product(db, product_id=product_id)
-    if not db_product:
-        raise HTTPException(status_code=404, detail="Produto não encontrado")
-    
-    try:
-        return await crud_variation.create_product_variation(
-            db=db, variation_in=variation_in, product_id=product_id
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    return crud.product.create(db=db, obj_in=product_in, current_user=current_user)
 
-# A função get_db duplicada foi removida daqui
-
-@router.post("/", response_model=Product)
-async def create_product(
-    product: ProductCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    return await crud_product.create_product(db=db, product=product)
-
-@router.get("/", response_model=List[Product])
-async def read_products(
+@router.get(
+    "/",
+    response_model=List[ProductSchema],
+    summary="Listar produtos da loja"
+)
+def read_products(
+    *,
+    db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
-    db: AsyncSession = Depends(get_db)
+    current_user: UserModel = Depends(get_current_active_user) # Usa o UserModel importado
 ):
-    # A chamada agora usa crud_product
-    return await crud_product.get_products(db, skip=skip, limit=limit)
+    """
+    Retorna uma lista de produtos pertencentes à loja do usuário autenticado.
+    A filtragem por `store_id` é feita automaticamente pela CRUDBase.
+    """
+    products = crud.product.get_multi(db, skip=skip, limit=limit, current_user=current_user)
+    return products
 
-@router.get("/{product_id}", response_model=Product)
-async def read_product(
+@router.get(
+    "/{product_id}",
+    response_model=ProductSchema,
+    summary="Obter um produto por ID"
+)
+def read_product(
+    *,
+    db: Session = Depends(get_db),
     product_id: int,
-    db: AsyncSession = Depends(get_db)
+    current_user: UserModel = Depends(get_current_active_user) # Usa o UserModel importado
 ):
-    db_product = await crud_product.get_product(db, product_id=product_id)
-    if db_product is None:
-        raise HTTPException(status_code=404, detail="Produto não encontrado")
-    return db_product
+    """
+    Obtém os detalhes de um produto específico, garantindo que ele
+    pertença à loja do usuário autenticado.
+    """
+    product = crud.product.get(db, id=product_id, current_user=current_user)
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Produto não encontrado ou não pertence a esta loja."
+        )
+    return product
 
-@router.put("/{product_id}", response_model=Product)
-async def update_product_endpoint(
+@router.put(
+    "/{product_id}",
+    response_model=ProductSchema,
+    dependencies=[Depends(manager_permissions)],
+    summary="Atualizar um produto"
+)
+def update_product(
+    *,
+    db: Session = Depends(get_db),
     product_id: int,
     product_in: ProductUpdate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_active_user) # Usa o UserModel importado
 ):
-    db_product = await crud_product.get_product(db, product_id=product_id)
+    """
+    Atualiza as informações de um produto. A CRUDBase garante que o usuário
+    só possa atualizar produtos da sua própria loja.
+    """
+    db_product = crud.product.get(db, id=product_id, current_user=current_user)
     if not db_product:
-        raise HTTPException(status_code=404, detail="Produto não encontrado")
-    return await crud_product.update_product(db=db, db_product=db_product, product_in=product_in)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Produto não encontrado ou não pertence a esta loja."
+        )
+    product = crud.product.update(db=db, db_obj=db_product, obj_in=product_in, current_user=current_user)
+    return product
 
-@router.delete("/{product_id}", response_model=Product)
-async def delete_product(
+@router.delete(
+    "/{product_id}",
+    response_model=ProductSchema,
+    dependencies=[Depends(manager_permissions)],
+    summary="Deletar um produto"
+)
+def delete_product(
+    *,
+    db: Session = Depends(get_db),
     product_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_active_user) # Usa o UserModel importado
 ):
-    deleted_product = await crud_product.remove_product(db=db, product_id=product_id)
-    if deleted_product is None:
-        raise HTTPException(status_code=404, detail="Produto não encontrado")
-    return deleted_product
+    """
+    Remove um produto do sistema, garantindo que pertença à loja
+    do usuário autenticado.
+    """
+    product = crud.product.remove(db=db, id=product_id, current_user=current_user)
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Produto não encontrado ou não pertence a esta loja."
+        )
+    return product
 
-
-@router.put("/{product_id}/recipe", response_model=Product)
-async def update_product_recipe_endpoint(
+@router.post(
+    "/{product_id}/stock-adjustment",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(manager_permissions)],
+    summary="Ajustar o estoque de um produto"
+)
+def adjust_product_stock(
+    *,
+    db: Session = Depends(get_db),
     product_id: int,
-    recipe_in: RecipeUpdate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    db_product = await crud_product.get_product(db, product_id=product_id)
-    if not db_product:
-        raise HTTPException(status_code=404, detail="Produto não encontrado")
-
-    updated_product = await crud_recipe.update_product_recipe(db=db, product=db_product, recipe_in=recipe_in)
-    
-    product_with_recipe = await crud_recipe.get_product_with_recipe(db, product_id=updated_product.id)
-    
-    return product_with_recipe
-
-@router.get("/lookup/", response_model=List[Product])
-async def lookup_products_endpoint(
-    query: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    adjustment_in: StockAdjustment,
+    current_user: UserModel = Depends(get_current_active_user) # Usa o UserModel importado
 ):
     """
-    Endpoint de busca rápida para a tela de PDV.
-    Busca por nome ou código de barras.
+    Realiza um ajuste manual no estoque de um produto da loja atual.
     """
-    return await crud_product.lookup_product(db=db, query=query)
+    product_to_adjust = crud.product.get(db, id=product_id, current_user=current_user)
+    if not product_to_adjust:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Produto não encontrado ou não pertence a esta loja."
+        )
 
-# --- FIM DO NOVO ENDPOINT ---
-
-@router.get("/low-stock/", response_model=List[Product])
-async def read_low_stock_products(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Endpoint para listar produtos com estoque baixo.
-    """
-    return await crud_product.get_low_stock_products(db=db)
+    movement = stock_service.adjust_stock(
+        db=db,
+        product_id=product_id,
+        new_stock_level=adjustment_in.new_stock_level,
+        user=current_user,
+        reason=adjustment_in.reason
+    )
+        
+    return {"message": "Estoque ajustado com sucesso.", "new_stock_level": movement.stock_after_movement}

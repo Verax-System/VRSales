@@ -1,46 +1,35 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy import func
+from sqlalchemy.orm import Session
 
-from app.models.cash_register import CashRegisterSession
-from app.models.sale import Sale
-from app.schemas.cash_register import CashRegisterOpen, CashRegisterClose
+from app.crud.base import CRUDBase
+from app.models.cash_register import CashRegister, CashRegisterTransaction, TransactionType, CashRegisterStatus
+from app.schemas.cash_register import CashRegisterCreate, CashRegisterUpdate
 
-async def get_open_session_by_user(db: AsyncSession, user_id: int) -> CashRegisterSession | None:
-    """Busca uma sessão de caixa aberta para um usuário específico."""
-    result = await db.execute(
-        select(CashRegisterSession).where(
-            CashRegisterSession.user_id == user_id,
-            CashRegisterSession.is_open == True
+class CRUDCashRegister(CRUDBase[CashRegister, CashRegisterCreate, CashRegisterUpdate]):
+    def create_with_opening_transaction(
+        self, db: Session, *, user_id: int, opening_balance: float
+    ) -> CashRegister:
+        """Cria um novo registro de caixa e sua transação de abertura inicial."""
+        
+        # 1. Cria o registro do caixa
+        cash_register_obj = CashRegister(
+            user_id=user_id,
+            opening_balance=opening_balance,
+            status=CashRegisterStatus.OPEN
         )
-    )
-    return result.scalars().first()
+        db.add(cash_register_obj)
+        db.commit()
+        db.refresh(cash_register_obj)
+        
+        # 2. Cria a transação de abertura
+        opening_transaction = CashRegisterTransaction(
+            cash_register_id=cash_register_obj.id,
+            transaction_type=TransactionType.OPENING_BALANCE,
+            amount=opening_balance,
+            description="Saldo de abertura do caixa"
+        )
+        db.add(opening_transaction)
+        db.commit()
+        
+        return cash_register_obj
 
-async def open_session(db: AsyncSession, session_in: CashRegisterOpen, user_id: int) -> CashRegisterSession:
-    """Abre uma nova sessão de caixa para o usuário."""
-    db_session = CashRegisterSession(
-        opening_balance=session_in.opening_balance,
-        user_id=user_id
-    )
-    db.add(db_session)
-    await db.commit()
-    await db.refresh(db_session)
-    return db_session
-
-async def close_session(db: AsyncSession, db_session: CashRegisterSession) -> CashRegisterSession:
-    """Fecha a sessão de caixa ativa."""
-    db_session.is_open = False
-    db_session.closed_at = func.now()
-    # O closing_balance virá do input do usuário, mas aqui apenas fechamos a sessão.
-    # A validação ocorrerá no endpoint.
-    await db.commit()
-    await db.refresh(db_session)
-    return db_session
-
-async def get_session_sales_total(db: AsyncSession, session_id: int) -> float:
-    """Calcula o total de vendas para uma sessão de caixa."""
-    result = await db.execute(
-        select(func.sum(Sale.total_amount)).where(Sale.cash_register_session_id == session_id)
-    )
-    total = result.scalar_one_or_none()
-    return total or 0.0
+cash_register = CRUDCashRegister(CashRegister)

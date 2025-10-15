@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
 from app.crud import crud_category
-from app.schemas.category import Category, CategoryCreate, Subcategory, SubcategoryCreate
+from app.schemas.category import ProductCategory, ProductCategoryCreate, ProductSubcategory, ProductSubcategoryCreate
 from app.schemas.user import User
 from app.api.dependencies import get_db, get_current_user
 
@@ -11,16 +11,16 @@ router = APIRouter()
 
 # --- Endpoints para Categorias (Grupos) ---
 
-@router.post("/", response_model=Category)
+@router.post("/", response_model=ProductCategory)
 async def create_category(
-    category_in: CategoryCreate,
+    category_in: ProductCategoryCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Cria uma nova categoria de produto (Grupo)."""
     return await crud_category.create_category(db=db, category=category_in)
 
-@router.get("/", response_model=List[Category])
+@router.get("/", response_model=List[ProductCategory])
 async def read_categories(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -30,10 +30,10 @@ async def read_categories(
 
 # --- Endpoints para Subcategorias (Subgrupos) ---
 
-@router.post("/{category_id}/subcategories", response_model=Subcategory)
+@router.post("/{category_id}/subcategories", response_model=ProductSubcategory)
 async def create_subcategory(
     category_id: int,
-    subcategory_in: SubcategoryCreate,
+    subcategory_in: ProductCategoryCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -43,7 +43,7 @@ async def create_subcategory(
         raise HTTPException(status_code=404, detail="Categoria não encontrada")
     return await crud_category.create_subcategory(db=db, subcategory=subcategory_in, category_id=category_id)
 
-@router.get("/{category_id}/subcategories", response_model=List[Subcategory])
+@router.get("/{category_id}/subcategories", response_model=List[ProductSubcategory])
 async def read_subcategories(
     category_id: int,
     db: AsyncSession = Depends(get_db),

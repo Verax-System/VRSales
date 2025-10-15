@@ -1,27 +1,30 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 
-class SubcategoryBase(BaseModel):
-    name: str
+# Schema para Subcategoria (usado dentro do schema de Categoria)
+class ProductSubcategoryBase(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100)
 
-class SubcategoryCreate(SubcategoryBase):
+class ProductSubcategoryCreate(ProductSubcategoryBase):
     pass
 
-class Subcategory(SubcategoryBase):
+class ProductSubcategory(ProductSubcategoryBase):
     id: int
+    parent_category_id: int
 
     class Config:
-        from_attributes = True # Correção aqui
+        orm_mode = True
 
-class CategoryBase(BaseModel):
-    name: str
+# Schema para Categoria Principal
+class ProductCategoryBase(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100)
 
-class CategoryCreate(CategoryBase):
+class ProductCategoryCreate(ProductCategoryBase):
     pass
 
-class Category(CategoryBase):
+class ProductCategory(ProductCategoryBase):
     id: int
-    subcategories: List[Subcategory] = []
+    subcategories: List[ProductSubcategory] = []
 
     class Config:
-        from_attributes = True # Correção aqui
+        orm_mode = True

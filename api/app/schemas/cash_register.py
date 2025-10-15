@@ -24,7 +24,20 @@ class CashRegisterSession(CashRegisterBase):
     class Config:
         from_attributes = True
 
+class CashRegisterClose(BaseModel):
+    closing_balance: float = Field(..., ge=0, description="Valor físico contado na gaveta ao fechar o caixa.")
+
 class CashRegisterStatus(CashRegisterSession):
     """ Schema para o status do caixa, incluindo o total de vendas na sessão. """
     total_sales: float
     expected_balance: float
+
+class CashRegister(CashRegisterBase):
+    id: int
+    status: str # Ou o Enum apropriado
+    opened_at: datetime
+    closed_at: Optional[datetime]
+
+
+    class Config:
+        orm_mode = True

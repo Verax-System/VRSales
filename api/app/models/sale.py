@@ -11,11 +11,11 @@ class Sale(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     total_amount: Mapped[float] = mapped_column(Float, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
-    
+    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), nullable=False)
+
     customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"), nullable=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    cash_register_session_id: Mapped[int] = mapped_column(ForeignKey("cash_register_sessions.id"))
-
+    cash_register_id: Mapped[int] = mapped_column(ForeignKey("cash_registers.id"), nullable=True)
     # Relações usando strings para evitar importações circulares
     customer: Mapped["Customer"] = relationship(back_populates="sales")
     user: Mapped["User"] = relationship()

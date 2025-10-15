@@ -6,6 +6,7 @@ from app.db.base import Base
 class Additional(Base):
     """ Modelo para cadastrar os adicionais disponíveis (ex: Extra Bacon, Borda Recheada). """
     __tablename__ = "additionals"
+    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), nullable=False)
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)

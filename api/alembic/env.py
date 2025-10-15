@@ -1,59 +1,51 @@
-import os
-import sys
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
-from app.models.cash_register_transaction import CashRegisterTransaction
-
-# Adiciona o diretório raiz da aplicação ao path do Python
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 # --- INÍCIO DA CORREÇÃO ---
-# Importamos a Base e TODAS as configurações e modelos aqui.
-# Isso garante que, quando o Alembic ler os metadados da Base,
-# todos os modelos já estarão definidos e associados a ela.
-from app.db.base import Base
-from app.core.config import settings
-from app.models.user import User
-from app.models.product import Product
-from app.models.customer import Customer
-from app.models.supplier import Supplier
-from app.models.sale import Sale, SaleItem
-from app.models.cash_register import CashRegisterSession
-from app.models.ingredient import Ingredient
-from app.models.recipe import RecipeItem
-from app.models.additional import Additional, OrderItemAdditional
-from app.models.batch import ProductBatch
-from app.models.table import Table
-from app.models.order import Order, OrderItem
-from app.models.payment import Payment
-from app.models.category import ProductCategory, ProductSubcategory
-from app.models.variation import Attribute, AttributeOption
-# Importações que estavam faltando:
-from app.models.variation import Attribute, AttributeOption, ProductVariation, VariationOptionsAssociation
+# Importa a sua Base declarativa do SQLAlchemy
+from app.db.base import Base 
+
+# Importa todos os seus modelos para que o Alembic os "veja"
+# Certifique-se de que esta lista está completa com todos os ficheiros de modelo que você tem.
+from app.models import (
+    user, product, customer, supplier, sale, cash_register, ingredient,
+    recipe, additional, batch, table, order, payment, stock_movement, store
+)
 # --- FIM DA CORREÇÃO ---
 
 
-# Esta é a configuração do Alembic, que é lida do arquivo .ini.
+# this is the Alembic Config object, which provides
+# access to the values within the .ini file in use.
 config = context.config
 
-# Carrega a URL síncrona para uso exclusivo do Alembic.
-config.set_main_option('sqlalchemy.url', os.getenv("SYNC_DATABASE_URL"))
-
-
-# Interpreta o arquivo de configuração para logging.
+# Interpret the config file for Python logging.
+# This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Define o 'target_metadata' para a base declarativa dos nossos modelos.
+# --- INÍCIO DA CORREÇÃO ---
+# add your model's MetaData object here
+# for 'autogenerate' support
 target_metadata = Base.metadata
+# --- FIM DA CORREÇÃO ---
 
 
 def run_migrations_offline() -> None:
-    """Executa migrations em modo 'offline'."""
+    """Run migrations in 'offline' mode.
+
+    This configures the context with just a URL
+    and not an Engine, though an Engine is acceptable
+    here as well.  By skipping the Engine creation
+    we don't even need a DBAPI to be available.
+
+    Calls to context.execute() here emit the given string to the
+    script output.
+
+    """
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
@@ -67,11 +59,16 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Executa migrations em modo 'online'."""
+    """Run migrations in 'online' mode.
+
+    In this scenario we need to create an Engine
+    and associate a connection with the context.
+
+    """
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
+        poolclass=pool.QueuePool,
     )
 
     with connectable.connect() as connection:

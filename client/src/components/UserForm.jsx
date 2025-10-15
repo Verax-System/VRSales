@@ -1,57 +1,125 @@
-import React, { useEffect } from 'react';
-import { Form, Input, Button, message, Select } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Modal, Form, Input, Button, message, Select, Switch } from 'antd';
+import { UserOutlined, MailOutlined, LockOutlined, ShopOutlined } from '@ant-design/icons';
+import ApiService from '../api/ApiService';
+import { useAuth } from '../context/AuthContext';
 
 const { Option } = Select;
 
-const UserForm = ({ user, onSuccess, onCancel, loading }) => {
+const UserForm = ({ visible, onCancel, onFinish, user }) => {
   const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const [stores, setStores] = useState([]);
+  const { user: currentUser } = useAuth(); // Utilizador autenticado
+
+  const isSuperAdmin = currentUser?.role === 'super_admin';
   const isEditing = !!user;
 
+  // Carrega a lista de lojas apenas se o utilizador for um super admin
   useEffect(() => {
-    if (isEditing) {
-      form.setFieldsValue(user);
-    } else {
-      form.resetFields();
+    if (isSuperAdmin) {
+      const fetchStores = async () => {
+        try {
+          const response = await ApiService.getStores();
+          setStores(response.data);
+        } catch (error) {
+          message.error('Falha ao carregar a lista de lojas.');
+        }
+      };
+      fetchStores();
     }
-  }, [user, form, isEditing]);
+  }, [isSuperAdmin]);
+  
+  const onOk = async () => {
+    try {
+      setLoading(true);
+      const values = await form.validateFields();
+      
+      // Se não for um super admin, a loja do novo utilizador será a mesma do admin atual
+      if (!isSuperAdmin) {
+        values.store_id = currentUser.store_id;
+      }
 
-  const onFinish = (values) => {
-    // A lógica de chamada da API será feita na página principal
-    onSuccess(values);
+      if (isEditing) {
+        // Não enviamos a palavra-passe se não for alterada
+        if (!values.password) {
+          delete values.password;
+        }
+        await ApiService.updateUser(user.id, values);
+        message.success('Utilizador atualizado com sucesso!');
+      } else {
+        await ApiService.createUser(values);
+        message.success('Utilizador criado com sucesso!');
+      }
+      onFinish();
+    } catch (error) {
+      message.error('Ocorreu um erro ao guardar o utilizador.');
+      console.error('Validation Failed:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const roles = [
+    isSuperAdmin && { value: 'super_admin', label: 'Super Admin' },
+    { value: 'admin', label: 'Admin' },
+    { value: 'manager', label: 'Manager' },
+    { value: 'cashier', label: 'Cashier' },
+  ].filter(Boolean); // Remove o 'super_admin' se o utilizador não for um
+
+
   return (
-    <Form form={form} layout="vertical" onFinish={onFinish}>
-      <Form.Item name="full_name" label="Nome Completo" rules={[{ required: true, message: 'Por favor, insira o nome completo!' }]}>
-        <Input placeholder="Ex: João da Silva" />
-      </Form.Item>
-      <Form.Item name="email" label="E-mail" rules={[{ required: true, message: 'Por favor, insira o e-mail!' }, { type: 'email', message: 'E-mail inválido!' }]}>
-        <Input placeholder="Ex: joao.silva@email.com" />
-      </Form.Item>
-      <Form.Item
-        name="password"
-        label={isEditing ? 'Nova Senha (opcional)' : 'Senha'}
-        rules={isEditing ? [] : [{ required: true, message: 'Por favor, insira a senha!' }]}
-        help={isEditing ? 'Deixe em branco para não alterar a senha.' : null}
-      >
-        <Input.Password placeholder="••••••••" />
-      </Form.Item>
-      <Form.Item name="role" label="Função" rules={[{ required: true, message: 'Por favor, selecione a função!' }]}>
-        <Select placeholder="Selecione a função do usuário">
-          <Option value="admin">Administrador</Option>
-          <Option value="manager">Gerente</Option>
-          <Option value="cashier">Operador de Caixa</Option>
-        </Select>
-      </Form.Item>
-      <Form.Item style={{ textAlign: 'right', marginTop: '24px', marginBottom: 0 }}>
-        <Button onClick={onCancel} style={{ marginRight: 8 }}>
+    <Modal
+      title={isEditing ? 'Editar Utilizador' : 'Criar Novo Utilizador'}
+      visible={visible}
+      onCancel={onCancel}
+      destroyOnClose
+      footer={[
+        <Button key="back" onClick={onCancel}>
           Cancelar
-        </Button>
-        <Button type="primary" htmlType="submit" loading={loading}>
-          {isEditing ? 'Salvar Alterações' : 'Criar Usuário'}
-        </Button>
-      </Form.Item>
-    </Form>
+        </Button>,
+        <Button key="submit" type="primary" loading={loading} onClick={onOk}>
+          Guardar
+        </Button>,
+      ]}
+    >
+      <Form form={form} layout="vertical" initialValues={user || { is_active: true, role: 'cashier' }}>
+        <Form.Item name="full_name" label="Nome Completo" rules={[{ required: true, message: 'O nome é obrigatório' }]}>
+          <Input prefix={<UserOutlined />} placeholder="João da Silva" />
+        </Form.Item>
+        <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email', message: 'Insira um email válido' }]}>
+          <Input prefix={<MailOutlined />} placeholder="exemplo@email.com" />
+        </Form.Item>
+        <Form.Item
+          name="password"
+          label={isEditing ? 'Nova Palavra-passe (deixe em branco para não alterar)' : 'Palavra-passe'}
+          rules={[{ required: !isEditing, message: 'A palavra-passe é obrigatória' }, { min: 8, message: 'A palavra-passe deve ter no mínimo 8 caracteres' }]}
+        >
+          <Input.Password prefix={<LockOutlined />} placeholder="••••••••" />
+        </Form.Item>
+        <Form.Item name="role" label="Função" rules={[{ required: true }]}>
+          <Select placeholder="Selecione uma função">
+            {roles.map(role => (
+              <Option key={role.value} value={role.value}>{role.label}</Option>
+            ))}
+          </Select>
+        </Form.Item>
+        
+        {isSuperAdmin && (
+          <Form.Item name="store_id" label="Loja" rules={[{ required: true, message: 'É obrigatório associar o utilizador a uma loja' }]}>
+            <Select placeholder="Selecione a loja do utilizador" loading={!stores.length}>
+              {stores.map(store => (
+                <Option key={store.id} value={store.id}>{store.name}</Option>
+              ))}
+            </Select>
+          </Form.Item>
+        )}
+
+        <Form.Item name="is_active" label="Status" valuePropName="checked">
+          <Switch checkedChildren="Ativo" unCheckedChildren="Inativo" />
+        </Form.Item>
+      </Form>
+    </Modal>
   );
 };
 

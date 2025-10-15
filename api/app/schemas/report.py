@@ -15,6 +15,15 @@ class TopSellingProduct(BaseModel):
     total_quantity_sold: int
     total_revenue: float
 
+class PurchaseSuggestion(BaseModel):
+    """Schema para um item na lista de sugestões de compra."""
+    product_id: int
+    product_name: str
+    current_stock: int
+    low_stock_threshold: int
+    sales_last_30_days: int
+    suggested_purchase_quantity: int
+    
 class SalesByUser(BaseModel):
     """ Relatório de vendas consolidadas por usuário/vendedor. """
     user_id: int

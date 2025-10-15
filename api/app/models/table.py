@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import String, Integer, Enum as SQLAlchemyEnum
+from sqlalchemy import String, Integer, Enum as SQLAlchemyEnum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import List
 
@@ -12,6 +12,7 @@ class TableStatus(enum.Enum):
 
 class Table(Base):
     __tablename__ = "tables"
+    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), nullable=False)
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     number: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)

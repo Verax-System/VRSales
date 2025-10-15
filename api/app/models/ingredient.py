@@ -1,4 +1,4 @@
-from sqlalchemy import String, Float, Enum as SQLAlchemyEnum
+from sqlalchemy import String, Float, Enum as SQLAlchemyEnum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 # --- INÍCIO DA CORREÇÃO ---
@@ -9,6 +9,7 @@ from app.db.base import Base
 
 class Ingredient(Base):
     __tablename__ = "ingredients"
+    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), nullable=False)
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, index=True)

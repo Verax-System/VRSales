@@ -12,6 +12,7 @@ from app.schemas.enums import OrderStatus, OrderType, OrderItemStatus # Adicione
 
 class Order(Base):
     __tablename__ = "orders"
+    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), nullable=False)
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     status: Mapped[OrderStatus] = mapped_column(
@@ -50,7 +51,6 @@ class OrderItem(Base):
         SQLAlchemyEnum(OrderItemStatus, name="orderitemstatus"),
         nullable=False,
         default=OrderItemStatus.PENDING,
-        server_default=OrderItemStatus.PENDING.value
     )
 
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"))

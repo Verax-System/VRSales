@@ -36,9 +36,11 @@ class PaymentMethod(str, enum.Enum):
     OTHER = "other"
 
 class UserRole(str, enum.Enum):
+    SUPER_ADMIN = "super_admin" # O novo nível mais alto
     ADMIN = "admin"
     MANAGER = "manager"
     CASHIER = "cashier"
+
 
 class OrderItemStatus(str, enum.Enum):
     PENDING = "pending"

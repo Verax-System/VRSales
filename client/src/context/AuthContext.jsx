@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { jwtDecode } from 'jwt-decode'; // Corrigido para a importação correta
 import ApiService from '../api/ApiService';
 import { useNavigate } from 'react-router-dom';
-import { Spin } from 'antd';
 
 const AuthContext = createContext(null);
 
@@ -11,64 +11,68 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const initializeAuth = async () => {
+    try {
       const token = localStorage.getItem('accessToken');
       if (token) {
-        try {
-          // Busca os dados reais do usuário no backend
-          const response = await ApiService.getMe();
-          setUser(response.data);
-        } catch (error) {
-          // Se o token for inválido, limpa tudo
+        const decodedUser = jwtDecode(token);
+        // O `exp` está em segundos, Date.now() em milissegundos
+        if (decodedUser.exp * 1000 > Date.now()) {
+          // O token ainda é válido, vamos buscar os detalhes completos do utilizador
+          ApiService.init(token);
+          // Idealmente, teríamos um endpoint /users/me para buscar nome, etc.
+          // Por agora, vamos extrair do token o que for possível.
+          setUser({
+            id: decodedUser.sub,
+            name: decodedUser.name || 'Utilizador', // Adicione 'name' ao payload do seu token no backend
+            role: decodedUser.role,
+            store_id: decodedUser.store_id,
+          });
+        } else {
+          // Token expirado
           localStorage.removeItem('accessToken');
-          setUser(null);
         }
       }
+    } catch (error) {
+      console.error("Falha ao processar o token de autenticação.", error);
+      localStorage.removeItem('accessToken');
+    } finally {
       setLoading(false);
-    };
-
-    initializeAuth();
+    }
   }, []);
 
-  const login = async (username, password) => {
-    try {
-      // 1. Faz o login e obtém o token
-      await ApiService.login(username, password);
-      
-      // 2. Com o token salvo, busca os dados do usuário
-      const response = await ApiService.getMe();
-      setUser(response.data);
+  const login = async (email, password) => {
+    const response = await ApiService.login(email, password);
+    const { access_token } = response.data;
 
-      // 3. Redireciona com base na ROLE REAL do usuário
-      if (response.data.role === 'cashier') {
-        navigate('/pos');
-      } else {
-        navigate('/');
-      }
-
-    } catch (error) {
-      setUser(null);
-      throw error;
-    }
+    localStorage.setItem('accessToken', access_token);
+    ApiService.init(access_token);
+    
+    const decodedUser = jwtDecode(access_token);
+    setUser({
+      id: decodedUser.sub,
+      name: decodedUser.name || 'Utilizador', // Adicione 'name' ao payload do seu token no backend
+      role: decodedUser.role,
+      store_id: decodedUser.store_id,
+    });
   };
 
   const logout = () => {
-    ApiService.logout();
     setUser(null);
+    localStorage.removeItem('accessToken');
+    ApiService.init(null);
     navigate('/login');
   };
 
   if (loading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><Spin size="large" /></div>;
+    // Pode adicionar um componente de Spinner/Loading de ecrã inteiro aqui
+    return <div>A carregar...</div>;
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated: !!user, user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);

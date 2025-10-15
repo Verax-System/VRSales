@@ -13,6 +13,7 @@ class PaymentMethod(enum.Enum):
 
 class Payment(Base):
     __tablename__ = "payments"
+    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), nullable=False)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     amount: Mapped[float] = mapped_column(Float, nullable=False)

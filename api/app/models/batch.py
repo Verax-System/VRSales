@@ -7,6 +7,7 @@ from app.db.base import Base
 class ProductBatch(Base):
     """ Modelo para Lotes de Produto com controle de validade. """
     __tablename__ = "product_batches"
+    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), nullable=False)
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     quantity: Mapped[float] = mapped_column(Float, nullable=False)

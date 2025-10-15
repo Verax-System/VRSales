@@ -2,8 +2,12 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import date
 from typing import List
-
+from app.services.analytics_service import analytics_service
+from app import schemas
 # --- CORREÇÃO AQUI ---
+from app.services.dashboard_service import dashboard_service
+from app.schemas import dashboard as dashboard_schemas
+
 from app.crud import crud_report
 # Adicione SalesEvolutionItem ao import
 from app.schemas.report import SalesByPeriod, TopSellingProduct, SalesByUser, SalesEvolutionItem
@@ -11,6 +15,26 @@ from app.schemas.user import User
 from app.api.dependencies import get_db, get_current_user
 
 router = APIRouter()
+
+manager_permissions = RoleChecker([UserRole.ADMIN, UserRole.MANAGER])
+
+@router.get(
+    "/purchase-suggestions",
+    response_model=List[schemas.report.PurchaseSuggestion],
+    dependencies=[Depends(manager_permissions)],
+    summary="Obter Sugestões de Compra de Estoque"
+)
+def get_purchase_suggestions(
+    db: Session = Depends(get_db)
+):
+    """
+    Analisa os produtos com estoque baixo e o histórico de vendas para
+    gerar uma lista inteligente de sugestões de compra.
+
+    Acessível apenas para **Admins** e **Gerentes**.
+    """
+    suggestions = analytics_service.get_purchase_suggestions(db)
+    return suggestions
 
 @router.get("/sales-by-period", response_model=SalesByPeriod)
 async def report_sales_by_period(
@@ -50,4 +74,23 @@ async def report_sales_evolution(
 ):
     """ Retorna dados de vendas diárias para o gráfico de evolução. """
     return await crud_report.get_sales_evolution_by_period(db, start_date=start_date, end_date=end_date)
+# --- FIM DO NOVO ENDPOINT ---
+
+@router.get(
+    "/dashboard",
+    response_model=dashboard_schemas.DashboardSummary,
+    dependencies=[Depends(manager_permissions)],
+    summary="Obter Dados Consolidados para o Dashboard"
+)
+def get_dashboard_summary(
+    db: Session = Depends(get_db)
+):
+    """
+    Recupera um resumo completo de dados e KPIs para alimentar o
+    dashboard principal da aplicação.
+
+    Acessível apenas para **Admins** e **Gerentes**.
+    """
+    summary_data = dashboard_service.get_dashboard_summary(db)
+    return summary_data
 # --- FIM DO NOVO ENDPOINT ---

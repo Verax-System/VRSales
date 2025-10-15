@@ -4,11 +4,11 @@ from sqlalchemy.orm import selectinload
 from typing import List, Optional
 
 from app.models.category import ProductCategory, ProductSubcategory
-from app.schemas.category import CategoryCreate, SubcategoryCreate
+from app.schemas.category import ProductCategoryCreate, ProductSubcategoryCreate
 
 # --- Funções para Categorias (Grupos) ---
 
-async def create_category(db: AsyncSession, category: CategoryCreate) -> ProductCategory:
+async def create_category(db: AsyncSession, category: ProductCategoryCreate) -> ProductCategory:
     db_category = ProductCategory(name=category.name)
     db.add(db_category)
     await db.commit()
@@ -27,7 +27,7 @@ async def get_categories(db: AsyncSession) -> List[ProductCategory]:
 
 # --- Funções para Subcategorias (Subgrupos) ---
 
-async def create_subcategory(db: AsyncSession, subcategory: SubcategoryCreate, category_id: int) -> ProductSubcategory:
+async def create_subcategory(db: AsyncSession, subcategory: ProductCategoryCreate, category_id: int) -> ProductSubcategory:
     db_subcategory = ProductSubcategory(name=subcategory.name, category_id=category_id)
     db.add(db_subcategory)
     await db.commit()

@@ -11,6 +11,7 @@ class Attribute(Base):
     __tablename__ = "attributes"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), nullable=False)
 
     options: Mapped[List["AttributeOption"]] = relationship(back_populates="attribute")
 

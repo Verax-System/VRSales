@@ -1,54 +1,23 @@
-import React, { useState, useEffect, useMemo } from 'react'; // A CORREÇÃO ESTÁ AQUI
-import {
-  Table,
-  Button,
-  Modal,
-  message,
-  Space,
-  Input,
-  Typography,
-  Popconfirm,
-  Tooltip,
-  Tag,
-  Switch,
-  Card
-} from 'antd';
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  SafetyCertificateOutlined,
-  LockOutlined,
-  SearchOutlined,
-} from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
+import { Table, Button, Modal, message, Input, Tag, Space, Avatar } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, UserOutlined } from '@ant-design/icons';
 import ApiService from '../api/ApiService';
-import UserForm from '../components/UserForm';
-
-const { Title, Text } = Typography;
-
-const roleColors = {
-  admin: 'red',
-  manager: 'orange',
-  cashier: 'blue',
-};
+import UserForm from '../components/UserForm'; // Vamos criar/atualizar este formulário
 
 const UsersPage = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [submitLoading, setSubmitLoading] = useState(false);
+  const [searchText, setSearchText] = useState('');
 
   const fetchUsers = async () => {
-    setLoading(true);
     try {
-      // Usando dados mockados enquanto o backend não está pronto
+      setLoading(true);
       const response = await ApiService.getUsers();
       setUsers(response.data);
     } catch (error) {
-      message.error('Falha ao carregar usuários.');
-      setUsers([]); // Garante que 'users' seja um array em caso de erro
+      message.error('Falha ao carregar os utilizadores.');
     } finally {
       setLoading(false);
     }
@@ -58,82 +27,61 @@ const UsersPage = () => {
     fetchUsers();
   }, []);
 
-  const handleModalSuccess = async (values) => {
-    setSubmitLoading(true);
-    try {
-      if (editingUser) {
-        await ApiService.updateUser(editingUser.id, values);
-        message.success(`Usuário "${values.full_name}" atualizado com sucesso!`);
-      } else {
-        await ApiService.createUser(values);
-        message.success(`Usuário "${values.full_name}" criado com sucesso!`);
-      }
-      setIsModalVisible(false);
-      setEditingUser(null);
-      fetchUsers();
-    } catch (error) {
-      message.error(error.response?.data?.detail || 'Erro ao salvar usuário.');
-    } finally {
-        setSubmitLoading(false);
-    }
+  const handleOpenModal = (user = null) => {
+    setEditingUser(user);
+    setIsModalVisible(true);
   };
 
   const handleCancel = () => {
     setIsModalVisible(false);
     setEditingUser(null);
   };
-  
-  const showCreateModal = () => {
-    setEditingUser(null);
-    setIsModalVisible(true);
+
+  const handleFinish = () => {
+    fetchUsers();
+    handleCancel();
   };
 
-  const showEditModal = (user) => {
-    setEditingUser(user);
-    setIsModalVisible(true);
-  };
-  
-  const handleStatusChange = async (userId, isActive) => {
-    try {
-        await ApiService.updateUser(userId, { is_active: isActive });
-        message.success(`Status do usuário alterado com sucesso!`);
-        // Atualiza o estado localmente para uma resposta visual mais rápida
-        setUsers(currentUsers => 
-            currentUsers.map(u => u.id === userId ? { ...u, is_active: isActive } : u)
-        );
-    } catch (error) {
-        message.error('Erro ao alterar status do usuário.');
-    }
-  };
-
-  const handleDelete = async (userId) => {
-    try {
-      await ApiService.deleteUser(userId);
-      message.success('Usuário excluído com sucesso!');
-      fetchUsers();
-    } catch (error) {
-      message.error('Erro ao excluir o usuário.');
-    }
+  const handleDelete = (userId) => {
+    Modal.confirm({
+      title: 'Tem a certeza que quer apagar este utilizador?',
+      content: 'Esta ação não pode ser desfeita.',
+      okText: 'Sim, apagar',
+      okType: 'danger',
+      cancelText: 'Não',
+      onOk: async () => {
+        try {
+          await ApiService.deleteUser(userId);
+          message.success('Utilizador apagado com sucesso!');
+          fetchUsers();
+        } catch (error) {
+          message.error('Falha ao apagar o utilizador.');
+        }
+      },
+    });
   };
 
-  const filteredUsers = useMemo(() => {
-    if (!searchTerm) return users;
-    return users.filter(user =>
-      user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [users, searchTerm]);
+  const roleColors = {
+    super_admin: 'gold',
+    admin: 'red',
+    manager: 'blue',
+    cashier: 'cyan',
+  };
 
   const columns = [
     {
       title: 'Nome',
       dataIndex: 'full_name',
-      key: 'name',
-      sorter: (a, b) => a.full_name.localeCompare(b.full_name),
-      render: (name) => <Text strong>{name}</Text>,
+      key: 'full_name',
+      render: (name) => (
+        <Space>
+          <Avatar icon={<UserOutlined />} />
+          <span className="font-semibold">{name}</span>
+        </Space>
+      )
     },
     {
-      title: 'E-mail',
+      title: 'Email',
       dataIndex: 'email',
       key: 'email',
     },
@@ -141,101 +89,87 @@ const UsersPage = () => {
       title: 'Função',
       dataIndex: 'role',
       key: 'role',
+      render: (role) => (
+        <Tag color={roleColors[role] || 'default'} className="uppercase font-bold">
+          {role.replace('_', ' ')}
+        </Tag>
+      ),
       filters: [
+        { text: 'Super Admin', value: 'super_admin' },
         { text: 'Admin', value: 'admin' },
-        { text: 'Gerente', value: 'manager' },
-        { text: 'Caixa', value: 'cashier' },
+        { text: 'Manager', value: 'manager' },
+        { text: 'Cashier', value: 'cashier' },
       ],
       onFilter: (value, record) => record.role.indexOf(value) === 0,
-      render: (role) => <Tag color={roleColors[role] || 'default'}>{role ? role.toUpperCase() : 'N/A'}</Tag>,
     },
-    {
-        title: 'Status',
-        dataIndex: 'is_active',
-        key: 'status',
-        filters: [
-            { text: 'Ativo', value: true },
-            { text: 'Inativo', value: false },
-        ],
-        onFilter: (value, record) => record.is_active === value,
-        render: (isActive, record) => (
-             <Tooltip title={isActive ? 'Desativar usuário' : 'Ativar usuário'}>
-                <Switch 
-                    checked={isActive} 
-                    onChange={() => handleStatusChange(record.id, !isActive)}
-                />
-             </Tooltip>
-        )
+     {
+      title: 'Status',
+      dataIndex: 'is_active',
+      key: 'is_active',
+      render: (isActive) => (
+        <Tag color={isActive ? 'green' : 'gray'}>{isActive ? 'ATIVO' : 'INATIVO'}</Tag>
+      ),
+       filters: [
+        { text: 'Ativo', value: true },
+        { text: 'Inativo', value: false },
+      ],
+      onFilter: (value, record) => record.is_active === value,
     },
     {
       title: 'Ações',
       key: 'actions',
-      align: 'center',
       render: (_, record) => (
-        <Space size="small">
-          <Tooltip title="Editar">
-            <Button type="text" icon={<EditOutlined style={{ color: '#1890ff' }} />} onClick={() => showEditModal(record)} />
-          </Tooltip>
-          <Tooltip title="Resetar Senha">
-            <Popconfirm
-                title="Deseja enviar um link de reset de senha?"
-                onConfirm={() => message.info('Funcionalidade de reset de senha a ser implementada.')}
-                okText="Sim"
-                cancelText="Não"
-            >
-                <Button type="text" icon={<LockOutlined style={{ color: '#faad14' }} />} />
-            </Popconfirm>
-          </Tooltip>
-          <Popconfirm
-            title="Tem certeza que deseja excluir?"
-            description="Esta ação não pode ser desfeita."
-            onConfirm={() => handleDelete(record.id)}
-            okText="Sim, Excluir"
-            cancelText="Não"
-          >
-            <Tooltip title="Excluir">
-              <Button type="text" danger icon={<DeleteOutlined />} />
-            </Tooltip>
-          </Popconfirm>
+        <Space>
+          <Button icon={<EditOutlined />} onClick={() => handleOpenModal(record)}>
+            Editar
+          </Button>
+          <Button icon={<DeleteOutlined />} danger onClick={() => handleDelete(record.id)}>
+            Apagar
+          </Button>
         </Space>
       ),
     },
   ];
 
+  const filteredUsers = users.filter(user => 
+    user.full_name.toLowerCase().includes(searchText.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchText.toLowerCase())
+  );
+
   return (
-    <Space direction="vertical" style={{ width: '100%' }} size="large">
-      <Title level={2} style={{ margin: 0 }}><SafetyCertificateOutlined /> Gerenciamento de Usuários</Title>
-      <Card>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+        <h1 className="text-2xl font-semibold text-gray-800">Gestão de Utilizadores</h1>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <Input
-            placeholder="Buscar por nome ou e-mail..."
+            placeholder="Procurar por nome ou email..."
             prefix={<SearchOutlined />}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ flex: 1, minWidth: '250px', maxWidth: '400px' }}
-            allowClear
+            value={searchText}
+            onChange={e => setSearchText(e.target.value)}
+            className="w-full sm:w-64"
           />
-          <Button type="primary" icon={<PlusOutlined />} onClick={showCreateModal}>
-            Adicionar Usuário
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenModal()}>
+            Novo Utilizador
           </Button>
         </div>
-      </Card>
-      <Table columns={columns} dataSource={filteredUsers} rowKey="id" loading={loading} pagination={{ pageSize: 10 }} scroll={{ x: true }}/>
+      </div>
+      <Table 
+        columns={columns} 
+        dataSource={filteredUsers} 
+        loading={loading} 
+        rowKey="id" 
+        pagination={{ pageSize: 10 }}
+      />
       
-      <Modal
-        title={editingUser ? 'Editar Usuário' : 'Adicionar Novo Usuário'}
-        open={isModalVisible}
-        onCancel={handleCancel}
-        footer={null}
-        destroyOnClose
-      >
+      {isModalVisible && (
         <UserForm
-          user={editingUser}
-          onSuccess={handleModalSuccess}
+          visible={isModalVisible}
           onCancel={handleCancel}
-          loading={submitLoading}
+          onFinish={handleFinish}
+          user={editingUser}
         />
-      </Modal>
-    </Space>
+      )}
+    </div>
   );
 };
 
