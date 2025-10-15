@@ -1,15 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Typography, message } from 'antd';
+import { Row, Col, Typography, message, Spin, Segmented } from 'antd';
+// eslint-disable-next-line no-unused-vars
+import { motion } from 'framer-motion';
+import {
+  DollarCircleOutlined,
+  ShoppingCartOutlined,
+  TeamOutlined,
+  LineChartOutlined,
+  CrownOutlined,
+  BarChartOutlined
+} from '@ant-design/icons';
 import ApiService from '../api/ApiService';
-import KpiCard from '../components/dashboard/KpiCard';
-import SalesByHourChart from '../components/dashboard/SalesByHourChart';
-import TopProductsList from '../components/dashboard/TopProductsList';
+import SalesByHourChart from '../components/dashboard/SalesByHourChart'; // Reutilizado
+import TopProductsList from '../components/dashboard/TopProductsList';   // Reutilizado
+import './DashboardPage.modern.css'; // O novo arquivo de estilo!
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
+
+// Um componente de Card de KPI redesenhado com ícones e cores
+const KpiCard = ({ icon, title, value, prefix, loading, color }) => (
+  <motion.div whileHover={{ y: -5 }} className="kpi-card-wrapper">
+    <div className="kpi-card" style={{ borderBottom: `3px solid ${color}` }}>
+      <div className="kpi-icon" style={{ backgroundColor: color }}>
+        {icon}
+      </div>
+      <div className="kpi-content">
+        <Text type="secondary">{title}</Text>
+        {loading ? <Spin size="small" /> : <Title level={3} style={{ margin: 0 }}>{prefix}{value}</Title>}
+      </div>
+    </div>
+  </motion.div>
+);
 
 const DashboardPage = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [timeRange, setTimeRange] = useState('today');
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -30,51 +56,75 @@ const DashboardPage = () => {
 
   const formatCurrency = (value) => `R$ ${value.toFixed(2).replace('.', ',')}`;
 
+  const kpisData = timeRange === 'today'
+    ? dashboardData?.kpis_today
+    : dashboardData?.kpis_last_7_days;
+
   return (
-    <div>
-      <Title level={2} style={{ marginBottom: '24px' }}>Dashboard de Análise</Title>
+    <motion.div
+      className="dashboard-container"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="dashboard-header">
+        <div>
+          <Title level={2} style={{ color: 'white', margin: 0 }}>Dashboard de Análise</Title>
+          <Text style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Olá, seja bem-vindo(a) de volta!</Text>
+        </div>
+        <Segmented
+          options={[
+            { label: 'Hoje', value: 'today' },
+            { label: 'Últimos 7 dias', value: '7d' },
+          ]}
+          value={timeRange}
+          onChange={setTimeRange}
+        />
+      </div>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} md={6}>
+      <Row gutter={[24, 24]}>
+        <Col xs={24} sm={12} lg={6}>
           <KpiCard
-            title="Receita de Hoje"
-            value={dashboardData?.kpis_today?.total_revenue || 0}
-            prefix="R$"
-            precision={2}
+            icon={<DollarCircleOutlined />}
+            title="Receita Total"
+            value={kpisData?.total_revenue || 0}
+            prefix="R$ "
             loading={loading}
+            color="#2ecc71"
           />
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} lg={6}>
           <KpiCard
-            title="Vendas de Hoje"
-            value={dashboardData?.kpis_today?.total_sales || 0}
+            icon={<ShoppingCartOutlined />}
+            title="Total de Vendas"
+            value={kpisData?.total_sales || 0}
             loading={loading}
+            color="#3498db"
           />
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} lg={6}>
           <KpiCard
-            title="Ticket Médio (Hoje)"
-            value={dashboardData?.kpis_today?.average_ticket || 0}
-            prefix="R$"
-            precision={2}
+            icon={<LineChartOutlined />}
+            title="Ticket Médio"
+            value={kpisData?.average_ticket || 0}
+            prefix="R$ "
             loading={loading}
+            color="#9b59b6"
           />
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} lg={6}>
           <KpiCard
-            title="Novos Clientes (Hoje)"
-            value={dashboardData?.kpis_today?.new_customers || 0}
+            icon={<TeamOutlined />}
+            title="Novos Clientes"
+            value={kpisData?.new_customers || 0}
             loading={loading}
+            color="#e67e22"
           />
-        </Col>
-
-        <Col xs={24} lg={12}>
-          <SalesByHourChart data={dashboardData?.sales_by_hour_today} loading={loading} />
         </Col>
 
         <Col xs={24} lg={12}>
             <TopProductsList
-              title="Top 5 Produtos por Receita (Últimos 30 dias)"
+              title={<><CrownOutlined /> Top 5 Produtos por Receita (30 dias)</>}
               data={dashboardData?.top_5_products_by_revenue_last_30_days}
               loading={loading}
               valueKey="total_revenue_generated"
@@ -82,17 +132,21 @@ const DashboardPage = () => {
             />
         </Col>
         
-         <Col xs={24} lg={12}>
-             <TopProductsList
-              title="Top 5 Produtos por Quantidade (Últimos 30 dias)"
+        <Col xs={24} lg={12}>
+            <TopProductsList
+              title={<><BarChartOutlined /> Top 5 Produtos por Quantidade (30 dias)</>}
               data={dashboardData?.top_5_products_by_quantity_last_30_days}
               loading={loading}
               valueKey="total_quantity_sold"
               valueFormatter={(val) => `${val} un.`}
             />
         </Col>
+        
+        <Col span={24}>
+          <SalesByHourChart data={dashboardData?.sales_by_hour_today} loading={loading} />
+        </Col>
       </Row>
-    </div>
+    </motion.div>
   );
 };
 

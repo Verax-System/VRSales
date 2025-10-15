@@ -8,9 +8,9 @@ import {
 } from '@ant-design/icons';
 import { Routes, Route, useNavigate, useLocation, Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-import { motion } from 'framer-motion';
-
-// Importação de Páginas (assumindo que estas páginas serão criadas)
+import { motion } from 'framer-motion'; // Adiciona a importação que estava em falta
+// Importação de Páginas (assumindo que estas páginas serão criadas
+import CustomerPage from './pages/CustomerPage'; // <-- Adicionar esta linha)
 import RoleBasedRoute from './components/RoleBasedRoute';
 import LoginPage from './pages/LoginPage';
 import ProductPage from './pages/ProductPage';
@@ -36,6 +36,7 @@ const { Header, Content, Sider } = Layout;
 
 // Definição dos itens de menu para cada tipo de utilizador
 const storeMenuItems = [
+    { key: '/customers', icon: <UserOutlined />, label: 'Clientes', roles: ['admin', 'manager', 'cashier'] }, // <-- Adicionar esta linha
     { key: '/pos', icon: <BarcodeOutlined />, label: 'Frente de Caixa', roles: ['admin', 'manager', 'cashier'] },
     { key: '/tables', icon: <TableOutlined />, label: 'Gestão de Mesas', roles: ['admin', 'manager', 'cashier'] },
     { key: '/kds', icon: <FireOutlined />, label: 'Painel da Cozinha', roles: ['admin', 'manager'] },
@@ -164,6 +165,12 @@ const App = () => {
           <Route path="marketing" element={<MarketingPage />} />
           <Route path="kds" element={<KDSPage />} />
         </Route>
+
+      {/* Adicionar um novo grupo de rotas para incluir os caixas */}
+        <Route element={<RoleBasedRoute allowedRoles={['admin', 'manager', 'cashier']} />}>
+          <Route path="customers" element={<CustomerPage />} /> {/* <-- Adicionar esta linha */}
+        </Route>
+
 
         {/* Rotas de Admin */}
         <Route element={<RoleBasedRoute allowedRoles={['admin']} />}>

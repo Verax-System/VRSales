@@ -7,9 +7,9 @@ from app.core import security
 from app.db.session import SessionLocal
 from app.models.user import User as UserModel
 from app.schemas.enums import UserRole
-from app.crud import crud_user
+# A importação do crud_user já não é necessária aqui, mas não faz mal mantê-la
+from app.crud import crud_user 
 
-# Define o esquema de autenticação OAuth2, apontando para o endpoint de login
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login/access-token")
 
 def get_db():
@@ -23,8 +23,8 @@ def get_current_user(
     db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
 ) -> UserModel:
     """
-    Decodifica o token JWT para obter o usuário atual.
-    Levanta uma exceção HTTP 401 se o token for inválido ou o usuário não for encontrado.
+    Descodifica o token JWT para obter o utilizador atual.
+    Levanta uma exceção HTTP 401 se o token for inválido ou o utilizador não for encontrado.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -39,7 +39,12 @@ def get_current_user(
     if user_id is None:
         raise credentials_exception
         
-    user = crud_user.user.get(db, id=int(user_id))
+    # --- INÍCIO DA CORREÇÃO ---
+    # Em vez de usar o método CRUD genérico, que agora exige um 'current_user',
+    # fazemos uma consulta direta à base de dados para este caso especial de autenticação.
+    user = db.query(UserModel).filter(UserModel.id == int(user_id)).first()
+    # --- FIM DA CORREÇÃO ---
+
     if user is None:
         raise credentials_exception
         
@@ -48,24 +53,15 @@ def get_current_user(
 def get_current_active_user(
     current_user: UserModel = Depends(get_current_user),
 ) -> UserModel:
-    """Verifica se o usuário obtido do token está ativo."""
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
 class RoleChecker:
-    """
-    Classe de dependência que verifica se o usuário tem uma das roles permitidas.
-    Uso: `Depends(RoleChecker(["admin", "manager"]))`
-    """
     def __init__(self, allowed_roles: List[UserRole]):
         self.allowed_roles = allowed_roles
 
     def __call__(self, user: UserModel = Depends(get_current_active_user)):
-        """
-        Verifica a role do usuário.
-        Levanta uma exceção HTTP 403 se o usuário não tiver permissão.
-        """
         if user.role not in self.allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
