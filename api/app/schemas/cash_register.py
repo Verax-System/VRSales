@@ -41,3 +41,12 @@ class CashRegister(CashRegisterBase):
 
     class Config:
         orm_mode = True
+
+        # Schema para a CRUDBase usar na criação
+class CashRegisterCreate(CashRegisterBase):
+    pass
+
+# Schema para a CRUDBase usar na atualização (geralmente não se atualiza um caixa, mas é bom ter)
+class CashRegisterUpdate(BaseModel):
+    status: Optional[CashRegisterStatus] = None
+    closing_balance: Optional[float] = None

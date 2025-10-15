@@ -2,7 +2,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, case
 from datetime import datetime, timedelta
 
-from app.models import Product, Sale, SaleItem
+from app.models.product import Product
+from app.models.sale import Sale, SaleItem
 
 class AnalyticsService:
     def get_purchase_suggestions(self, db: Session) -> list[dict]:

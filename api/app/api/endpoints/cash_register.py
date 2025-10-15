@@ -1,17 +1,28 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+# --- INÍCIO DA CORREÇÃO ---
+# Importações explícitas e diretas para cada módulo
 from app.api.dependencies import get_db, get_current_active_user
-from app.models import User
-from app import schemas
+from app.models.user import User as UserModel
+from app.schemas.cash_register import (
+    CashRegister as CashRegisterSchema, 
+    CashRegisterOpen, 
+    CashRegisterClose
+)
 from app.services.cash_register_service import cash_register_service
+# --- FIM DA CORREÇÃO ---
 
 router = APIRouter()
 
-@router.get("/status", response_model=schemas.CashRegister, summary="Verificar status do caixa")
+@router.get(
+    "/status", 
+    response_model=CashRegisterSchema, # Usa o schema importado diretamente
+    summary="Verificar status do caixa"
+)
 def get_cash_register_status(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: UserModel = Depends(get_current_active_user)
 ):
     """
     Verifica se há um caixa aberto no momento. Se sim, retorna seus detalhes.
@@ -25,27 +36,33 @@ def get_cash_register_status(
         )
     return open_register
 
-
-
-
-@router.post("/open", response_model=schemas.CashRegister, status_code=status.HTTP_201_CREATED, summary="Abrir o caixa")
+@router.post(
+    "/open", 
+    response_model=CashRegisterSchema, # Usa o schema importado diretamente
+    status_code=status.HTTP_201_CREATED, 
+    summary="Abrir o caixa"
+)
 def open_cash_register(
     *,
     db: Session = Depends(get_db),
-    open_info: schemas.CashRegisterOpen,
-    current_user: User = Depends(get_current_active_user)
+    open_info: CashRegisterOpen, # Usa o schema importado diretamente
+    current_user: UserModel = Depends(get_current_active_user)
 ):
     """
     Abre uma nova sessão de caixa com um saldo inicial.
     """
     return cash_register_service.open_register(db=db, user=current_user, open_info=open_info)
 
-@router.post("/close", response_model=schemas.CashRegister, summary="Fechar o caixa")
+@router.post(
+    "/close", 
+    response_model=CashRegisterSchema, # Usa o schema importado diretamente
+    summary="Fechar o caixa"
+)
 def close_cash_register(
     *,
     db: Session = Depends(get_db),
-    close_info: schemas.CashRegisterClose,
-    current_user: User = Depends(get_current_active_user)
+    close_info: CashRegisterClose, # Usa o schema importado diretamente
+    current_user: UserModel = Depends(get_current_active_user)
 ):
     """
     Fecha a sessão de caixa atual.
@@ -54,4 +71,3 @@ def close_cash_register(
     O usuário deve fornecer o saldo físico contado. A diferença é registrada.
     """
     return cash_register_service.close_register(db=db, close_info=close_info)
-# --- FIM DO NOVO ENDPOINT ---

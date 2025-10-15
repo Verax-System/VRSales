@@ -11,8 +11,8 @@ from app.schemas import dashboard as dashboard_schemas
 from app.crud import crud_report
 # Adicione SalesEvolutionItem ao import
 from app.schemas.report import SalesByPeriod, TopSellingProduct, SalesByUser, SalesEvolutionItem
-from app.schemas.user import User
-from app.api.dependencies import get_db, get_current_user
+from app.schemas.user import User, UserRole
+from app.api.dependencies import get_db, get_current_user, RoleChecker, Session
 
 router = APIRouter()
 
