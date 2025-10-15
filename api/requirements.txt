@@ -11,3 +11,5 @@ bcrypt==3.2.0
 python-jose[cryptography]
 psycopg2-binary
 loguru>=0.7.0
+pydantic[email]
+python-multipart

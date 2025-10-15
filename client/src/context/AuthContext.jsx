@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { jwtDecode } from 'jwt-decode'; // Corrigido para a importação correta
+import { jwtDecode } from 'jwt-decode';
 import ApiService from '../api/ApiService';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,20 +15,14 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('accessToken');
       if (token) {
         const decodedUser = jwtDecode(token);
-        // O `exp` está em segundos, Date.now() em milissegundos
         if (decodedUser.exp * 1000 > Date.now()) {
-          // O token ainda é válido, vamos buscar os detalhes completos do utilizador
-          ApiService.init(token);
-          // Idealmente, teríamos um endpoint /users/me para buscar nome, etc.
-          // Por agora, vamos extrair do token o que for possível.
           setUser({
             id: decodedUser.sub,
-            name: decodedUser.name || 'Utilizador', // Adicione 'name' ao payload do seu token no backend
+            name: decodedUser.name || 'Utilizador',
             role: decodedUser.role,
             store_id: decodedUser.store_id,
           });
         } else {
-          // Token expirado
           localStorage.removeItem('accessToken');
         }
       }
@@ -45,12 +39,17 @@ export const AuthProvider = ({ children }) => {
     const { access_token } = response.data;
 
     localStorage.setItem('accessToken', access_token);
-    ApiService.init(access_token);
+    
+    // --- INÍCIO DA CORREÇÃO ---
+    // A linha abaixo foi removida porque ApiService.js não tem o método 'init'
+    // e o interceptor já faz o trabalho de adicionar o token.
+    // ApiService.init(access_token); 
+    // --- FIM DA CORREÇÃO ---
     
     const decodedUser = jwtDecode(access_token);
     setUser({
       id: decodedUser.sub,
-      name: decodedUser.name || 'Utilizador', // Adicione 'name' ao payload do seu token no backend
+      name: decodedUser.name || 'Utilizador',
       role: decodedUser.role,
       store_id: decodedUser.store_id,
     });
@@ -59,12 +58,12 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('accessToken');
-    ApiService.init(null);
+    // Não é necessário chamar ApiService aqui, o interceptor irá simplesmente
+    // deixar de encontrar um token no localStorage.
     navigate('/login');
   };
 
   if (loading) {
-    // Pode adicionar um componente de Spinner/Loading de ecrã inteiro aqui
     return <div>A carregar...</div>;
   }
 

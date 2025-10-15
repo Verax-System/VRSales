@@ -137,7 +137,7 @@ const POSPage = () => {
       } else {
         message.warning('Produto não encontrado.');
       }
-    } catch (error) {
+    } catch {
       message.error('Erro ao buscar o produto.');
     } finally {
       setSearchValue('');

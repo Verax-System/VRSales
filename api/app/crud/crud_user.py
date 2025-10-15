@@ -1,40 +1,43 @@
 from typing import Optional
 from sqlalchemy.orm import Session
 
-# Importa a classe base e os modelos/schemas
 from app.crud.base import CRUDBase
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
-from app.core.security import get_password_hash
+# --- INÍCIO DA CORREÇÃO ---
+# Importa AMBAS as funções: uma para criar o hash, outra para verificar.
+from app.core.security import get_password_hash, verify_password
+# --- FIM DA CORREÇÃO ---
 
 
 class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
-    """
-    Operações CRUD para o modelo User, com métodos específicos.
-    Herda get, get_multi, update, e remove de CRUDBase.
-    """
+    def authenticate(self, db: Session, *, email: str, password: str) -> Optional[User]:
+        user = self.get_by_email(db, email=email)
+        if not user:
+            return None
+        # --- CORREÇÃO PRINCIPAL ---
+        # Usa a função 'verify_password' em vez de tentar chamar um método inexistente.
+        if not verify_password(password, user.hashed_password):
+            return None
+        # --- FIM DA CORREÇÃO ---
+        return user
+
     def get_by_email(self, db: Session, *, email: str) -> Optional[User]:
-        """Busca um usuário pelo seu e-mail."""
         return db.query(User).filter(User.email == email).first()
 
     def create(self, db: Session, *, obj_in: UserCreate) -> User:
-        """
-        Cria um novo usuário, com hashing da senha.
-        Sobrescreve o método 'create' da classe base.
-        """
-        # Cria o dicionário a partir do schema Pydantic
         create_data = obj_in.dict()
-        # Remove a senha para tratá-la separadamente
-        create_data.pop("password")
-        # Cria o objeto do modelo SQLAlchemy
+        # O store_id pode ser nulo para um SUPER_ADMIN, o que está correto.
+        # Se um admin de loja criar um utilizador, o frontend deve garantir que o store_id é enviado.
+        
+        password = create_data.pop("password")
+        
         db_obj = User(**create_data)
-        # Define a senha hasheada
-        db_obj.hashed_password = get_password_hash(obj_in.password)
+        db_obj.hashed_password = get_password_hash(password)
         
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
         return db_obj
 
-# Cria uma instância da classe para ser importada em outros lugares
 user = CRUDUser(User)

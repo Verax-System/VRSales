@@ -1,8 +1,8 @@
-"""Criacao inicial de todas as tabelas
+"""Versao estavel com multi-loja e correcoes
 
-Revision ID: bc7c98b1200a
+Revision ID: 1cf337f3324c
 Revises: 
-Create Date: 2025-10-15 16:02:18.519780
+Create Date: 2025-10-15 17:50:33.763848
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'bc7c98b1200a'
+revision: str = '1cf337f3324c'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -44,6 +44,14 @@ def upgrade() -> None:
     sa.UniqueConstraint('name')
     )
     op.create_index(op.f('ix_additionals_id'), 'additionals', ['id'], unique=False)
+    op.create_table('attributes',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=50), nullable=False),
+    sa.Column('store_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['store_id'], ['stores.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('name')
+    )
     op.create_table('customers',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('full_name', sa.String(length=150), nullable=False),
@@ -113,18 +121,23 @@ def upgrade() -> None:
     sa.Column('full_name', sa.String(length=100), nullable=False),
     sa.Column('email', sa.String(length=100), nullable=False),
     sa.Column('hashed_password', sa.String(length=255), nullable=False),
-    sa.Column('store_id', sa.Integer(), nullable=False),
     sa.Column('role', sa.Enum('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', name='userrole'), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('is_superuser', sa.Boolean(), nullable=False),
+    sa.Column('store_id', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['store_id'], ['stores.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
-    op.create_index(op.f('ix_users_full_name'), 'users', ['full_name'], unique=False)
     op.create_index(op.f('ix_users_id'), 'users', ['id'], unique=False)
+    op.create_table('attribute_options',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('value', sa.String(length=50), nullable=False),
+    sa.Column('attribute_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['attribute_id'], ['attributes.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('cash_registers',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
@@ -158,10 +171,8 @@ def upgrade() -> None:
     op.create_table('product_subcategories',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=100), nullable=False),
-    sa.Column('category_id', sa.Integer(), nullable=False),
     sa.Column('parent_category_id', sa.Integer(), nullable=False),
     sa.Column('store_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['category_id'], ['product_categories.id'], ),
     sa.ForeignKeyConstraint(['parent_category_id'], ['product_categories.id'], ),
     sa.ForeignKeyConstraint(['store_id'], ['stores.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -178,9 +189,9 @@ def upgrade() -> None:
     sa.Column('barcode', sa.String(length=100), nullable=True),
     sa.Column('category_id', sa.Integer(), nullable=True),
     sa.Column('subcategory_id', sa.Integer(), nullable=True),
+    sa.Column('store_id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.Column('store_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['category_id'], ['product_categories.id'], ),
     sa.ForeignKeyConstraint(['store_id'], ['stores.id'], ),
     sa.ForeignKeyConstraint(['subcategory_id'], ['product_subcategories.id'], ),
@@ -192,11 +203,13 @@ def upgrade() -> None:
     op.create_table('sales',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('total_amount', sa.Float(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('store_id', sa.Integer(), nullable=False),
-    sa.Column('customer_id', sa.Integer(), nullable=True),
+    sa.Column('payment_method', sa.String(length=50), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('customer_id', sa.Integer(), nullable=True),
     sa.Column('cash_register_id', sa.Integer(), nullable=True),
+    sa.Column('store_id', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['cash_register_id'], ['cash_registers.id'], ),
     sa.ForeignKeyConstraint(['customer_id'], ['customers.id'], ),
     sa.ForeignKeyConstraint(['store_id'], ['stores.id'], ),
@@ -251,6 +264,16 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_product_batches_expiration_date'), 'product_batches', ['expiration_date'], unique=False)
     op.create_index(op.f('ix_product_batches_id'), 'product_batches', ['id'], unique=False)
+    op.create_table('product_variations',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('product_id', sa.Integer(), nullable=False),
+    sa.Column('price', sa.Float(), nullable=False),
+    sa.Column('stock', sa.Integer(), nullable=False),
+    sa.Column('barcode', sa.String(length=100), nullable=True),
+    sa.ForeignKeyConstraint(['product_id'], ['products.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('barcode')
+    )
     op.create_table('recipe_items',
     sa.Column('store_id', sa.Integer(), nullable=False),
     sa.Column('id', sa.Integer(), nullable=False),
@@ -296,17 +319,26 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['order_item_id'], ['order_items.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('variation_options_association',
+    sa.Column('variation_id', sa.Integer(), nullable=False),
+    sa.Column('option_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['option_id'], ['attribute_options.id'], ),
+    sa.ForeignKeyConstraint(['variation_id'], ['product_variations.id'], ),
+    sa.PrimaryKeyConstraint('variation_id', 'option_id')
+    )
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_table('variation_options_association')
     op.drop_table('order_item_additionals')
     op.drop_index(op.f('ix_stock_movements_id'), table_name='stock_movements')
     op.drop_table('stock_movements')
     op.drop_table('sale_items')
     op.drop_table('recipe_items')
+    op.drop_table('product_variations')
     op.drop_index(op.f('ix_product_batches_id'), table_name='product_batches')
     op.drop_index(op.f('ix_product_batches_expiration_date'), table_name='product_batches')
     op.drop_table('product_batches')
@@ -325,8 +357,8 @@ def downgrade() -> None:
     op.drop_table('orders')
     op.drop_index(op.f('ix_cash_registers_id'), table_name='cash_registers')
     op.drop_table('cash_registers')
+    op.drop_table('attribute_options')
     op.drop_index(op.f('ix_users_id'), table_name='users')
-    op.drop_index(op.f('ix_users_full_name'), table_name='users')
     op.drop_index(op.f('ix_users_email'), table_name='users')
     op.drop_table('users')
     op.drop_index(op.f('ix_tables_id'), table_name='tables')
@@ -343,6 +375,7 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_customers_id'), table_name='customers')
     op.drop_index(op.f('ix_customers_email'), table_name='customers')
     op.drop_table('customers')
+    op.drop_table('attributes')
     op.drop_index(op.f('ix_additionals_id'), table_name='additionals')
     op.drop_table('additionals')
     op.drop_index(op.f('ix_stores_id'), table_name='stores')

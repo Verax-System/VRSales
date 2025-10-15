@@ -13,7 +13,6 @@ from app.crud import crud_user
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login/access-token")
 
 def get_db():
-    """Dependência para obter uma sessão do banco de dados."""
     db = SessionLocal()
     try:
         yield db

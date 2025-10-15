@@ -22,7 +22,7 @@ const UserForm = ({ visible, onCancel, onFinish, user }) => {
         try {
           const response = await ApiService.getStores();
           setStores(response.data);
-        } catch (error) {
+        } catch {
           message.error('Falha ao carregar a lista de lojas.');
         }
       };

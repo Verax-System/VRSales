@@ -6,26 +6,39 @@ from app.db.base import Base
 
 class ProductCategory(Base):
     __tablename__ = "product_categories"
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
-    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), nullable=False)
 
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    
+    # Relação para aceder a todas as subcategorias de uma categoria principal
     subcategories: Mapped[List["ProductSubcategory"]] = relationship(
         back_populates="parent_category", 
         cascade="all, delete-orphan"
+        # --- CORREÇÃO ---
+        # A linha abaixo foi removida pois não é necessária aqui, a ambiguidade
+        # é resolvida no outro lado da relação. O back_populates já é suficiente.
     )
+    
+    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), nullable=False)
+
 
 class ProductSubcategory(Base):
     __tablename__ = "product_subcategories"
+
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     
-    category_id: Mapped[int] = mapped_column(ForeignKey("product_categories.id"))
-    category: Mapped["ProductCategory"] = relationship(back_populates="subcategories")
+    # Chave estrangeira para a categoria principal
     parent_category_id: Mapped[int] = mapped_column(ForeignKey("product_categories.id"))
     
     # Relação inversa para aceder à categoria principal
-    parent_category: Mapped["ProductCategory"] = relationship(back_populates="subcategories")
+    parent_category: Mapped["ProductCategory"] = relationship(
+        back_populates="subcategories",
+        # --- INÍCIO DA CORREÇÃO ---
+        # Explicitamente dizemos ao SQLAlchemy para usar a coluna 'parent_category_id'
+        # para este relacionamento, resolvendo a ambiguidade.
+        foreign_keys=[parent_category_id]
+        # --- FIM DA CORREÇÃO ---
+    )
     
-    # Adicionando o campo store_id para a arquitetura multi-loja
     store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), nullable=False)
