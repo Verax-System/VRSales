@@ -12,7 +12,8 @@ from app.models.table import Table, TableStatus
 from app.models.order import Order, OrderItem, OrderStatus
 from app.models.product import Product
 from app.schemas.order import OrderItemCreate
-from app.schemas.sale import SaleCreate, SaleItemCreate
+from app.schemas.sale import SaleCreate
+from app.schemas.sale_item import SaleItemCreate
 from app.crud import crud_sale
 
 async def create_delivery_order(db: AsyncSession, customer_id: int, address: str) -> Order:
