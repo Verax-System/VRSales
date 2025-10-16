@@ -1,56 +1,58 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from typing import List, Any
 
-from app.crud import crud_category
-from app.schemas.category import ProductCategory, ProductCategoryCreate, ProductSubcategory, ProductSubcategoryCreate
-from app.schemas.user import User
-from app.api.dependencies import get_db, get_current_user
+from app import crud
+from app.models.user import User as UserModel
+from app.schemas.category import ProductCategory, ProductCategoryCreate, ProductCategoryUpdate
+from app.api.dependencies import get_db, get_current_active_user, RoleChecker
+from app.schemas.enums import UserRole
 
 router = APIRouter()
+manager_permissions = RoleChecker([UserRole.ADMIN, UserRole.MANAGER])
 
-# --- Endpoints para Categorias (Grupos) ---
-
-@router.post("/", response_model=ProductCategory)
+@router.post("/", response_model=ProductCategory, status_code=status.HTTP_201_CREATED, dependencies=[Depends(manager_permissions)])
 async def create_category(
-    category_in: ProductCategoryCreate,
+    *,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
+    category_in: ProductCategoryCreate,
+    current_user: UserModel = Depends(get_current_active_user)
+) -> Any:
     """Cria uma nova categoria de produto (Grupo)."""
-    return await crud_category.create_category(db=db, category=category_in)
+    return await crud.category.create(db=db, obj_in=category_in, current_user=current_user)
 
 @router.get("/", response_model=List[ProductCategory])
 async def read_categories(
+    *,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Lista todas as categorias e suas subcategorias."""
-    return await crud_category.get_categories(db)
+    current_user: UserModel = Depends(get_current_active_user)
+) -> Any:
+    """Lista todas as categorias da loja."""
+    return await crud.category.get_multi(db=db, current_user=current_user)
 
-# --- Endpoints para Subcategorias (Subgrupos) ---
-
-@router.post("/{category_id}/subcategories", response_model=ProductSubcategory)
-async def create_subcategory(
+@router.put("/{category_id}", response_model=ProductCategory, dependencies=[Depends(manager_permissions)])
+async def update_category(
+    *,
+    db: AsyncSession = Depends(get_db),
     category_id: int,
-    subcategory_in: ProductCategoryCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Cria uma nova subcategoria dentro de uma categoria existente."""
-    category = await crud_category.get_category(db, category_id=category_id)
+    category_in: ProductCategoryUpdate,
+    current_user: UserModel = Depends(get_current_active_user)
+) -> Any:
+    """Atualiza uma categoria de produto."""
+    category = await crud.category.get(db=db, id=category_id, current_user=current_user)
     if not category:
         raise HTTPException(status_code=404, detail="Categoria não encontrada")
-    return await crud_category.create_subcategory(db=db, subcategory=subcategory_in, category_id=category_id)
+    return await crud.category.update(db=db, db_obj=category, obj_in=category_in, current_user=current_user)
 
-@router.get("/{category_id}/subcategories", response_model=List[ProductSubcategory])
-async def read_subcategories(
-    category_id: int,
+@router.delete("/{category_id}", response_model=ProductCategory, dependencies=[Depends(manager_permissions)])
+async def delete_category(
+    *,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Lista todas as subcategorias de uma categoria específica."""
-    category = await crud_category.get_category(db, category_id=category_id)
+    category_id: int,
+    current_user: UserModel = Depends(get_current_active_user)
+) -> Any:
+    """Exclui uma categoria de produto."""
+    category = await crud.category.remove(db=db, id=category_id, current_user=current_user)
     if not category:
         raise HTTPException(status_code=404, detail="Categoria não encontrada")
-    return await crud_category.get_subcategories_by_category(db, category_id=category_id)
+    return category

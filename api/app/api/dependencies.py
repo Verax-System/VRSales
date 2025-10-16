@@ -1,30 +1,30 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
-from typing import List
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from typing import AsyncGenerator
 
 from app.core import security
-from app.db.session import SessionLocal
+from app.db.session import AsyncSessionLocal  # Importa a sessão assíncrona
 from app.models.user import User as UserModel
-from app.schemas.enums import UserRole
-# A importação do crud_user já não é necessária aqui, mas não faz mal mantê-la
-from app.crud import crud_user 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login/access-token")
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """
+    Dependência que fornece uma sessão assíncrona do banco de dados.
+    """
+    async with AsyncSessionLocal() as db:
+        try:
+            yield db
+        finally:
+            await db.close()
 
-def get_current_user(
-    db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
+async def get_current_user(
+    db: AsyncSession = Depends(get_db), token: str = Depends(oauth2_scheme)
 ) -> UserModel:
     """
-    Descodifica o token JWT para obter o utilizador atual.
-    Levanta uma exceção HTTP 401 se o token for inválido ou o utilizador não for encontrado.
+    Decodifica o token JWT para obter o usuário atual de forma assíncrona.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -38,24 +38,26 @@ def get_current_user(
     user_id = payload.get("sub")
     if user_id is None:
         raise credentials_exception
-        
-    # --- INÍCIO DA CORREÇÃO ---
-    # Em vez de usar o método CRUD genérico, que agora exige um 'current_user',
-    # fazemos uma consulta direta à base de dados para este caso especial de autenticação.
-    user = db.query(UserModel).filter(UserModel.id == int(user_id)).first()
-    # --- FIM DA CORREÇÃO ---
+    
+    # Faz a query de forma assíncrona
+    result = await db.execute(select(UserModel).filter(UserModel.id == int(user_id)))
+    user = result.scalars().first()
 
     if user is None:
         raise credentials_exception
         
     return user
 
-def get_current_active_user(
+async def get_current_active_user(
     current_user: UserModel = Depends(get_current_user),
 ) -> UserModel:
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+
+# O RoleChecker pode continuar como está
+from app.schemas.enums import UserRole
+from typing import List
 
 class RoleChecker:
     def __init__(self, allowed_roles: List[UserRole]):

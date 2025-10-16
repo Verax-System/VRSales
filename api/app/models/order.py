@@ -4,17 +4,16 @@ from datetime import datetime
 from typing import List
 
 from app.db.base import Base
-# --- INÍCIO DA CORREÇÃO ---
-# Importa os Enums do arquivo centralizado
-from app.schemas.enums import OrderStatus, OrderType, OrderItemStatus # Adicione OrderItemStatus
-# --- FIM DA CORREÇÃO ---
+# Importa os Enums do arquivo centralizado para consistência
+from app.schemas.enums import OrderStatus, OrderType, OrderItemStatus
 
 
 class Order(Base):
     __tablename__ = "orders"
+    
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
     store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), nullable=False)
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
     status: Mapped[OrderStatus] = mapped_column(
         SQLAlchemyEnum(OrderStatus, name="orderstatus", create_type=False), 
         nullable=False, 
@@ -37,7 +36,7 @@ class Order(Base):
     items: Mapped[List["OrderItem"]] = relationship(
         back_populates="order", 
         cascade="all, delete-orphan",
-        lazy="selectin"  # Garante que os itens sejam carregados junto com a comanda
+        lazy="selectin"
     )
 
 class OrderItem(Base):

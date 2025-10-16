@@ -2,7 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import asc
 from typing import List, Optional
-from datetime import date
+from fastapi import HTTPException
+from datetime import date, timedelta
 
 from app.models.batch import ProductBatch
 from app.models.product import Product

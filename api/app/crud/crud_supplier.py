@@ -30,6 +30,8 @@ async def update_supplier(db: AsyncSession, db_supplier: Supplier, supplier_in: 
 async def remove_supplier(db: AsyncSession, supplier_id: int) -> Optional[Supplier]:
     db_supplier = await get_supplier(db, supplier_id)
     if db_supplier:
-        await db.delete(db_supplier)
+        # --- CORREÇÃO AQUI ---
+        # db.delete não é uma operação awaitable
+        db.delete(db_supplier)
         await db.commit()
     return db_supplier

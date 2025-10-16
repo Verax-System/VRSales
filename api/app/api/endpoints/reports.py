@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException, status
+from requests import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import date
 from typing import List
@@ -7,12 +8,17 @@ from app import schemas
 # --- CORREÇÃO AQUI ---
 from app.services.dashboard_service import dashboard_service
 from app.schemas import dashboard as dashboard_schemas
-
+from app.api.dependencies import get_db, RoleChecker, get_current_active_user
+from app.models.user import User as UserModel
+from app.schemas.enums import UserRole
+from app.services.analytics_service import analytics_service
+from app.services.dashboard_service import dashboard_service
+from app.schemas import report as report_schemas
 from app.crud import crud_report
 # Adicione SalesEvolutionItem ao import
 from app.schemas.report import SalesByPeriod, TopSellingProduct, SalesByUser, SalesEvolutionItem
 from app.schemas.user import User, UserRole
-from app.api.dependencies import get_db, get_current_user, RoleChecker, Session
+from app.api.dependencies import get_db, get_current_user, RoleChecker
 
 router = APIRouter()
 
@@ -83,14 +89,19 @@ async def report_sales_evolution(
     summary="Obter Dados Consolidados para o Dashboard"
 )
 def get_dashboard_summary(
-    db: Session = Depends(get_db)
+    *,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_active_user) # Adiciona a dependência do utilizador
 ):
     """
-    Recupera um resumo completo de dados e KPIs para alimentar o
-    dashboard principal da aplicação.
-
-    Acessível apenas para **Admins** e **Gerentes**.
+    Recupera um resumo de dados e KPIs para o dashboard da loja do utilizador autenticado.
     """
-    summary_data = dashboard_service.get_dashboard_summary(db)
+    if not current_user.store_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Utilizador não está associado a uma loja."
+        )
+    # --- CORREÇÃO PRINCIPAL ---
+    # Passa o store_id do utilizador atual para o serviço
+    summary_data = dashboard_service.get_dashboard_summary(db, store_id=current_user.store_id)
     return summary_data
-# --- FIM DO NOVO ENDPOINT ---
