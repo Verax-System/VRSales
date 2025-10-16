@@ -1,9 +1,85 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, message, Alert } from 'antd';
+// A CORREÇÃO ESTÁ AQUI: Adicionei 'Typography' à importação do antd.
+import { Form, Input, Button, message, Alert, Typography } from 'antd';
 import { UserOutlined, LockOutlined, DesktopOutlined } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+
+// E AQUI: Desestruturamos Title e Text a partir do Typography importado.
+const { Title, Text } = Typography;
+
+// Estilos embutidos para a nova página de login
+const PageStyles = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+    .login-container {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .login-promo-panel {
+      width: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 48px;
+      text-align: center;
+    }
+    
+    .promo-icon {
+      font-size: 64px;
+      margin-bottom: 24px;
+      padding: 20px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+    }
+
+    .login-form-panel {
+      width: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #f0f2f5;
+    }
+
+    .login-form-wrapper {
+      width: 100%;
+      max-width: 400px;
+      padding: 40px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .login-form-title {
+        text-align: center;
+        margin-bottom: 32px;
+    }
+    
+    .login-form-button {
+        height: 48px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    
+    /* Responsividade para telas menores */
+    @media (max-width: 768px) {
+      .login-promo-panel {
+        display: none;
+      }
+      .login-form-panel {
+        width: 100%;
+      }
+    }
+  `}</style>
+);
 
 const LoginPage = () => {
   const [loading, setLoading] = useState(false);
@@ -16,10 +92,10 @@ const LoginPage = () => {
     setError('');
     try {
       await login(values.email, values.password);
-      message.success('Login bem-sucedido! A redirecionar...');
+      message.success('Login bem-sucedido! Redirecionando...');
       navigate('/');
     } catch (err) {
-      setError('Email ou palavra-passe inválidos. Por favor, tente novamente.');
+      setError('Email ou senha inválidos. Por favor, tente novamente.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -27,64 +103,75 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <motion.div
-        initial={{ opacity: 0, y: -50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8"
-      >
-        <div className="text-center mb-8">
-          <div className="inline-block bg-blue-500 text-white rounded-full p-4 mb-4">
-            <DesktopOutlined style={{ fontSize: '32px' }} />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-800">Bem-vindo ao VR Sales</h1>
-          <p className="text-gray-500">Faça login para aceder ao seu painel</p>
-        </div>
+    <>
+      <PageStyles />
+      <div className="login-container">
+        <motion.div 
+          className="login-promo-panel"
+          initial={{ x: '-100%' }}
+          animate={{ x: 0 }}
+          transition={{ duration: 0.7, ease: [0.25, 1, 0.5, 1] }}
+        >
+          <motion.div 
+            className="promo-icon"
+            animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <DesktopOutlined />
+          </motion.div>
+          <Title level={1} style={{ color: 'white', marginBottom: 16 }}>VR Sales</Title>
+          <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: '18px' }}>
+            A solução completa para a gestão do seu negócio.
+          </Text>
+        </motion.div>
 
-        {error && (
+        <div className="login-form-panel">
           <motion.div
+            className="login-form-wrapper"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="mb-4"
+            transition={{ duration: 0.5, delay: 0.5 }}
           >
-            <Alert message={error} type="error" showIcon closable onClose={() => setError('')} />
+            <div className="login-form-title">
+              <Title level={2}>Acesse sua Conta</Title>
+            </div>
+
+            {error && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-4">
+                <Alert message={error} type="error" showIcon closable onClose={() => setError('')} />
+              </motion.div>
+            )}
+
+            <Form name="login_form" onFinish={onFinish} size="large" layout="vertical">
+              <Form.Item
+                label="Email"
+                name="email"
+                rules={[{ required: true, type: 'email', message: 'Por favor, insira um email válido!' }]}
+              >
+                <Input prefix={<UserOutlined />} placeholder="seuemail@exemplo.com" />
+              </Form.Item>
+              <Form.Item
+                label="Senha"
+                name="password"
+                rules={[{ required: true, message: 'Por favor, insira a sua senha!' }]}
+              >
+                <Input.Password prefix={<LockOutlined />} placeholder="••••••••" />
+              </Form.Item>
+              
+              <Form.Item>
+                <a style={{ float: 'right' }} href="">Esqueceu a senha?</a>
+              </Form.Item>
+
+              <Form.Item>
+                <Button type="primary" htmlType="submit" block loading={loading} className="login-form-button">
+                  {loading ? 'Entrando...' : 'Entrar'}
+                </Button>
+              </Form.Item>
+            </Form>
           </motion.div>
-        )}
-
-        <Form
-          name="login_form"
-          initialValues={{ remember: true }}
-          onFinish={onFinish}
-          size="large"
-        >
-          <Form.Item
-            name="email"
-            rules={[{ required: true, type: 'email', message: 'Por favor, insira um email válido!' }]}
-          >
-            <Input prefix={<UserOutlined className="site-form-item-icon" />} placeholder="Email" />
-          </Form.Item>
-          <Form.Item
-            name="password"
-            rules={[{ required: true, message: 'Por favor, insira a sua palavra-passe!' }]}
-          >
-            <Input.Password prefix={<LockOutlined className="site-form-item-icon" />} placeholder="Palavra-passe" />
-          </Form.Item>
-          
-          <Form.Item>
-            <a className="float-right text-blue-500 hover:text-blue-700" href="">
-              Esqueceu a palavra-passe?
-            </a>
-          </Form.Item>
-
-          <Form.Item>
-            <Button type="primary" htmlType="submit" className="w-full" loading={loading}>
-              {loading ? 'A entrar...' : 'Entrar'}
-            </Button>
-          </Form.Item>
-        </Form>
-      </motion.div>
-    </div>
+        </div>
+      </div>
+    </>
   );
 };
 
