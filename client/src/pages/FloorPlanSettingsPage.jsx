@@ -17,43 +17,68 @@ const PageStyles = () => (
     .header-content { display: flex; justify-content: space-between; align-items: center; }
     .header-instructions { margin-top: 8px; color: rgba(255, 255, 255, 0.85); }
     .floorplan-canvas { position: relative; height: 75vh; width: 100%; border-radius: 16px; overflow: hidden; background-color: #1a202c; background-image: linear-gradient(rgba(0, 198, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 198, 255, 0.1) 1px, transparent 1px); background-size: 20px 20px; box-shadow: inset 0 0 20px rgba(0,0,0,0.4); }
-    .draggable-table { cursor: grab; width: 100px; height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 50%; background: #ffffff; color: #1a202c; box-shadow: 0 0 15px rgba(0, 198, 255, 0.5); border: 2px solid rgba(0, 198, 255, 0.8); transition: transform 0.2s ease, box-shadow 0.2s ease; }
-    .draggable-table:active { cursor: grabbing; }
+    
+    /* --- MUDANÇA CRÍTICA --- */
+    /* O invólucro que será arrastado */
+    .draggable-wrapper {
+        position: absolute; /* Essencial para o posicionamento */
+        width: 100px;
+        height: 100px;
+        cursor: grab;
+    }
+    .draggable-wrapper:active {
+        cursor: grabbing;
+    }
+
+    /* O visual da mesa (o círculo) */
+    .table-visual {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #ffffff;
+        color: #1a202c;
+        box-shadow: 0 0 15px rgba(0, 198, 255, 0.5);
+        border: 2px solid rgba(0, 198, 255, 0.8);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        /* Impede que o texto dentro seja selecionado ao arrastar */
+        user-select: none;
+    }
     .table-number { font-size: 1.5rem; font-weight: 700; }
     .empty-canvas { display: flex; justify-content: center; align-items: center; height: 100%; color: white; }
   `}</style>
 );
 
-// Componente da Mesa Arrastável separado para usar a ref corretamente
 const DraggableTable = ({ table, activeDragId, onStart, onStop }) => {
     const nodeRef = useRef(null);
 
     return (
         <Draggable
-            key={table.id}
             bounds="parent"
-            // --- AQUI ESTÁ A CORREÇÃO ---
-            // Trocamos 'position' por 'defaultPosition'.
-            // Isso permite que o componente se mova livremente,
-            // evitando o bug que o "prendia" no lugar.
             defaultPosition={{ x: table.pos_x, y: table.pos_y }}
             onStart={() => onStart(table.id)}
             onStop={(e, data) => onStop(e, data, table.id)}
             nodeRef={nodeRef}
         >
-            <motion.div
-                ref={nodeRef}
-                className="draggable-table"
-                variants={{ hidden: { opacity: 0, scale: 0.5 }, visible: { opacity: 1, scale: 1 } }}
-                whileTap={{ scale: 1.1, cursor: 'grabbing', boxShadow: "0 0 30px rgba(0, 230, 255, 0.8)" }}
-                animate={{
-                    scale: activeDragId === table.id ? 1.1 : 1,
-                    boxShadow: activeDragId === table.id ? "0 0 30px rgba(0, 230, 255, 0.8)" : "0 0 15px rgba(0, 198, 255, 0.5)",
-                }}
-            >
-                <Text className="table-number">{table.number}</Text>
-                <DragOutlined style={{ fontSize: '12px', color: '#888' }} />
-            </motion.div>
+            {/* --- ESTRUTURA CORRIGIDA --- */}
+            {/* 1. O 'div' que a biblioteca realmente arrasta. É simples e estável. */}
+            <div ref={nodeRef} className="draggable-wrapper" style={{ zIndex: activeDragId === table.id ? 100 : 1 }}>
+                {/* 2. O visual com a animação fica DENTRO do invólucro. */}
+                <motion.div
+                    className="table-visual"
+                    whileTap={{ scale: 1.1, cursor: 'grabbing', boxShadow: "0 0 30px rgba(0, 230, 255, 0.8)" }}
+                    animate={{
+                        scale: activeDragId === table.id ? 1.1 : 1,
+                        boxShadow: activeDragId === table.id ? "0 0 30px rgba(0, 230, 255, 0.8)" : "0 0 15px rgba(0, 198, 255, 0.5)",
+                    }}
+                >
+                    <Text className="table-number">{table.number}</Text>
+                    <DragOutlined style={{ fontSize: '12px', color: '#888' }} />
+                </motion.div>
+            </div>
         </Draggable>
     );
 };
@@ -88,7 +113,6 @@ const FloorPlanSettingsPage = () => {
 
     const handleDragStop = (e, data, tableId) => {
         setActiveDragId(null);
-        // Atualiza o estado com a posição final da mesa
         setTables(currentTables =>
             currentTables.map(t =>
                 t.id === tableId ? { ...t, pos_x: Math.round(data.x), pos_y: Math.round(data.y) } : t
@@ -133,7 +157,7 @@ const FloorPlanSettingsPage = () => {
                     </Text>
                 </div>
 
-                <motion.div className="floorplan-canvas" variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05 } } }} initial="hidden" animate="visible">
+                <div className="floorplan-canvas">
                     {tables.length > 0 ? (
                         tables.map(table => (
                             <DraggableTable
@@ -155,7 +179,7 @@ const FloorPlanSettingsPage = () => {
                             </Empty>
                         </div>
                     )}
-                </motion.div>
+                </div>
             </motion.div>
         </>
     );
