@@ -1,42 +1,42 @@
-import { useState, useEffect } from 'react';
-import { Button, Modal, message, Input, Space, Avatar, Tag, Tooltip, Card, Typography, Spin } from 'antd';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+// Importando todos os componentes necessários do AntD
+import { Button, Modal, message, Space, Input, Typography, Popconfirm, Tooltip, Card, Avatar, Empty, Spin, Form, Tag } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, UserOutlined, EyeOutlined, StarFilled, DollarCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, SearchOutlined, MailOutlined, PhoneOutlined, StarOutlined } from '@ant-design/icons';
 import ApiService from '../api/ApiService';
-import CustomerForm from '../components/CustomerForm';
-import CustomerDetailsModal from '../components/CustomerDetailsModal';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
+const { Search } = Input;
 
-// O CSS está agora dentro do componente para manter tudo em um único arquivo.
+// Estilos embutidos para a nova página
 const PageStyles = () => (
-  <style>{`
+    <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
-    .customer-page-container-v2 {
+    .customer-page-container {
       padding: 24px;
-      background: #f0f2f5;
+      background-color: #f0f2f5;
       font-family: 'Inter', sans-serif;
-      min-height: calc(100vh - 112px);
+      min-height: 100vh;
     }
 
-    .page-header-gradient-v2 {
+    .customer-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 24px;
       padding: 20px 24px;
-      background: linear-gradient(135deg, #3498db 0%, #8e44ad 100%);
-      border-radius: 12px;
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      border-radius: 16px;
       color: white;
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 30px -10px rgba(52, 152, 219, 0.5);
     }
 
     .controls-card {
-      margin-bottom: 24px;
-      border-radius: 12px;
+        margin-bottom: 24px;
+        border-radius: 12px;
     }
-
+    
     .customer-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -44,209 +44,227 @@ const PageStyles = () => (
     }
 
     .customer-card {
-      position: relative;
-      border-radius: 12px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
       border: 1px solid #e8e8e8;
-      transition: all 0.3s ease;
-      overflow: hidden;
-      border-left: 5px solid #3498db;
+      transition: all 0.3s ease-in-out;
+      position: relative;
     }
 
     .customer-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.12);
     }
-
-    .customer-card-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .customer-info {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .customer-stats {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid #f0f0f0;
-    }
-
-    .stat-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
+    
     .card-actions {
       position: absolute;
-      top: 10px;
-      right: 10px;
-      display: flex;
-      gap: 8px;
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(5px);
-      padding: 5px;
-      border-radius: 8px;
-      opacity: 0;
-      transform: translateY(-10px);
-      transition: all 0.2s ease-in-out;
+      top: 16px;
+      right: 16px;
     }
-
-    .customer-card:hover .card-actions {
-      opacity: 1;
-      transform: translateY(0);
+    
+    .contact-info {
+        margin-top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .customer-form-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 24px;
     }
   `}</style>
 );
 
-const CustomerPage = () => {
-  const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [isFormModalVisible, setIsFormModalVisible] = useState(false);
-  const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState(null);
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [searchText, setSearchText] = useState('');
-
-  const fetchCustomers = async () => {
-    try {
+// Formulário integrado para evitar dependências externas
+const CustomerForm = ({ customer, onSuccess, onCancel }) => {
+    const [form] = Form.useForm();
+    const [loading, setLoading] = useState(false);
+  
+    useEffect(() => {
+      if (customer) {
+        form.setFieldsValue(customer);
+      } else {
+        form.resetFields();
+      }
+    }, [customer, form]);
+  
+    const onFinish = async (values) => {
       setLoading(true);
-      const response = await ApiService.getCustomers();
-      setCustomers(response.data);
-    } catch {
-      message.error('Falha ao carregar os clientes.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
-
-  // Handlers
-  const handleOpenFormModal = (customer = null) => { setEditingCustomer(customer); setIsFormModalVisible(true); };
-  const handleFormCancel = () => { setIsFormModalVisible(false); setEditingCustomer(null); };
-  const handleFormFinish = () => { fetchCustomers(); handleFormCancel(); };
-  const handleOpenDetailsModal = (customer) => { setSelectedCustomer(customer); setIsDetailsModalVisible(true); };
-  const handleDetailsCancel = () => { setIsDetailsModalVisible(false); setSelectedCustomer(null); };
-
-  const handleDelete = (customerId) => {
-    Modal.confirm({
-      title: 'Tem a certeza que quer apagar este cliente?',
-      content: 'Esta ação não pode ser desfeita.',
-      okText: 'Sim, apagar', okType: 'danger', cancelText: 'Não',
-      onOk: async () => {
-        try {
-          await ApiService.deleteCustomer(customerId);
-          message.success('Cliente apagado com sucesso!');
-          fetchCustomers();
-        } catch {
-          message.error('Falha ao apagar o cliente.');
+      try {
+        if (customer) {
+          await ApiService.put(`/customers/${customer.id}/`, values);
+          message.success(`Cliente "${values.full_name}" atualizado com sucesso!`);
+        } else {
+          await ApiService.post('/customers/', values);
+          message.success(`Cliente "${values.full_name}" criado com sucesso!`);
         }
-      },
-    });
-  };
-
-  const filteredCustomers = customers.filter(c =>
-    c.full_name.toLowerCase().includes(searchText.toLowerCase()) ||
-    (c.email && c.email.toLowerCase().includes(searchText.toLowerCase())) ||
-    (c.phone_number && c.phone_number.includes(searchText))
-  );
-
-  return (
-    <>
-      <PageStyles />
-      <motion.div
-        className="customer-page-container-v2"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      >
-        <div className="page-header-gradient-v2">
-          <Title level={2} style={{ color: 'white', margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <UserOutlined /> Gestão de Clientes
-          </Title>
+        onSuccess();
+      } catch (error) {
+        const errorMsg = error.response?.data?.detail || 'Erro ao salvar o cliente.';
+        message.error(errorMsg);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    return (
+      <Form form={form} layout="vertical" onFinish={onFinish}>
+        <Form.Item name="full_name" label="Nome Completo" rules={[{ required: true, message: 'Por favor, insira o nome completo!' }]}>
+          <Input prefix={<UserOutlined />} placeholder="Ex: João da Silva" size="large" />
+        </Form.Item>
+        <Form.Item name="email" label="E-mail" rules={[{ type: 'email', message: 'Por favor, insira um e-mail válido!' }]}>
+          <Input prefix={<MailOutlined />} placeholder="Ex: joao.silva@email.com" size="large" />
+        </Form.Item>
+        <Form.Item name="phone_number" label="Telefone">
+          <Input prefix={<PhoneOutlined />} placeholder="Ex: (16) 99999-8888" size="large" />
+        </Form.Item>
+        <div className="customer-form-buttons">
+          <Button onClick={onCancel} size="large">Cancelar</Button>
+          <Button type="primary" htmlType="submit" loading={loading} size="large">
+            {customer ? 'Salvar Alterações' : 'Adicionar Cliente'}
+          </Button>
         </div>
+      </Form>
+    );
+};
 
-        <Card className="controls-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Input
-              placeholder="Buscar por nome, email ou telefone..."
-              prefix={<SearchOutlined />}
-              value={searchText}
-              onChange={e => setSearchText(e.target.value)}
-              style={{ maxWidth: 400 }}
-              allowClear
-            />
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenFormModal()}>
-              Adicionar Cliente
-            </Button>
-          </div>
-        </Card>
 
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" /></div>
-        ) : (
-          <AnimatePresence>
-            <motion.div className="customer-grid" layout>
-              {filteredCustomers.map((customer, index) => (
-                <motion.div key={customer.id} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: index * 0.05 }}>
-                  <Card className="customer-card">
-                    <div className="card-actions">
-                      <Tooltip title="Detalhes"><Button size="small" shape="circle" icon={<EyeOutlined />} onClick={() => handleOpenDetailsModal(customer)} /></Tooltip>
-                      <Tooltip title="Editar"><Button size="small" shape="circle" icon={<EditOutlined />} onClick={() => handleOpenFormModal(customer)} /></Tooltip>
-                      <Tooltip title="Excluir"><Button size="small" shape="circle" danger icon={<DeleteOutlined />} onClick={() => handleDelete(customer.id)} /></Tooltip>
+const CustomerPage = () => {
+    const [customers, setCustomers] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [editingCustomer, setEditingCustomer] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const fetchCustomers = useCallback(async () => {
+        setLoading(true);
+        try {
+            const response = await ApiService.get('/customers/');
+            setCustomers(response.data);
+        } catch (error) {
+            message.error('Não foi possível carregar os clientes.');
+            console.error('Erro ao buscar clientes:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchCustomers();
+    }, [fetchCustomers]);
+
+    const showModal = (customer = null) => {
+        setEditingCustomer(customer);
+        setIsModalVisible(true);
+    };
+
+    const handleCancel = () => {
+        setIsModalVisible(false);
+        setEditingCustomer(null);
+    };
+
+    const handleFormSuccess = () => {
+        setIsModalVisible(false);
+        setEditingCustomer(null);
+        fetchCustomers();
+    };
+    
+    const handleDelete = async (customerId) => {
+        try {
+          await ApiService.delete(`/customers/${customerId}/`);
+          message.success('Cliente excluído com sucesso!');
+          fetchCustomers();
+        } catch (error) {
+          message.error('Erro ao excluir o cliente.');
+        }
+    };
+
+    const filteredCustomers = useMemo(() => {
+        if (!searchTerm) return customers;
+        return customers.filter(c =>
+            c.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (c.email && c.email.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+    }, [customers, searchTerm]);
+
+    const gridVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05 } } };
+    const cardVariants = { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } };
+
+    return (
+        <>
+            <PageStyles />
+            <motion.div className="customer-page-container" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <div className="customer-header">
+                    <Title level={2} style={{ color: 'white', margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <UserOutlined /> Gestão de Clientes
+                    </Title>
+                </div>
+                
+                <Card className="controls-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Search
+                            placeholder="Pesquisar clientes..."
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{ maxWidth: 400 }}
+                            allowClear size="large"
+                        />
+                        <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()} size="large">
+                            Adicionar Cliente
+                        </Button>
                     </div>
+                </Card>
 
-                    <div className="customer-card-header">
-                      <Avatar size={48} icon={<UserOutlined />} />
-                      <div className="customer-info">
-                        <Title level={5} style={{ margin: 0 }}>{customer.full_name}</Title>
-                        <Text type="secondary">{customer.email || 'Sem email'}</Text>
-                      </div>
-                    </div>
+                {loading ? <div style={{textAlign: 'center', padding: 50}}><Spin size="large" /></div> : (
+                    <AnimatePresence>
+                        {filteredCustomers.length > 0 ? (
+                            <motion.div className="customer-grid" variants={gridVariants} initial="hidden" animate="visible">
+                                {filteredCustomers.map(customer => (
+                                    <motion.div key={customer.id} variants={cardVariants}>
+                                        <Card className="customer-card">
+                                            <div className="card-actions">
+                                                <Space>
+                                                    <Tooltip title="Editar"><Button shape="circle" icon={<EditOutlined />} onClick={() => showModal(customer)} /></Tooltip>
+                                                    <Popconfirm title="Tem certeza?" onConfirm={() => handleDelete(customer.id)} okText="Sim" cancelText="Não">
+                                                        <Tooltip title="Excluir"><Button shape="circle" danger icon={<DeleteOutlined />} /></Tooltip>
+                                                    </Popconfirm>
+                                                </Space>
+                                            </div>
+                                            <Space align="start">
+                                                <Avatar size={48} icon={<UserOutlined />} style={{backgroundColor: '#1890ff'}}/>
+                                                <div>
+                                                    <Title level={4} style={{marginBottom: 0}}>{customer.full_name}</Title>
+                                                    <Tag icon={<StarOutlined />} color="gold">{customer.loyalty_points} Pontos</Tag>
+                                                </div>
+                                            </Space>
+                                            <div className="contact-info">
+                                                {customer.email && <Text><MailOutlined style={{marginRight: 8, color: '#3498db'}}/> {customer.email}</Text>}
+                                                {customer.phone_number && <Text><PhoneOutlined style={{marginRight: 8, color: '#3498db'}}/> {customer.phone_number}</Text>}
+                                            </div>
+                                        </Card>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                        ) : (
+                            <Empty description={<Title level={5} style={{color: '#888'}}>Nenhum cliente encontrado.</Title>} />
+                        )}
+                    </AnimatePresence>
+                )}
 
-                    <div className="customer-stats">
-                      <div className="stat-item">
-                        <DollarCircleOutlined style={{ color: '#27ae60' }} />
-                        <Text>R$ {customer.total_spent.toFixed(2)}</Text>
-                      </div>
-                      <div className="stat-item">
-                        <StarFilled style={{ color: '#f1c40f' }} />
-                        <Text>{customer.loyalty_points} pts</Text>
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
+                <Modal
+                    title={editingCustomer ? "Editar Cliente" : "Adicionar Novo Cliente"}
+                    open={isModalVisible}
+                    onCancel={handleCancel}
+                    footer={null}
+                    destroyOnClose
+                >
+                    <CustomerForm customer={editingCustomer} onSuccess={handleFormSuccess} onCancel={handleCancel} />
+                </Modal>
             </motion.div>
-          </AnimatePresence>
-        )}
-      </motion.div>
-
-      {isFormModalVisible && (
-        <CustomerForm
-          visible={isFormModalVisible}
-          onCancel={handleFormCancel}
-          onFinish={handleFormFinish}
-          customer={editingCustomer}
-        />
-      )}
-
-      {isDetailsModalVisible && (
-        <CustomerDetailsModal
-          visible={isDetailsModalVisible}
-          onCancel={handleDetailsCancel}
-          customer={selectedCustomer}
-        />
-      )}
-    </>
-  );
+        </>
+    );
 };
 
 export default CustomerPage;

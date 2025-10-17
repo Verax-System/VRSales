@@ -8,9 +8,9 @@ import {
 } from '@ant-design/icons';
 import { Routes, Route, useNavigate, useLocation, Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-import { motion } from 'framer-motion'; // Adiciona a importação que estava em falta
-// Importação de Páginas (assumindo que estas páginas serão criadas
-import CustomerPage from './pages/CustomerPage'; // <-- Adicionar esta linha)
+import { motion } from 'framer-motion';
+
+import CustomerPage from './pages/CustomerPage';
 import RoleBasedRoute from './components/RoleBasedRoute';
 import LoginPage from './pages/LoginPage';
 import ProductPage from './pages/ProductPage';
@@ -26,17 +26,14 @@ import MarketingPage from './pages/MarketingPage';
 import FloorPlanSettingsPage from './pages/FloorPlanSettingsPage';
 import UsersPage from './pages/UsersPage';
 import OpenCashRegisterPage from './pages/OpenCashRegisterPage';
-import GlobalDashboardPage from './pages/superadmin/GlobalDashboardPage'; // Nova página
-import StoresManagementPage from './pages/superadmin/StoresManagementPage'; // Nova página
+import GlobalDashboardPage from './pages/superadmin/GlobalDashboardPage';
+import StoresManagementPage from './pages/superadmin/StoresManagementPage';
 
-// Remova App.css se não for mais necessário ou limpe o seu conteúdo
-// import './App.css';
 
 const { Header, Content, Sider } = Layout;
 
-// Definição dos itens de menu para cada tipo de utilizador
 const storeMenuItems = [
-    { key: '/customers', icon: <UserOutlined />, label: 'Clientes', roles: ['admin', 'manager', 'cashier'] }, // <-- Adicionar esta linha
+    { key: '/customers', icon: <UserOutlined />, label: 'Clientes', roles: ['admin', 'manager', 'cashier'] },
     { key: '/pos', icon: <BarcodeOutlined />, label: 'Frente de Caixa', roles: ['admin', 'manager', 'cashier'] },
     { key: '/tables', icon: <TableOutlined />, label: 'Gestão de Mesas', roles: ['admin', 'manager', 'cashier'] },
     { key: '/kds', icon: <FireOutlined />, label: 'Painel da Cozinha', roles: ['admin', 'manager'] },
@@ -55,22 +52,19 @@ const storeMenuItems = [
 
 const superAdminMenuItems = [
     { key: '/global-dashboard', icon: <GlobalOutlined />, label: 'Dashboard Global' },
+    { key: '/users', icon: <SafetyCertificateOutlined />, label: 'Gestão de Utilizadores' },
     { key: '/stores', icon: <ShopOutlined />, label: 'Gerir Lojas' },
 ];
 
-// Componente de Layout Principal (para utilizadores de loja e super admins)
 const MainLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
 
   const accessibleMenuItems = useMemo(() => {
     if (!user) return [];
-    
     const items = user.role === 'super_admin' ? superAdminMenuItems : storeMenuItems;
-    
-    // Filtra com base na role para os menus de loja
     return items.filter(item => !item.roles || item.roles.includes(user.role));
   }, [user]);
 
@@ -91,18 +85,15 @@ const MainLayout = () => {
     </Menu>
   );
 
-  if (!user) {
-    return <Navigate to="/login" />;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
   
-  // Redireciona para o dashboard correto após o login
   if (location.pathname === '/') {
     if (user.role === 'super_admin') {
       return <Navigate to="/global-dashboard" replace />;
     }
-    // O dashboard padrão '/' é para os outros utilizadores
   }
-
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -119,7 +110,8 @@ const MainLayout = () => {
             <a onClick={(e) => e.preventDefault()} className="cursor-pointer">
               <Space>
                 <Avatar style={{ backgroundColor: '#1890ff' }} icon={<UserOutlined />} />
-                <span className="text-gray-700">{user.name}</span>
+                {/* O user.full_name agora virá da API */}
+                <span className="text-gray-700">{user.full_name || 'Usuário'}</span>
               </Space>
             </a>
           </Dropdown>
@@ -139,7 +131,6 @@ const MainLayout = () => {
   );
 };
 
-// Componente Principal da Aplicação
 const App = () => {
   return (
     <Routes>
@@ -147,17 +138,14 @@ const App = () => {
       <Route path="/open-cash-register" element={<OpenCashRegisterPage />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
       
-      {/* Rotas de Layout Principal */}
       <Route path="/" element={<MainLayout />}>
-        {/* Rotas do Super Admin */}
         <Route element={<RoleBasedRoute allowedRoles={['super_admin']} />}>
           <Route path="global-dashboard" element={<GlobalDashboardPage />} />
           <Route path="stores" element={<StoresManagementPage />} />
         </Route>
         
-        {/* Rotas de Admin/Manager */}
         <Route element={<RoleBasedRoute allowedRoles={['admin', 'manager']} />}>
-          <Route index element={<DashboardPage />} /> {/* Página inicial para admins de loja */}
+          <Route index element={<DashboardPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="products" element={<ProductPage />} />
           <Route path="suppliers" element={<SupplierPage />} />
@@ -166,25 +154,20 @@ const App = () => {
           <Route path="kds" element={<KDSPage />} />
         </Route>
 
-      {/* Adicionar um novo grupo de rotas para incluir os caixas */}
         <Route element={<RoleBasedRoute allowedRoles={['admin', 'manager', 'cashier']} />}>
-          <Route path="customers" element={<CustomerPage />} /> {/* <-- Adicionar esta linha */}
+          <Route path="customers" element={<CustomerPage />} />
         </Route>
 
-
-        {/* Rotas de Admin */}
         <Route element={<RoleBasedRoute allowedRoles={['admin']} />}>
           <Route path="users" element={<UsersPage />} />
           <Route path="settings/floor-plan" element={<FloorPlanSettingsPage />} />
         </Route>
 
-        {/* Rotas de Caixa/Operador */}
         <Route element={<RoleBasedRoute allowedRoles={['admin', 'manager', 'cashier']} />}>
           <Route path="pos" element={<POSPage />} />
           <Route path="tables" element={<TableManagementPage />} />
         </Route>
 
-        {/* Rota de fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

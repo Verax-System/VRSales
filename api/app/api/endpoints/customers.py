@@ -23,8 +23,9 @@ async def create_customer(
     """
     Cria um novo cliente na loja do usuário autenticado.
     """
+    # Esta chamada agora passa o usuário para o CRUDBase modificado,
+    # que irá extrair e usar o store_id automaticamente.
     return await crud.customer.create(db=db, obj_in=customer_in, current_user=current_user)
-
 @router.get("/", response_model=List[CustomerSchema], dependencies=[Depends(full_permissions)])
 async def read_customers(
     *,

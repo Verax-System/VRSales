@@ -1,63 +1,88 @@
-import React, { useState } from 'react';
-import { Modal, Form, Input, Button, message } from 'antd';
-import { UserOutlined, MailOutlined, PhoneOutlined, IdcardOutlined } from '@ant-design/icons';
+import React, { useEffect } from 'react';
+import { Form, Input, Button, message } from 'antd';
 import ApiService from '../api/ApiService';
 
-const CustomerForm = ({ visible, onCancel, onFinish, customer }) => {
+const CustomerForm = ({ customer, onSuccess, onCancel }) => {
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
-  const isEditing = !!customer;
 
-  const onOk = async () => {
+  useEffect(() => {
+    // Se estivermos editando um cliente, preenche o formulário com os dados dele
+    if (customer) {
+      form.setFieldsValue(customer);
+    } else {
+      form.resetFields();
+    }
+  }, [customer, form]);
+
+  const onFinish = async (values) => {
     try {
-      setLoading(true);
-      const values = await form.validateFields();
-
-      if (isEditing) {
-        await ApiService.updateCustomer(customer.id, values);
+      if (customer) {
+        // Lógica de atualização (PUT)
+        await ApiService.put(`/customers/${customer.id}`, values);
         message.success('Cliente atualizado com sucesso!');
       } else {
-        await ApiService.createCustomer(values);
+        // Lógica de criação (POST)
+        await ApiService.post('/customers/', values);
         message.success('Cliente criado com sucesso!');
       }
-      onFinish();
-    } catch {
-      message.error('Ocorreu um erro ao guardar o cliente.');
-    } finally {
-      setLoading(false);
+      // --- INÍCIO DA CORREÇÃO ---
+      // Chama a função onSuccess passada pela página principal
+      if (onSuccess) {
+        onSuccess();
+      }
+      // --- FIM DA CORREÇÃO ---
+
+    } catch (error) {
+      const errorMessage = error.response?.data?.detail || 'Ocorreu um erro. Tente novamente.';
+      message.error(`Falha ao salvar cliente: ${errorMessage}`);
+      console.error('Erro ao salvar cliente:', error);
     }
   };
 
   return (
-    <Modal
-      title={isEditing ? 'Editar Cliente' : 'Criar Novo Cliente'}
-      visible={visible}
-      onCancel={onCancel}
-      destroyOnClose
-      footer={[
-        <Button key="back" onClick={onCancel}>
-          Cancelar
-        </Button>,
-        <Button key="submit" type="primary" loading={loading} onClick={onOk}>
-          Guardar
-        </Button>,
-      ]}
+    <Form
+      form={form}
+      layout="vertical"
+      onFinish={onFinish}
+      initialValues={customer}
     >
-      <Form form={form} layout="vertical" initialValues={customer || {}}>
-        <Form.Item name="full_name" label="Nome Completo" rules={[{ required: true, message: 'O nome é obrigatório' }]}>
-          <Input prefix={<UserOutlined />} placeholder="João da Silva" />
-        </Form.Item>
-        <Form.Item name="email" label="Email" rules={[{ type: 'email', message: 'Insira um email válido' }]}>
-          <Input prefix={<MailOutlined />} placeholder="joao.silva@email.com" />
-        </Form.Item>
-        <Form.Item name="phone_number" label="Telefone">
-          <Input prefix={<PhoneOutlined />} placeholder="(XX) XXXXX-XXXX" />
-        </Form.Item>
-        <Form.Item name="document_number" label="Documento (CPF/CNPJ)">
-          <Input prefix={<IdcardOutlined />} />
-        </Form.Item>
-      </Form>
-    </Modal>
+      <Form.Item
+        name="full_name"
+        label="Nome Completo"
+        rules={[{ required: true, message: 'Por favor, insira o nome completo.' }]}
+      >
+        <Input />
+      </Form.Item>
+      <Form.Item
+        name="email"
+        label="Email"
+        rules={[{ type: 'email', message: 'O email inserido não é válido.' }]}
+      >
+        <Input />
+      </Form.Item>
+      <Form.Item
+        name="phone_number"
+        label="Número de Telefone"
+      >
+        <Input />
+      </Form.Item>
+      <Form.Item
+        name="document_number"
+        label="CPF/CNPJ"
+      >
+        <Input />
+      </Form.Item>
+
+      {/* Botões de Ação */}
+      <Form.Item style={{ textAlign: 'right', marginBottom: 0 }}>
+        <Button onClick={onCancel} style={{ marginRight: 8 }}>
+          Cancelar
+        </Button>
+        <Button type="primary" htmlType="submit">
+          Guardar
+        </Button>
+      </Form.Item>
+    </Form>
   );
 };
 
