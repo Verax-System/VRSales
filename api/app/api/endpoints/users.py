@@ -50,7 +50,7 @@ async def create_user(
     if user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Já existe um usuário com este e-mail.")
     
-    new_user = await crud.user.create(db, obj_in=user_in)
+    new_user = await crud.user.create(db, obj_in=user_in, current_user=current_user) # Adicionado current_user
     return new_user
 
 # --- INÍCIO DA CORREÇÃO ---
@@ -66,14 +66,15 @@ async def read_user_me(
 # --- FIM DA CORREÇÃO ---
 
 
-@router.get("/", response_model=List[UserSchema], dependencies=[Depends(dependencies.RoleChecker(admin_roles))])
+@router.get("/", response_model=List[UserSchema])
 async def read_users(
     db: AsyncSession = Depends(dependencies.get_db),
     skip: int = 0,
     limit: int = 100,
+    current_user: UserModel = Depends(dependencies.RoleChecker(admin_roles)) # <- MUDANÇA AQUI
 ) -> Any:
     """
     Recupera a lista de usuários.
     """
-    users = await crud.user.get_multi(db, skip=skip, limit=limit)
+    users = await crud.user.get_multi(db, skip=skip, limit=limit, current_user=current_user) # E AQUI
     return users
