@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-// Garantindo que TODOS os componentes AntD estão importados
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Card, Row, Col, Typography, Tag, Modal, Button, message, Spin, Empty, List, Avatar, Divider, Form, Input, Popconfirm, Space } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TableOutlined, PlusOutlined, DollarCircleOutlined, CloseCircleOutlined, QuestionCircleOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons';
@@ -10,96 +9,20 @@ import { useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
-// Estilos embutidos para a nova página
 const PageStyles = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-
-    .table-mgmt-page-container {
-      padding: 24px;
-      background-color: #f0f2f5;
-      font-family: 'Inter', sans-serif;
-      min-height: 100vh;
-    }
-
-    .table-mgmt-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-      padding: 20px 24px;
-      background: linear-gradient(135deg, #007BFF 0%, #00C6FF 100%);
-      border-radius: 16px;
-      color: white;
-      box-shadow: 0 10px 30px -10px rgba(0, 123, 255, 0.5);
-    }
-
-    .floor-plan-canvas {
-      position: relative;
-      height: 75vh;
-      width: 100%;
-      border-radius: 16px;
-      overflow: hidden;
-      background-color: #1a202c;
-      background-image:
-        linear-gradient(rgba(0, 198, 255, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 198, 255, 0.1) 1px, transparent 1px);
-      background-size: 25px 25px;
-      box-shadow: inset 0 0 20px rgba(0,0,0,0.4);
-      animation: bg-pan 45s linear infinite;
-    }
-
+    .table-mgmt-page-container { padding: 24px; background-color: #f0f2f5; font-family: 'Inter', sans-serif; min-height: 100vh; }
+    .table-mgmt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 20px 24px; background: linear-gradient(135deg, #007BFF 0%, #00C6FF 100%); border-radius: 16px; color: white; box-shadow: 0 10px 30px -10px rgba(0, 123, 255, 0.5); }
+    .floor-plan-canvas { position: relative; height: 75vh; width: 100%; border-radius: 16px; overflow: hidden; background-color: #1a202c; background-image: linear-gradient(rgba(0, 198, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 198, 255, 0.1) 1px, transparent 1px); background-size: 25px 25px; box-shadow: inset 0 0 20px rgba(0,0,0,0.4); animation: bg-pan 45s linear infinite; }
     @keyframes bg-pan { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
-
-    .table-wrapper {
-        position: absolute;
-        width: 100px;
-        height: 100px;
-        z-index: 1;
-    }
-    
-    .table-circle {
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: 3px solid;
-    }
-
-    .table-circle.available {
-        background: rgba(46, 204, 113, 0.1);
-        border-color: #2ecc71;
-        color: #2ecc71;
-        box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
-    }
-    
-    .table-circle.occupied {
-        background: rgba(231, 76, 60, 0.1);
-        border-color: #e74c3c;
-        color: #e74c3c;
-        box-shadow: 0 0 15px rgba(231, 76, 60, 0.5);
-    }
-
-    .table-circle:hover {
-        transform: scale(1.1);
-    }
-    
-    .table-number {
-        font-size: 1.8rem;
-        font-weight: 700;
-        line-height: 1;
-    }
-    
-    .table-status {
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-transform: uppercase;
-    }
+    .table-wrapper { position: absolute; width: 100px; height: 100px; z-index: 1; }
+    .table-circle { width: 100%; height: 100%; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s ease; border: 3px solid; }
+    .table-circle.available { background: rgba(46, 204, 113, 0.1); border-color: #2ecc71; color: #2ecc71; box-shadow: 0 0 15px rgba(46, 204, 113, 0.5); }
+    .table-circle.occupied { background: rgba(231, 76, 60, 0.1); border-color: #e74c3c; color: #e74c3c; box-shadow: 0 0 15px rgba(231, 76, 60, 0.5); }
+    .table-circle:hover { transform: scale(1.1); }
+    .table-number { font-size: 1.8rem; font-weight: 700; line-height: 1; }
+    .table-status { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; }
   `}</style>
 );
 
@@ -115,25 +38,26 @@ const TableManagementPage = () => {
     const navigate = useNavigate();
     const [isConfirmOpenModalVisible, setIsConfirmOpenModalVisible] = useState(false);
     const [tableToOpen, setTableToOpen] = useState(null);
-  
+    const floorPlanRef = useRef(null);
+ 
     const fetchTables = useCallback(async () => {
       try {
-        const response = await ApiService.getTables();
+        const response = await ApiService.get('/tables/');
         setTables(response.data);
-      } catch (error) {
+      } catch {
         message.error('Erro ao carregar mesas.');
       } finally {
         setLoading(false);
       }
     }, []);
-  
+ 
     useEffect(() => {
       setLoading(true);
       fetchTables();
       const interval = setInterval(fetchTables, 15000);
       return () => clearInterval(interval);
     }, [fetchTables]);
-  
+ 
     const groupedOrderItems = useMemo(() => {
         if (!selectedOrder?.items) return [];
         return selectedOrder.items.reduce((acc, item) => {
@@ -146,7 +70,7 @@ const TableManagementPage = () => {
           return acc;
         }, []);
     }, [selectedOrder]);
-  
+ 
     const handleTableClick = async (table) => {
       if (table.status === 'available') {
         setTableToOpen(table);
@@ -155,9 +79,9 @@ const TableManagementPage = () => {
         setModalLoading(true);
         setIsOrderModalVisible(true);
         try {
-          const response = await ApiService.getOpenOrderByTable(table.id);
+          const response = await ApiService.get(`/orders/table/${table.id}/open`);
           setSelectedOrder(response.data);
-        } catch (error) {
+        } catch{
           message.error('Não foi possível carregar a comanda desta mesa.');
           setIsOrderModalVisible(false);
         } finally {
@@ -165,14 +89,14 @@ const TableManagementPage = () => {
         }
       }
     };
-  
+ 
     const handleConfirmOpenOrder = async () => {
         if (!tableToOpen) return;
         setIsConfirmOpenModalVisible(false);
         setModalLoading(true);
         message.loading({ content: 'Abrindo comanda...', key: 'opening_order' });
         try {
-          const response = await ApiService.createOrderForTable({ table_id: tableToOpen.id });
+          const response = await ApiService.post('/orders/', { table_id: tableToOpen.id });
           setSelectedOrder(response.data);
           setIsOrderModalVisible(true);
           fetchTables();
@@ -192,27 +116,47 @@ const TableManagementPage = () => {
         try {
             const values = await addForm.validateFields();
             setModalLoading(true);
-            await ApiService.createTable(values);
+
+            const canvasWidth = floorPlanRef.current ? floorPlanRef.current.offsetWidth : 800;
+            const tableSize = 100;
+            const spacing = 20;
+            const itemWidth = tableSize + spacing;
+            
+            // Garante que tablesPerRow seja no mínimo 1 para evitar divisão por zero
+            const tablesPerRow = Math.max(1, Math.floor((canvasWidth - spacing) / itemWidth));
+            const existingTablesCount = tables.length;
+            
+            const col = existingTablesCount % tablesPerRow;
+            const row = Math.floor(existingTablesCount / tablesPerRow);
+            
+            const newX = col * itemWidth + spacing;
+            const newY = row * itemWidth + spacing;
+
+            const payload = { ...values, pos_x: newX, pos_y: newY };
+            
+            await ApiService.post('/tables/', payload);
+            
             message.success(`Mesa "${values.number}" criada com sucesso!`);
             handleAddCancel();
             fetchTables();
         } catch (error) {
-            if (error.response) { message.error(error.response.data?.detail || 'Erro ao salvar no servidor.'); }
+            if (error.response) { message.error(error.response.data?.detail || 'Erro ao salvar no servidor.'); } 
+            else { message.error('Erro de validação ou de rede.'); }
         } finally {
             setModalLoading(false);
         }
     };
-  
+ 
     const refreshSelectedOrder = async () => {
         if (!selectedOrder) return;
         setModalLoading(true);
         try {
-          const response = await ApiService.getOpenOrderByTable(selectedOrder.table_id);
+          const response = await ApiService.get(`/orders/table/${selectedOrder.table_id}/open`);
           setSelectedOrder(response.data);
-        } catch (error) { message.error('Não foi possível atualizar a comanda.'); }
+        } catch  { message.error('Não foi possível atualizar a comanda.'); }
         finally { setModalLoading(false); }
     };
-  
+ 
     const getStatusProps = (status) => {
       switch (status) {
         case 'occupied': return { variant: 'occupied', label: 'Ocupada' };
@@ -220,7 +164,7 @@ const TableManagementPage = () => {
         default: return { variant: 'default', label: 'N/A' };
       }
     };
-  
+ 
     const handleGoToPayment = () => {
       if (!selectedOrder || selectedOrder.items.length === 0) {
         message.warning('Adicione pelo menos um item à comanda antes de ir para o pagamento.');
@@ -239,7 +183,7 @@ const TableManagementPage = () => {
         if (!selectedOrder) return;
         setModalLoading(true);
         try {
-          await ApiService.cancelOrder(selectedOrder.id);
+          await ApiService.patch(`/orders/${selectedOrder.id}/cancel`);
           message.success('Comanda cancelada com sucesso!');
           setIsOrderModalVisible(false);
           setSelectedOrder(null);
@@ -250,11 +194,11 @@ const TableManagementPage = () => {
           setModalLoading(false);
         }
     };
-  
+ 
     if (loading && !tables.length) {
       return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><Spin tip="Carregando mesas..." size="large" /></div>;
     }
-  
+ 
     return (
       <>
         <PageStyles />
@@ -271,7 +215,7 @@ const TableManagementPage = () => {
                 </Space>
             </div>
             
-            <motion.div className="floor-plan-canvas">
+            <motion.div className="floor-plan-canvas" ref={floorPlanRef}>
                 <AnimatePresence>
                     {tables.length > 0 ? (
                         tables.map(table => {
@@ -293,7 +237,7 @@ const TableManagementPage = () => {
                             );
                         })
                     ) : (
-                        <Empty description="Nenhuma mesa cadastrada." style={{ paddingTop: '25vh' }}/>
+                        !loading && <Empty description="Nenhuma mesa cadastrada." style={{ paddingTop: '25vh' }}/>
                     )}
                 </AnimatePresence>
             </motion.div>

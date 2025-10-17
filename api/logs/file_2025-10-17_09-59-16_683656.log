@@ -1,0 +1,14 @@
+2025-10-17 09:59:16.699 | INFO     | app.core.logging_config:setup_logging:60 - Configuração de logging concluída e interceptadores ativados.
+2025-10-17 09:59:18.274 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 220.35ms
+2025-10-17 09:59:23.859 | INFO     | main:log_requests:47 - Request: POST /api/v1/tables/ | Status: 201 | Duration: 10.99ms
+2025-10-17 09:59:23.876 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 17.01ms
+2025-10-17 09:59:27.277 | INFO     | main:log_requests:47 - Request: POST /api/v1/tables/ | Status: 201 | Duration: 11.91ms
+2025-10-17 09:59:27.277 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 0.00ms
+2025-10-17 09:59:30.114 | INFO     | main:log_requests:47 - Request: POST /api/v1/tables/ | Status: 201 | Duration: 0.00ms
+2025-10-17 09:59:30.130 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 15.75ms
+2025-10-17 09:59:30.650 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 0.00ms
+2025-10-17 09:59:33.367 | INFO     | main:log_requests:47 - Request: POST /api/v1/tables/ | Status: 201 | Duration: 0.00ms
+2025-10-17 09:59:33.383 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 16.86ms
+2025-10-17 09:59:45.646 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 0.00ms
+2025-10-17 09:59:48.657 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 2.43ms
+2025-10-17 09:59:48.657 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 0.00ms

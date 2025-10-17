@@ -7,7 +7,8 @@ from app.crud.base import CRUDBase
 from app.models.order import Order, OrderItem
 from app.models.product import Product
 from app.models.user import User
-from app.models.table import Table, TableStatus
+from app.models.table import Table
+from app.schemas.enums import TableStatus
 from app.schemas.order import OrderCreate, OrderUpdate, OrderItemCreate
 from app.schemas.enums import OrderStatus, OrderType, OrderItemStatus
 
