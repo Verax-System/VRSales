@@ -10,6 +10,7 @@ import { Routes, Route, useNavigate, useLocation, Outlet, Navigate } from 'react
 import { useAuth } from './context/AuthContext';
 import { motion } from 'framer-motion';
 
+import vrSalesLogo from './assets/logo-vrsales.png';
 import CustomerPage from './pages/CustomerPage';
 import RoleBasedRoute from './components/RoleBasedRoute';
 import LoginPage from './pages/LoginPage';
@@ -33,21 +34,57 @@ import StoresManagementPage from './pages/superadmin/StoresManagementPage';
 const { Header, Content, Sider } = Layout;
 
 const storeMenuItems = [
-    { key: '/customers', icon: <UserOutlined />, label: 'Clientes', roles: ['admin', 'manager', 'cashier'] },
+
+  {
+    label: 'Vendas e Operações',
+    key: 'grp-sales',
+    type: 'group',
+    roles: ['admin', 'manager', 'cashier'], // O grupo é visível para todos
+    children: [
     { key: '/pos', icon: <BarcodeOutlined />, label: 'Frente de Caixa', roles: ['admin', 'manager', 'cashier'] },
     { key: '/tables', icon: <TableOutlined />, label: 'Gestão de Mesas', roles: ['admin', 'manager', 'cashier'] },
     { key: '/kds', icon: <FireOutlined />, label: 'Painel da Cozinha', roles: ['admin', 'manager'] },
-    { type: 'divider', roles: ['admin', 'manager'] },
+    ],
+  },
+  { type: 'divider', roles: ['admin', 'manager'] }, // Divisor
+
+{
+    label: 'Análise e Marketing',
+    key: 'grp-analytics',
+    type: 'group',
+    roles: ['admin', 'manager'],
+    children: [
     { key: '/', icon: <AreaChartOutlined />, label: 'Análise da Loja', roles: ['admin', 'manager'] },
     { key: '/reports', icon: <LineChartOutlined />, label: 'Relatórios', roles: ['admin', 'manager'] },
     { key: '/marketing', icon: <RocketOutlined />, label: 'Marketing', roles: ['admin', 'manager'] },
-    { type: 'divider', roles: ['admin', 'manager'] },
+    { key: '/customers', icon: <UserOutlined />, label: 'Clientes', roles: ['admin', 'manager', 'cashier'] },
+    ],
+  },
+  { type: 'divider', roles: ['admin', 'manager'] },
+
+{
+    label: 'Gestão de Estoque',
+    key: 'grp-management',
+    type: 'group',
+    roles: ['admin', 'manager'],
+    children: [
     { key: '/products', icon: <AppstoreOutlined />, label: 'Produtos', roles: ['admin', 'manager'] },
     { key: '/suppliers', icon: <TeamOutlined />, label: 'Fornecedores', roles: ['admin', 'manager'] },
     { key: '/expiration', icon: <CalendarOutlined />, label: 'Validade', roles: ['admin', 'manager'] },
-    { type: 'divider', roles: ['admin'] },
+    ],
+  },
+  { type: 'divider', roles: ['admin'] },
+
+  {
+    label: 'Administração',
+    key: 'grp-admin',
+    type: 'group',
+    roles: ['admin'],
+    children: [
     { key: '/users', icon: <SafetyCertificateOutlined />, label: 'Utilizadores', roles: ['admin'] },
     { key: '/settings/floor-plan', icon: <LayoutOutlined />, label: 'Layout do Salão', roles: ['admin'] },
+    ],
+  },
 ];
 
 const superAdminMenuItems = [
@@ -98,9 +135,20 @@ const MainLayout = () => {
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed} theme="dark" className="!bg-gray-900">
-        <div className="flex items-center justify-center h-16 text-white text-xl">
-          <DesktopOutlined className="transition-all" style={{ fontSize: collapsed ? '24px' : '20px' }} />
-          {!collapsed && <span className="ml-2 font-semibold">VR Sales</span>}
+        <div className="flex items-center justify-center h-16 p-2">
+          {collapsed ? (
+            <img 
+              src={vrSalesLogo} 
+              alt="VR Sales" 
+              className="h-10 w-10 object-contain transition-all" 
+            />
+          ) : (
+            <img 
+              src={vrSalesLogo} 
+              alt="VR Sales" 
+              className="h-12 max-w-full object-contain transition-all" 
+            />
+          )}
         </div>
         <Menu theme="dark" selectedKeys={[location.pathname]} mode="inline" items={accessibleMenuItems} onClick={handleMenuClick} className="!bg-gray-900" />
       </Sider>

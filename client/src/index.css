@@ -34,3 +34,7 @@ body {
     margin-top: 4px;
     margin-bottom: 4px;
 }
+.ant-menu-dark.ant-menu-inline .ant-menu-item-group-title {
+    font-weight: 700; /* 700 é o valor para "bold" (negrito) */
+    color: #c6ced8;   /* Um cinza um pouco mais claro para destacar */
+}

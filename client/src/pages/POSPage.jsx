@@ -40,6 +40,8 @@ const PageStyles = () => (
       font-family: 'Inter', sans-serif;
       background-color: var(--page-bg);
       color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
     }
 
     /* NOVO: Header Colorido */
@@ -65,11 +67,14 @@ const PageStyles = () => (
     .pos-content-layout {
         padding: 16px 24px 24px 24px;
         background: transparent;
+        flex: 1;
+        min-height: 0;
     }
 
     .pos-main-content {
       display: flex; flex-direction: column;
-      height: 100%; gap: 16px;
+      gap: 16px;
+      height: 100%; 
     }
 
     .clean-card {
@@ -77,12 +82,26 @@ const PageStyles = () => (
         border: none; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
         height: 100%;
     }
-    
+
+    .cart-table-card {
+        flex: 1;
+        min-height: 0; /* Garante que ele possa encolher */
+        display: flex;
+        flex-direction: column;
+    }
+
     .cart-table-card .ant-card-body {
         padding: 8px; height: 100%; display: flex; flex-direction: column;
     }
     
-    .cart-table .ant-table-wrapper { flex-grow: 1; }
+.cart-table .ant-table-wrapper { 
+      /* --- INÍCIO DA ALTERAÇÃO --- */
+      /* 5. É o wrapper da tabela que deve rolar, não a tabela em si */
+      flex: 1; 
+      min-height: 0;
+      overflow-y: auto; 
+      /* --- FIM DA ALTERAÇÃO --- */
+    }
 
     /* NOVO: Cabeçalho da tabela colorido */
     .cart-table .ant-table-thead > tr > th {
@@ -118,6 +137,7 @@ const PageStyles = () => (
         height: 100%; background: var(--card-bg);
         border-radius: 16px; padding: 24px;
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+        overflow-y: auto;
     }
 
     /* NOVO: Destaque na Seção de Pagamento */
@@ -306,7 +326,6 @@ const POSPage = () => {
               <Card className="clean-card cart-table-card">
                 <Table
                   className="cart-table" columns={cartColumns} dataSource={cartItems} rowKey="id" pagination={false}
-                  scroll={{ y: 'calc(100vh - 300px)' }}
                   locale={{ emptyText: <Empty description="Nenhum item no carrinho." /> }}
                   rowClassName={(record) => record.id === lastAddedItem?.id ? 'highlight-new-item' : '' }
                 />
