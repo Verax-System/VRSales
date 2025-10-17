@@ -1,4 +1,4 @@
-from pydantic import Field, validator
+from pydantic import Field, validator, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 
@@ -70,7 +70,6 @@ class ProductBase(BaseSchema):
 # =====================================================================================
 class ProductCreate(ProductBase):
     """Schema usado para criar um novo produto no sistema."""
-    # Herda todos os campos e validações de ProductBase
     pass
 
 # =====================================================================================
@@ -102,7 +101,8 @@ class Product(ProductBase):
     
     # Relacionamentos (carregados via ORM)
     category: Optional[ProductCategory] = None
+    subcategory: Optional[ProductSubcategory] = None # <-- Adicionado para consistência
     variations: List[ProductVariation] = []
 
-    class Config:
-        orm_mode = True
+    # CORREÇÃO: 'orm_mode=True' foi substituído por 'from_attributes=True' no Pydantic V2
+    model_config = ConfigDict(from_attributes=True)

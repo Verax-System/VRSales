@@ -1,46 +1,29 @@
-2025-10-17 09:59:16.699 | INFO     | app.core.logging_config:setup_logging:60 - Configuração de logging concluída e interceptadores ativados.
-2025-10-17 09:59:18.274 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 220.35ms
-2025-10-17 09:59:23.859 | INFO     | main:log_requests:47 - Request: POST /api/v1/tables/ | Status: 201 | Duration: 10.99ms
-2025-10-17 09:59:23.876 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 17.01ms
-2025-10-17 09:59:27.277 | INFO     | main:log_requests:47 - Request: POST /api/v1/tables/ | Status: 201 | Duration: 11.91ms
-2025-10-17 09:59:27.277 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 0.00ms
-2025-10-17 09:59:30.114 | INFO     | main:log_requests:47 - Request: POST /api/v1/tables/ | Status: 201 | Duration: 0.00ms
-2025-10-17 09:59:30.130 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 15.75ms
-2025-10-17 09:59:30.650 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 0.00ms
-2025-10-17 09:59:33.367 | INFO     | main:log_requests:47 - Request: POST /api/v1/tables/ | Status: 201 | Duration: 0.00ms
-2025-10-17 09:59:33.383 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 16.86ms
-2025-10-17 09:59:45.646 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 0.00ms
-2025-10-17 09:59:48.657 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 2.43ms
-2025-10-17 09:59:48.657 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 0.00ms
-2025-10-17 10:02:59.490 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 0.00ms
-2025-10-17 10:02:59.498 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 7.32ms
-2025-10-17 10:04:54.989 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns/ | Status: 307 | Duration: 0.00ms
-2025-10-17 10:04:54.989 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns | Status: 200 | Duration: 0.00ms
-2025-10-17 10:05:05.298 | INFO     | main:log_requests:47 - Request: POST /api/v1/marketing/campaigns/ | Status: 307 | Duration: 0.00ms
-2025-10-17 10:05:05.299 | INFO     | main:log_requests:47 - Request: POST /api/v1/marketing/campaigns | Status: 201 | Duration: 0.00ms
-2025-10-17 10:05:05.299 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns/ | Status: 307 | Duration: 0.00ms
-2025-10-17 10:05:05.315 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns | Status: 200 | Duration: 0.00ms
-2025-10-17 10:05:08.862 | INFO     | main:log_requests:47 - Request: PUT /api/v1/marketing/campaigns/1 | Status: 200 | Duration: 0.87ms
-2025-10-17 10:05:08.862 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns/ | Status: 307 | Duration: 0.00ms
-2025-10-17 10:05:08.875 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns | Status: 200 | Duration: 0.00ms
-2025-10-17 10:05:36.150 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns/ | Status: 307 | Duration: 0.00ms
-2025-10-17 10:05:36.150 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns/ | Status: 307 | Duration: 0.00ms
-2025-10-17 10:05:36.150 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns | Status: 200 | Duration: 0.00ms
-2025-10-17 10:05:36.164 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns | Status: 200 | Duration: 14.10ms
-2025-10-17 10:05:38.884 | INFO     | main:log_requests:47 - Request: DELETE /api/v1/marketing/campaigns/1 | Status: 204 | Duration: 0.95ms
-2025-10-17 10:05:38.884 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns/ | Status: 307 | Duration: 0.00ms
-2025-10-17 10:05:38.884 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns | Status: 200 | Duration: 0.00ms
-2025-10-17 10:05:42.986 | INFO     | main:log_requests:47 - Request: POST /api/v1/marketing/campaigns/ | Status: 307 | Duration: 0.00ms
-2025-10-17 10:05:42.987 | INFO     | main:log_requests:47 - Request: POST /api/v1/marketing/campaigns | Status: 201 | Duration: 0.00ms
-2025-10-17 10:05:42.993 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns/ | Status: 307 | Duration: 0.00ms
-2025-10-17 10:05:43.003 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns | Status: 200 | Duration: 0.00ms
-2025-10-17 10:06:01.055 | INFO     | main:log_requests:47 - Request: GET /api/v1/products/ | Status: 200 | Duration: 33.00ms
-2025-10-17 10:06:01.055 | INFO     | main:log_requests:47 - Request: GET /api/v1/products/ | Status: 200 | Duration: 0.00ms
-2025-10-17 10:07:26.306 | ERROR    | app.core.exception_handler:global_exception_handler:12 - Erro inesperado na requisição: POST http://localhost:8000/api/v1/products/
-2025-10-17 10:07:26.306 | ERROR    | app.core.exception_handler:global_exception_handler:13 - Exceção: 1 validation errors:
-  {'type': 'get_attribute_error', 'loc': ('response', 'variations'), 'msg': "Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)", 'input': <app.models.product.Product object at 0x00000184442D5590>, 'ctx': {'error': "MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)"}}
-
-2025-10-17 10:07:26.341 | ERROR    | app.core.exception_handler:global_exception_handler:14 - Traceback:   + Exception Group Traceback (most recent call last):
+2025-10-17 10:56:42.348 | INFO     | app.core.logging_config:setup_logging:60 - Configuração de logging concluída e interceptadores ativados.
+2025-10-17 10:56:44.555 | INFO     | main:log_requests:47 - Request: POST /api/v1/suppliers/ | Status: 201 | Duration: 238.45ms
+2025-10-17 10:56:44.561 | INFO     | main:log_requests:47 - Request: GET /api/v1/suppliers/ | Status: 200 | Duration: 0.00ms
+2025-10-17 10:56:50.034 | INFO     | main:log_requests:47 - Request: GET /api/v1/batches/ | Status: 200 | Duration: 13.58ms
+2025-10-17 10:56:50.034 | INFO     | main:log_requests:47 - Request: GET /api/v1/batches/ | Status: 200 | Duration: 0.00ms
+2025-10-17 10:56:50.901 | INFO     | main:log_requests:47 - Request: GET /api/v1/products/ | Status: 200 | Duration: 10.84ms
+2025-10-17 10:56:50.910 | INFO     | main:log_requests:47 - Request: GET /api/v1/products/ | Status: 200 | Duration: 9.02ms
+2025-10-17 10:56:52.003 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns/ | Status: 307 | Duration: 1.01ms
+2025-10-17 10:56:52.005 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns/ | Status: 307 | Duration: 0.10ms
+2025-10-17 10:56:52.011 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns | Status: 200 | Duration: 1.06ms
+2025-10-17 10:56:52.020 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns | Status: 200 | Duration: 0.50ms
+2025-10-17 10:56:56.589 | INFO     | main:log_requests:47 - Request: POST /api/v1/marketing/campaigns/ | Status: 307 | Duration: 0.97ms
+2025-10-17 10:56:56.592 | INFO     | main:log_requests:47 - Request: POST /api/v1/marketing/campaigns | Status: 201 | Duration: 0.00ms
+2025-10-17 10:56:56.592 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns/ | Status: 307 | Duration: 0.00ms
+2025-10-17 10:56:56.607 | INFO     | main:log_requests:47 - Request: GET /api/v1/marketing/campaigns | Status: 200 | Duration: 15.63ms
+2025-10-17 10:57:01.140 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 19.28ms
+2025-10-17 10:57:01.144 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 2.41ms
+2025-10-17 10:57:04.531 | INFO     | main:log_requests:47 - Request: GET /api/v1/customers/ | Status: 200 | Duration: 13.81ms
+2025-10-17 10:57:04.532 | INFO     | main:log_requests:47 - Request: GET /api/v1/customers/ | Status: 200 | Duration: 0.00ms
+2025-10-17 10:57:08.653 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 0.00ms
+2025-10-17 10:57:08.671 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 2.72ms
+2025-10-17 10:57:21.187 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 3.36ms
+2025-10-17 10:57:21.190 | INFO     | main:log_requests:47 - Request: GET /api/v1/tables/ | Status: 200 | Duration: 1.83ms
+2025-10-17 10:58:47.978 | ERROR    | app.core.exception_handler:global_exception_handler:12 - Erro inesperado na requisição: GET http://localhost:8000/api/v1/users/
+2025-10-17 10:58:47.978 | ERROR    | app.core.exception_handler:global_exception_handler:13 - Exceção: CRUDBase.get_multi() missing 1 required keyword-only argument: 'current_user'
+2025-10-17 10:58:47.991 | ERROR    | app.core.exception_handler:global_exception_handler:14 - Traceback:   + Exception Group Traceback (most recent call last):
   |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\_utils.py", line 87, in collapse_excgroups
   |     yield
   |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 190, in __call__
@@ -97,14 +80,16 @@
     |     await self.gen.athrow(typ, value, traceback)
     |   File "C:\Users\Vitor Lemes\Downloads\VRSales\api\app\api\dependencies.py", line 25, in get_db
     |     yield db
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 296, in app
-    |     content = await serialize_response(
-    |               ^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 155, in serialize_response
-    |     raise ResponseValidationError(
-    | fastapi.exceptions.ResponseValidationError: 1 validation errors:
-    |   {'type': 'get_attribute_error', 'loc': ('response', 'variations'), 'msg': "Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)", 'input': <app.models.product.Product object at 0x00000184442D5590>, 'ctx': {'error': "MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)"}}
-    | 
+    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 278, in app
+    |     raw_response = await run_endpoint_function(
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 191, in run_endpoint_function
+    |     return await dependant.call(**values)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\Vitor Lemes\Downloads\VRSales\api\app\api\endpoints\users.py", line 78, in read_users
+    |     users = await crud.user.get_multi(db, skip=skip, limit=limit)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | TypeError: CRUDBase.get_multi() missing 1 required keyword-only argument: 'current_user'
     +------------------------------------
 
 During handling of the above exception, another exception occurred:
@@ -157,22 +142,22 @@ Traceback (most recent call last):
     await self.gen.athrow(typ, value, traceback)
   File "C:\Users\Vitor Lemes\Downloads\VRSales\api\app\api\dependencies.py", line 25, in get_db
     yield db
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 296, in app
-    content = await serialize_response(
-              ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 155, in serialize_response
-    raise ResponseValidationError(
-fastapi.exceptions.ResponseValidationError: 1 validation errors:
-  {'type': 'get_attribute_error', 'loc': ('response', 'variations'), 'msg': "Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)", 'input': <app.models.product.Product object at 0x00000184442D5590>, 'ctx': {'error': "MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)"}}
+  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 278, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 191, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Vitor Lemes\Downloads\VRSales\api\app\api\endpoints\users.py", line 78, in read_users
+    users = await crud.user.get_multi(db, skip=skip, limit=limit)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: CRUDBase.get_multi() missing 1 required keyword-only argument: 'current_user'
 
-
-2025-10-17 10:07:49.104 | INFO     | main:log_requests:47 - Request: GET /api/v1/users/me | Status: 200 | Duration: 15.53ms
-2025-10-17 10:07:49.108 | INFO     | main:log_requests:47 - Request: GET /api/v1/users/me | Status: 200 | Duration: 2.01ms
-2025-10-17 10:07:49.199 | ERROR    | app.core.exception_handler:global_exception_handler:12 - Erro inesperado na requisição: GET http://localhost:8000/api/v1/products/
-2025-10-17 10:07:49.199 | ERROR    | app.core.exception_handler:global_exception_handler:13 - Exceção: 1 validation errors:
-  {'type': 'get_attribute_error', 'loc': ('response', 0, 'variations'), 'msg': "Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)", 'input': <app.models.product.Product object at 0x0000018444455050>, 'ctx': {'error': "MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)"}}
-
-2025-10-17 10:07:49.202 | ERROR    | app.core.exception_handler:global_exception_handler:14 - Traceback:   + Exception Group Traceback (most recent call last):
+2025-10-17 10:58:51.131 | INFO     | main:log_requests:47 - Request: GET /api/v1/users/me | Status: 200 | Duration: 2.12ms
+2025-10-17 10:58:51.136 | INFO     | main:log_requests:47 - Request: GET /api/v1/users/me | Status: 200 | Duration: 3.00ms
+2025-10-17 10:58:51.255 | ERROR    | app.core.exception_handler:global_exception_handler:12 - Erro inesperado na requisição: GET http://localhost:8000/api/v1/users/
+2025-10-17 10:58:51.255 | ERROR    | app.core.exception_handler:global_exception_handler:13 - Exceção: CRUDBase.get_multi() missing 1 required keyword-only argument: 'current_user'
+2025-10-17 10:58:51.257 | ERROR    | app.core.exception_handler:global_exception_handler:14 - Traceback:   + Exception Group Traceback (most recent call last):
   |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\_utils.py", line 87, in collapse_excgroups
   |     yield
   |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 190, in __call__
@@ -229,14 +214,16 @@ fastapi.exceptions.ResponseValidationError: 1 validation errors:
     |     await self.gen.athrow(typ, value, traceback)
     |   File "C:\Users\Vitor Lemes\Downloads\VRSales\api\app\api\dependencies.py", line 25, in get_db
     |     yield db
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 296, in app
-    |     content = await serialize_response(
-    |               ^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 155, in serialize_response
-    |     raise ResponseValidationError(
-    | fastapi.exceptions.ResponseValidationError: 1 validation errors:
-    |   {'type': 'get_attribute_error', 'loc': ('response', 0, 'variations'), 'msg': "Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)", 'input': <app.models.product.Product object at 0x0000018444455050>, 'ctx': {'error': "MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)"}}
-    | 
+    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 278, in app
+    |     raw_response = await run_endpoint_function(
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 191, in run_endpoint_function
+    |     return await dependant.call(**values)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\Vitor Lemes\Downloads\VRSales\api\app\api\endpoints\users.py", line 78, in read_users
+    |     users = await crud.user.get_multi(db, skip=skip, limit=limit)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | TypeError: CRUDBase.get_multi() missing 1 required keyword-only argument: 'current_user'
     +------------------------------------
 
 During handling of the above exception, another exception occurred:
@@ -289,20 +276,20 @@ Traceback (most recent call last):
     await self.gen.athrow(typ, value, traceback)
   File "C:\Users\Vitor Lemes\Downloads\VRSales\api\app\api\dependencies.py", line 25, in get_db
     yield db
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 296, in app
-    content = await serialize_response(
-              ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 155, in serialize_response
-    raise ResponseValidationError(
-fastapi.exceptions.ResponseValidationError: 1 validation errors:
-  {'type': 'get_attribute_error', 'loc': ('response', 0, 'variations'), 'msg': "Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)", 'input': <app.models.product.Product object at 0x0000018444455050>, 'ctx': {'error': "MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)"}}
+  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 278, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 191, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Vitor Lemes\Downloads\VRSales\api\app\api\endpoints\users.py", line 78, in read_users
+    users = await crud.user.get_multi(db, skip=skip, limit=limit)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: CRUDBase.get_multi() missing 1 required keyword-only argument: 'current_user'
 
-
-2025-10-17 10:07:49.202 | ERROR    | app.core.exception_handler:global_exception_handler:12 - Erro inesperado na requisição: GET http://localhost:8000/api/v1/products/
-2025-10-17 10:07:49.202 | ERROR    | app.core.exception_handler:global_exception_handler:13 - Exceção: 1 validation errors:
-  {'type': 'get_attribute_error', 'loc': ('response', 0, 'variations'), 'msg': "Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)", 'input': <app.models.product.Product object at 0x0000018444564390>, 'ctx': {'error': "MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)"}}
-
-2025-10-17 10:07:49.212 | ERROR    | app.core.exception_handler:global_exception_handler:14 - Traceback:   + Exception Group Traceback (most recent call last):
+2025-10-17 10:58:51.444 | ERROR    | app.core.exception_handler:global_exception_handler:12 - Erro inesperado na requisição: GET http://localhost:8000/api/v1/users/
+2025-10-17 10:58:51.444 | ERROR    | app.core.exception_handler:global_exception_handler:13 - Exceção: CRUDBase.get_multi() missing 1 required keyword-only argument: 'current_user'
+2025-10-17 10:58:51.455 | ERROR    | app.core.exception_handler:global_exception_handler:14 - Traceback:   + Exception Group Traceback (most recent call last):
   |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\_utils.py", line 87, in collapse_excgroups
   |     yield
   |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 190, in __call__
@@ -359,14 +346,16 @@ fastapi.exceptions.ResponseValidationError: 1 validation errors:
     |     await self.gen.athrow(typ, value, traceback)
     |   File "C:\Users\Vitor Lemes\Downloads\VRSales\api\app\api\dependencies.py", line 25, in get_db
     |     yield db
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 296, in app
-    |     content = await serialize_response(
-    |               ^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 155, in serialize_response
-    |     raise ResponseValidationError(
-    | fastapi.exceptions.ResponseValidationError: 1 validation errors:
-    |   {'type': 'get_attribute_error', 'loc': ('response', 0, 'variations'), 'msg': "Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)", 'input': <app.models.product.Product object at 0x0000018444564390>, 'ctx': {'error': "MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)"}}
-    | 
+    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 278, in app
+    |     raw_response = await run_endpoint_function(
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 191, in run_endpoint_function
+    |     return await dependant.call(**values)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\Vitor Lemes\Downloads\VRSales\api\app\api\endpoints\users.py", line 78, in read_users
+    |     users = await crud.user.get_multi(db, skip=skip, limit=limit)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | TypeError: CRUDBase.get_multi() missing 1 required keyword-only argument: 'current_user'
     +------------------------------------
 
 During handling of the above exception, another exception occurred:
@@ -419,142 +408,14 @@ Traceback (most recent call last):
     await self.gen.athrow(typ, value, traceback)
   File "C:\Users\Vitor Lemes\Downloads\VRSales\api\app\api\dependencies.py", line 25, in get_db
     yield db
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 296, in app
-    content = await serialize_response(
-              ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 155, in serialize_response
-    raise ResponseValidationError(
-fastapi.exceptions.ResponseValidationError: 1 validation errors:
-  {'type': 'get_attribute_error', 'loc': ('response', 0, 'variations'), 'msg': "Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)", 'input': <app.models.product.Product object at 0x0000018444564390>, 'ctx': {'error': "MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)"}}
-
-
-2025-10-17 10:08:06.597 | ERROR    | app.core.exception_handler:global_exception_handler:12 - Erro inesperado na requisição: POST http://localhost:8000/api/v1/products/
-2025-10-17 10:08:06.597 | ERROR    | app.core.exception_handler:global_exception_handler:13 - Exceção: 1 validation errors:
-  {'type': 'get_attribute_error', 'loc': ('response', 'variations'), 'msg': "Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)", 'input': <app.models.product.Product object at 0x000001844444DB90>, 'ctx': {'error': "MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)"}}
-
-2025-10-17 10:08:06.597 | ERROR    | app.core.exception_handler:global_exception_handler:14 - Traceback:   + Exception Group Traceback (most recent call last):
-  |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\_utils.py", line 87, in collapse_excgroups
-  |     yield
-  |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 190, in __call__
-  |     async with anyio.create_task_group() as task_group:
-  |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\anyio\_backends\_asyncio.py", line 772, in __aexit__
-  |     raise BaseExceptionGroup(
-  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
-  +-+---------------- 1 ----------------
-    | Traceback (most recent call last):
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
-    |     await self.app(scope, receive, _send)
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\cors.py", line 93, in __call__
-    |     await self.simple_response(scope, receive, send, request_headers=headers)
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\cors.py", line 148, in simple_response
-    |     await self.app(scope, receive, send)
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
-    |     with collapse_excgroups():
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 155, in __exit__
-    |     self.gen.throw(typ, value, traceback)
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
-    |     raise exc
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
-    |     response = await self.dispatch_func(request, call_next)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "C:\Users\Vitor Lemes\Downloads\VRSales\api\main.py", line 41, in log_requests
-    |     response = await call_next(request)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 165, in call_next
-    |     raise app_exc
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 151, in coro
-    |     await self.app(scope, receive_or_disconnect, send_no_error)
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\exceptions.py", line 65, in __call__
-    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\_exception_handler.py", line 64, in wrapped_app
-    |     raise exc
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
-    |     await app(scope, receive, sender)
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\routing.py", line 756, in __call__
-    |     await self.middleware_stack(scope, receive, send)
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\routing.py", line 776, in app
-    |     await route.handle(scope, receive, send)
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\routing.py", line 297, in handle
-    |     await self.app(scope, receive, send)
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\routing.py", line 77, in app
-    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\_exception_handler.py", line 64, in wrapped_app
-    |     raise exc
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
-    |     await app(scope, receive, sender)
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\routing.py", line 72, in app
-    |     response = await func(request)
-    |                ^^^^^^^^^^^^^^^^^^^
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 222, in __aexit__
-    |     await self.gen.athrow(typ, value, traceback)
-    |   File "C:\Users\Vitor Lemes\Downloads\VRSales\api\app\api\dependencies.py", line 25, in get_db
-    |     yield db
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 296, in app
-    |     content = await serialize_response(
-    |               ^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 155, in serialize_response
-    |     raise ResponseValidationError(
-    | fastapi.exceptions.ResponseValidationError: 1 validation errors:
-    |   {'type': 'get_attribute_error', 'loc': ('response', 'variations'), 'msg': "Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)", 'input': <app.models.product.Product object at 0x000001844444DB90>, 'ctx': {'error': "MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)"}}
-    | 
-    +------------------------------------
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
-    await self.app(scope, receive, _send)
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\cors.py", line 93, in __call__
-    await self.simple_response(scope, receive, send, request_headers=headers)
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\cors.py", line 148, in simple_response
-    await self.app(scope, receive, send)
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
-    with collapse_excgroups():
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 155, in __exit__
-    self.gen.throw(typ, value, traceback)
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
-    raise exc
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
-    response = await self.dispatch_func(request, call_next)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Vitor Lemes\Downloads\VRSales\api\main.py", line 41, in log_requests
-    response = await call_next(request)
-               ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 165, in call_next
-    raise app_exc
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\base.py", line 151, in coro
-    await self.app(scope, receive_or_disconnect, send_no_error)
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\middleware\exceptions.py", line 65, in __call__
-    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\_exception_handler.py", line 64, in wrapped_app
-    raise exc
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
-    await app(scope, receive, sender)
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\routing.py", line 756, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\routing.py", line 776, in app
-    await route.handle(scope, receive, send)
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\routing.py", line 297, in handle
-    await self.app(scope, receive, send)
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\routing.py", line 77, in app
-    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\_exception_handler.py", line 64, in wrapped_app
-    raise exc
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
-    await app(scope, receive, sender)
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\starlette\routing.py", line 72, in app
-    response = await func(request)
-               ^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 222, in __aexit__
-    await self.gen.athrow(typ, value, traceback)
-  File "C:\Users\Vitor Lemes\Downloads\VRSales\api\app\api\dependencies.py", line 25, in get_db
-    yield db
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 296, in app
-    content = await serialize_response(
-              ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 155, in serialize_response
-    raise ResponseValidationError(
-fastapi.exceptions.ResponseValidationError: 1 validation errors:
-  {'type': 'get_attribute_error', 'loc': ('response', 'variations'), 'msg': "Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)", 'input': <app.models.product.Product object at 0x000001844444DB90>, 'ctx': {'error': "MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)"}}
-
+  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 278, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Vitor Lemes\AppData\Local\Programs\Python\Python311\Lib\site-packages\fastapi\routing.py", line 191, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Vitor Lemes\Downloads\VRSales\api\app\api\endpoints\users.py", line 78, in read_users
+    users = await crud.user.get_multi(db, skip=skip, limit=limit)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: CRUDBase.get_multi() missing 1 required keyword-only argument: 'current_user'
 

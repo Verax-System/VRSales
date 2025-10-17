@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Any
+from typing import List, Any, Optional
 
 from app import crud
 from app.models.user import User as UserModel
@@ -14,6 +14,7 @@ router = APIRouter()
 
 manager_permissions = RoleChecker([UserRole.ADMIN, UserRole.MANAGER])
 
+# ... (as rotas create_product, etc. permanecem iguais) ...
 @router.post(
     "/",
     response_model=ProductSchema,
@@ -32,18 +33,24 @@ async def create_product(
     """
     return await crud.product.create(db=db, obj_in=product_in, current_user=current_user)
 
+
 @router.get("/", response_model=List[ProductSchema], summary="Listar produtos da loja")
 async def read_products(
     *,
     db: AsyncSession = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
+    # CORREÇÃO: Adiciona o parâmetro de busca
+    search: Optional[str] = Query(None, description="Filtra produtos pelo nome"),
     current_user: UserModel = Depends(get_current_active_user)
 ) -> Any:
     """
-    Retorna uma lista de produtos pertencentes à loja do usuário autenticado.
+    Retorna uma lista de produtos da loja do usuário, com opção de busca por nome.
     """
-    return await crud.product.get_multi(db, skip=skip, limit=limit, current_user=current_user)
+    # Passa o parâmetro 'search' para a camada de CRUD
+    return await crud.product.get_multi(db, skip=skip, limit=limit, current_user=current_user, search=search)
+
+# ... (o restante do arquivo products.py permanece igual) ...
 
 @router.get("/{product_id}", response_model=ProductSchema, summary="Obter um produto por ID")
 async def read_product(
@@ -133,7 +140,6 @@ async def adjust_product_stock(
             detail="Produto não encontrado ou não pertence a esta loja."
         )
 
-    # Assumindo que stock_service.adjust_stock também foi convertido para async
     movement = await stock_service.adjust_stock(
         db=db,
         product_id=product_id,

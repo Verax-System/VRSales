@@ -1,74 +1,59 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
-# --- INÍCIO DA CORREÇÃO ---
-# Importa o módulo CRUD específico para fornecedores
-from app.crud import crud_supplier
-# Importa os schemas e dependências necessários diretamente
+from app import crud
+from app.models.user import User as UserModel
 from app.schemas.supplier import Supplier, SupplierCreate, SupplierUpdate
-from app.schemas.user import User
-from app.api.dependencies import get_db, get_current_user
-# --- FIM DA CORREÇÃO ---
-
+from app.api.dependencies import get_db, get_current_active_user
 
 router = APIRouter()
 
-@router.post("/", response_model=Supplier)
+# --- AQUI ESTÁ A CORREÇÃO ---
+# Trocamos o status_code de HTTP_21_CREATED para HTTP_201_CREATED
+@router.post("/", response_model=Supplier, status_code=status.HTTP_201_CREATED)
 async def create_supplier(
-    supplier_in: SupplierCreate,
+    *,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    supplier_in: SupplierCreate,
+    current_user: UserModel = Depends(get_current_active_user)
 ):
-    """Cria um novo fornecedor."""
-    # A chamada agora usa crud_supplier
-    return await crud_supplier.create_supplier(db=db, supplier=supplier_in)
+    """ Cria um novo fornecedor para a loja do usuário logado. """
+    return await crud.supplier.supplier.create(db=db, obj_in=supplier_in, current_user=current_user)
 
 @router.get("/", response_model=List[Supplier])
 async def read_suppliers(
+    db: AsyncSession = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_active_user)
 ):
-    """Retorna uma lista de fornecedores."""
-    return await crud_supplier.get_suppliers(db, skip=skip, limit=limit)
-
-@router.get("/{supplier_id}", response_model=Supplier)
-async def read_supplier(
-    supplier_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Busca um único fornecedor pelo ID."""
-    db_supplier = await crud_supplier.get_supplier(db, supplier_id=supplier_id)
-    if db_supplier is None:
-        raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
-    return db_supplier
+    """ Lista todos os fornecedores da loja do usuário logado. """
+    return await crud.supplier.supplier.get_multi(db, skip=skip, limit=limit, current_user=current_user)
 
 @router.put("/{supplier_id}", response_model=Supplier)
 async def update_supplier(
+    *,
+    db: AsyncSession = Depends(get_db),
     supplier_id: int,
     supplier_in: SupplierUpdate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_active_user)
 ):
-    """Atualiza um fornecedor."""
-    db_supplier = await crud_supplier.get_supplier(db, supplier_id=supplier_id)
-    if not db_supplier:
+    """ Atualiza um fornecedor da loja do usuário logado. """
+    supplier = await crud.supplier.get(db=db, id=supplier_id, current_user=current_user)
+    if not supplier:
         raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
-    
-    updated_supplier = await crud_supplier.update_supplier(db=db, db_supplier=db_supplier, supplier_in=supplier_in)
-    return updated_supplier
+    return await crud.supplier.supplier.update(db=db, db_obj=supplier, obj_in=supplier_in, current_user=current_user)
 
 @router.delete("/{supplier_id}", response_model=Supplier)
 async def delete_supplier(
-    supplier_id: int,
+    *,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    supplier_id: int,
+    current_user: UserModel = Depends(get_current_active_user)
 ):
-    """Exclui um fornecedor."""
-    deleted_supplier = await crud_supplier.remove_supplier(db, supplier_id=supplier_id)
-    if not deleted_supplier:
+    """ Deleta um fornecedor da loja do usuário logado. """
+    supplier = await crud.supplier.supplier.get(db=db, id=supplier_id, current_user=current_user)
+    if not supplier:
         raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
-    return deleted_supplier
+    return await crud.supplier.supplier.remove(db=db, id=supplier_id, current_user=current_user)

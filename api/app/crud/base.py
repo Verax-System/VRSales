@@ -18,7 +18,6 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
     async def get(self, db: AsyncSession, id: Any, *, current_user: User) -> Optional[ModelType]:
         stmt = select(self.model).filter(self.model.id == id)
-        # Se o modelo tem 'store_id' e o usuário não é super_admin, filtra pela loja dele
         if hasattr(self.model, 'store_id') and current_user.role != 'super_admin':
             stmt = stmt.filter(self.model.store_id == current_user.store_id)
         result = await db.execute(stmt)
@@ -35,19 +34,17 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         result = await db.execute(stmt)
         return result.scalars().all()
 
-    # --- LÓGICA DE CRIAÇÃO CORRIGIDA E SIMPLIFICADA ---
     async def create(self, db: AsyncSession, *, obj_in: CreateSchemaType, current_user: User) -> ModelType:
         """
-        Cria um novo registro.
-        - Se o modelo a ser criado tiver um campo 'store_id' e o usuário logado
-          não for um 'super_admin', o 'store_id' do usuário será injetado automaticamente.
-        - Modelos que não têm 'store_id' (como a própria Loja) são criados normalmente.
+        Cria um novo registro no banco de dados.
         """
-        obj_in_data = jsonable_encoder(obj_in)
+        # --- AQUI ESTÁ A CORREÇÃO FINAL ---
+        # Trocamos 'jsonable_encoder' por 'model_dump()'.
+        # model_dump() mantém os tipos de dados do Python (como datas),
+        # que é o que o SQLAlchemy precisa para falar com o banco de dados.
+        obj_in_data = obj_in.model_dump()
         
-        # Apenas modifica os dados se o modelo tiver 'store_id'
         if hasattr(self.model, 'store_id'):
-            # Se o usuário não for super_admin, ele SÓ PODE criar itens para a sua própria loja
             if current_user.role != 'super_admin':
                 obj_in_data['store_id'] = current_user.store_id
         
@@ -83,7 +80,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     async def remove(self, db: AsyncSession, *, id: int, current_user: User) -> Optional[ModelType]:
         obj = await self.get(db, id=id, current_user=current_user)
         if not obj:
-            return None # O get já filtra por permissão, então não precisa de checagem extra
+            return None
         await db.delete(obj)
         await db.commit()
         return obj

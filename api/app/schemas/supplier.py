@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 from typing import Optional
 
 class SupplierBase(BaseModel):
@@ -11,10 +11,11 @@ class SupplierCreate(SupplierBase):
     pass
 
 class SupplierUpdate(SupplierBase):
-    name: Optional[str] = None
+    pass
 
 class Supplier(SupplierBase):
     id: int
+    store_id: int
 
-    class Config:
-        from_attributes = True
+    # Substitui a 'class Config' obsoleta pela nova sintaxe do Pydantic V2
+    model_config = ConfigDict(from_attributes=True)

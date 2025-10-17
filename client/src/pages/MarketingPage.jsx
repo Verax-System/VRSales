@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Typography, Button, Modal, message, Spin, Card, Popconfirm, Tooltip, Form, Input, Select, DatePicker, Empty } from 'antd';
+import { Typography, Button, Modal, message, Spin, Card, Popconfirm, Tooltip, Form, Input, Select, DatePicker, Empty, Tag, Space } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   PlusOutlined,
@@ -18,120 +18,120 @@ import dayjs from 'dayjs';
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 
-// Estilos embutidos para a nova página de marketing
+// Estilos embutidos (sem alterações)
 const PageStyles = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-
-    .marketing-page-container {
-      padding: 24px;
-      background-color: #f0f2f5;
-      font-family: 'Inter', sans-serif;
-      min-height: 100vh;
-    }
-
-    .marketing-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-      padding: 20px 24px;
-      background: linear-gradient(135deg, #8e44ad 0%, #d43f8d 100%);
-      border-radius: 16px;
-      color: white;
-      box-shadow: 0 10px 30px -10px rgba(142, 68, 173, 0.5);
-    }
-
-    .campaign-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-      gap: 24px;
-    }
-
-    .campaign-card {
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      border: 1px solid #e8e8e8;
-      transition: all 0.3s ease;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
-
-    .campaign-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-    }
-
-    .campaign-card .ant-card-body {
-        flex-grow: 1;
-        padding: 24px;
-    }
-
-    .card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 16px;
-    }
-
-    .status-pin {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 12px;
-    }
-    
+    .marketing-page-container { padding: 24px; background-color: #f0f2f5; font-family: 'Inter', sans-serif; min-height: 100vh; }
+    .marketing-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 20px 24px; background: linear-gradient(135deg, #8e44ad 0%, #d43f8d 100%); border-radius: 16px; color: white; box-shadow: 0 10px 30px -10px rgba(142, 68, 173, 0.5); }
+    .campaign-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 24px; }
+    .campaign-card { border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e8e8e8; transition: all 0.3s ease; display: flex; flex-direction: column; height: 100%; }
+    .campaign-card:hover { transform: translateY(-5px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+    .campaign-card .ant-card-body { flex-grow: 1; padding: 24px; }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .status-pin { display: flex; align-items: center; gap: 6px; font-weight: 600; text-transform: uppercase; font-size: 12px; }
     .status-pin.sent { color: #27ae60; }
     .status-pin.scheduled { color: #2980b9; }
     .status-pin.draft { color: #f39c12; }
-
-    .card-footer {
-        padding: 16px 24px;
-        border-top: 1px solid #f0f0f0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
+    .card-footer { padding: 16px 24px; border-top: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
   `}</style>
 );
 
-const CampaignForm = ({ form, onFinish }) => (
-  <Form form={form} layout="vertical" onFinish={onFinish}>
-    <Form.Item name="name" label="Nome da Campanha" rules={[{ required: true, message: 'Dê um nome para a campanha!' }]}>
-      <Input placeholder="Ex: Campanha de Aniversário de Outubro" />
-    </Form.Item>
-    <Form.Item name="target_audience" label="Público-Alvo" rules={[{ required: true, message: 'Selecione o público-alvo!' }]}>
-      <Select placeholder="Selecione para quem a campanha será enviada">
-        <Option value="inactive_30_days">Clientes inativos há 30 dias</Option>
-        <Option value="inactive_60_days">Clientes inativos há 60 dias</Option>
-        <Option value="top_10_spenders">Top 10 Clientes (maiores gastos)</Option>
-        <Option value="all_customers">Todos os Clientes</Option>
-      </Select>
-    </Form.Item>
-    <Form.Item name="message" label="Mensagem" rules={[{ required: true, message: 'Escreva a mensagem da campanha!' }]}>
-      <Input.TextArea rows={4} placeholder="Use {nome} para personalizar. Ex: Olá {nome}, sentimos sua falta! Use o cupom VOLTA10 para ganhar 10% de desconto." />
-    </Form.Item>
-    <Form.Item name="send_date" label="Agendar Envio (Opcional)">
-      <DatePicker showTime style={{ width: '100%' }} placeholder="Deixe em branco para envio imediato" />
-    </Form.Item>
-  </Form>
-);
+// PASSO 3 (CORRIGIDO): O formulário agora é um componente "filho" inteligente.
+// Ele controla o envio para a API e notifica o "pai" quando termina.
+const CampaignFormModal = ({ visible, onCancel, onSuccess, editingCampaign }) => {
+  const [form] = Form.useForm();
+  const [formLoading, setFormLoading] = useState(false);
+  const isEditing = !!editingCampaign;
 
+  useEffect(() => {
+    if (visible) {
+        if (isEditing) {
+            form.setFieldsValue({
+                ...editingCampaign,
+                send_date: editingCampaign.send_date ? dayjs(editingCampaign.send_date) : null
+            });
+        } else {
+            form.resetFields();
+        }
+    }
+  }, [editingCampaign, visible, form, isEditing]);
+
+  const handleFinish = async (values) => {
+    setFormLoading(true);
+    const payload = {
+        ...values,
+        send_date: values.send_date ? values.send_date.toISOString() : null
+    };
+
+    try {
+      if (isEditing) {
+        // PASSO 1 (CORRIGIDO): Usando o método padrão do ApiService
+        await ApiService.put(`/marketing/campaigns/${editingCampaign.id}`, payload);
+      } else {
+        // PASSO 1 (CORRIGIDO): Usando o método padrão do ApiService
+        await ApiService.post('/marketing/campaigns/', payload);
+      }
+      
+      // A CORREÇÃO PRINCIPAL: Notifica o pai sobre o sucesso.
+      if (onSuccess) {
+        onSuccess();
+      }
+
+    } catch (error) {
+      message.error('Ocorreu um erro ao salvar a campanha.');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  return (
+    <Modal
+      title={isEditing ? "Editar Campanha" : "Nova Campanha de Marketing"}
+      open={visible}
+      onCancel={onCancel}
+      footer={[
+        <Button key="back" onClick={onCancel}>Cancelar</Button>,
+        <Button key="submit" type="primary" loading={formLoading} onClick={() => form.submit()}>Salvar Campanha</Button>
+      ]}
+      destroyOnClose
+    >
+      <Form form={form} layout="vertical" onFinish={handleFinish}>
+        <Form.Item name="name" label="Nome da Campanha" rules={[{ required: true, message: 'Dê um nome para a campanha!' }]}>
+          <Input placeholder="Ex: Campanha de Aniversário de Outubro" />
+        </Form.Item>
+        <Form.Item name="target_audience" label="Público-Alvo" rules={[{ required: true, message: 'Selecione o público-alvo!' }]}>
+          <Select placeholder="Selecione para quem a campanha será enviada">
+            <Option value="inactive_30_days">Clientes inativos há 30 dias</Option>
+            <Option value="inactive_60_days">Clientes inativos há 60 dias</Option>
+            <Option value="top_10_spenders">Top 10 Clientes (maiores gastos)</Option>
+            <Option value="all_customers">Todos os Clientes</Option>
+          </Select>
+        </Form.Item>
+        <Form.Item name="message" label="Mensagem" rules={[{ required: true, message: 'Escreva a mensagem da campanha!' }]}>
+          <Input.TextArea rows={4} placeholder="Use {nome} para personalizar. Ex: Olá {nome}, sentimos sua falta! Use o cupom VOLTA10 para ganhar 10% de desconto." />
+        </Form.Item>
+        <Form.Item name="send_date" label="Agendar Envio (Opcional)">
+          <DatePicker showTime style={{ width: '100%' }} placeholder="Deixe em branco para envio imediato" />
+        </Form.Item>
+      </Form>
+    </Modal>
+  );
+};
+
+
+// PASSO 2 (CORRIGIDO): A página principal (componente "pai")
 const MarketingPage = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState(null);
-  const [form] = Form.useForm();
-  const [formLoading, setFormLoading] = useState(false);
 
   const fetchCampaigns = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await ApiService.getMarketingCampaigns();
+      // PASSO 1 (CORRIGIDO): Usando o método padrão do ApiService
+      const response = await ApiService.get('/marketing/campaigns/');
       setCampaigns(response.data);
     } catch (error) {
       message.error("Erro ao carregar campanhas de marketing.");
@@ -143,32 +143,35 @@ const MarketingPage = () => {
   useEffect(() => {
     fetchCampaigns();
   }, [fetchCampaigns]);
+  
+  const showCreateModal = () => {
+    setEditingCampaign(null);
+    setIsModalVisible(true);
+  };
 
-  const showCreateModal = () => { setEditingCampaign(null); form.resetFields(); setIsModalVisible(true); };
-  const handleModalCancel = () => { setIsModalVisible(false); setEditingCampaign(null); };
+  const showEditModal = (campaign) => {
+    setEditingCampaign(campaign);
+    setIsModalVisible(true);
+  };
 
-  const handleFormSubmit = async (values) => {
-    setFormLoading(true);
-    try {
-      if (editingCampaign) {
-        await ApiService.updateMarketingCampaign(editingCampaign.id, values);
-        message.success("Campanha atualizada com sucesso!");
-      } else {
-        await ApiService.createMarketingCampaign(values);
-        message.success("Campanha criada com sucesso!");
-      }
-      setIsModalVisible(false);
-      fetchCampaigns();
-    } catch (error) {
-      message.error("Erro ao salvar a campanha.");
-    } finally {
-      setFormLoading(false);
-    }
+  const handleModalCancel = () => {
+    setIsModalVisible(false);
+    // Opcional: A propriedade destroyOnClose do Modal já limpa o estado do formulário.
+    setEditingCampaign(null); 
+  };
+  
+  // A FUNÇÃO CHAVE: O que fazer quando o formulário for salvo com sucesso.
+  const handleFormSuccess = () => {
+    message.success('Campanha salva com sucesso!');
+    setIsModalVisible(false); // 1. Fecha a janela
+    fetchCampaigns();       // 2. Atualiza a lista na tela
+    setEditingCampaign(null);
   };
 
   const handleDelete = async (id) => {
     try {
-      await ApiService.deleteMarketingCampaign(id);
+      // PASSO 1 (CORRIGIDO): Usando o método padrão do ApiService
+      await ApiService.delete(`/marketing/campaigns/${id}`);
       message.success("Campanha excluída com sucesso!");
       fetchCampaigns();
     } catch (error) {
@@ -184,9 +187,9 @@ const MarketingPage = () => {
   };
   
   const statusMap = {
-      sent: { color: 'success', text: 'Enviada', icon: <CheckCircleOutlined /> },
-      scheduled: { color: 'processing', text: 'Agendada', icon: <ClockCircleOutlined /> },
-      draft: { color: 'gold', text: 'Rascunho', icon: <PauseCircleOutlined /> }
+      sent: { text: 'Enviada', icon: <CheckCircleOutlined /> },
+      scheduled: { text: 'Agendada', icon: <ClockCircleOutlined /> },
+      draft: { text: 'Rascunho', icon: <PauseCircleOutlined /> }
   };
 
   const gridVariants = {
@@ -219,7 +222,7 @@ const MarketingPage = () => {
             {campaigns.length > 0 ? (
               <motion.div className="campaign-grid" variants={gridVariants} initial="hidden" animate="visible">
                 {campaigns.map(campaign => {
-                  const status = statusMap[campaign.status] || { color: 'default', text: 'Desconhecido', icon: null };
+                  const status = statusMap[campaign.status] || { text: 'Desconhecido', icon: null };
                   return (
                     <motion.div key={campaign.id} variants={cardVariants}>
                       <Card className="campaign-card">
@@ -246,7 +249,7 @@ const MarketingPage = () => {
                           </Space>
                           <Space>
                             <Tooltip title="Editar">
-                              <Button shape="circle" icon={<EditOutlined />} disabled={campaign.status === 'sent'} onClick={() => { setEditingCampaign(campaign); setIsModalVisible(true); form.setFieldsValue({...campaign, send_date: campaign.send_date ? dayjs(campaign.send_date) : null}); }} />
+                              <Button shape="circle" icon={<EditOutlined />} disabled={campaign.status === 'sent'} onClick={() => showEditModal(campaign)} />
                             </Tooltip>
                             <Popconfirm title="Tem certeza?" onConfirm={() => handleDelete(campaign.id)} okText="Sim" cancelText="Não">
                               <Tooltip title="Excluir">
@@ -268,18 +271,13 @@ const MarketingPage = () => {
           </AnimatePresence>
         )}
 
-        <Modal
-          title={editingCampaign ? "Editar Campanha" : "Nova Campanha de Marketing"}
-          open={isModalVisible}
+        {/* O "Pai" renderiza o componente do formulário/modal e passa a função de sucesso */}
+        <CampaignFormModal
+          visible={isModalVisible}
           onCancel={handleModalCancel}
-          footer={[
-            <Button key="back" onClick={handleModalCancel}>Cancelar</Button>,
-            <Button key="submit" type="primary" loading={formLoading} onClick={() => form.submit()}>Salvar Campanha</Button>
-          ]}
-          destroyOnClose
-        >
-          <CampaignForm form={form} onFinish={handleFormSubmit} />
-        </Modal>
+          onSuccess={handleFormSuccess}
+          editingCampaign={editingCampaign}
+        />
       </motion.div>
     </>
   );
