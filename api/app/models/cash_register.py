@@ -6,23 +6,26 @@ import enum
 
 from app.db.base import Base
 
-
-
 class CashRegisterStatus(str, enum.Enum):
     OPEN = "OPEN"
     CLOSED = "CLOSED"
 
 class TransactionType(str, enum.Enum):
-    OPENING_BALANCE = "OPENING_BALANCE" # Saldo inicial
-    SALE_PAYMENT = "SALE_PAYMENT"      # Pagamento de venda
-    SUPPLY = "SUPPLY"                  # Suprimento (adição de dinheiro)
-    WITHDRAWAL = "WITHDRAWAL"          # Sangria (retirada de dinheiro)
-    CLOSING_BALANCE = "CLOSING_BALANCE" # Saldo final
+    OPENING_BALANCE = "OPENING_BALANCE"
+    SALE_PAYMENT = "SALE_PAYMENT"
+    SUPPLY = "SUPPLY"
+    WITHDRAWAL = "WITHDRAWAL"
+    CLOSING_BALANCE = "CLOSING_BALANCE"
 
 class CashRegister(Base):
     __tablename__ = "cash_registers"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    
+    # --- CORREÇÃO APLICADA AQUI ---
+    # Adicionamos a referência para qual loja este caixa pertence.
+    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), nullable=False)
+    # -----------------------------
     
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     
@@ -33,19 +36,19 @@ class CashRegister(Base):
     )
     
     opening_balance: Mapped[float] = mapped_column(Float, nullable=False)
-    closing_balance: Mapped[float] = mapped_column(Float, nullable=True) # Pode ser nulo enquanto o caixa está aberto
+    closing_balance: Mapped[float] = mapped_column(Float, nullable=True)
     
-    # Valores calculados ao fechar o caixa
     expected_balance: Mapped[float] = mapped_column(Float, nullable=True) 
-    balance_difference: Mapped[float] = mapped_column(Float, nullable=True) # Diferença (sobra/falta)
+    balance_difference: Mapped[float] = mapped_column(Float, nullable=True)
 
     opened_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     closed_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
-    user: Mapped["User"] = relationship()
+    user: Mapped["User"] = relationship(lazy="selectin") # Adicionado lazy="selectin" para consistência
     transactions: Mapped[List["CashRegisterTransaction"]] = relationship(
         back_populates="cash_register",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        lazy="selectin" # Adicionado lazy="selectin" para consistência
     )
 
 class CashRegisterTransaction(Base):
@@ -53,13 +56,13 @@ class CashRegisterTransaction(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     cash_register_id: Mapped[int] = mapped_column(ForeignKey("cash_registers.id"), nullable=False)
-    sale_id: Mapped[int] = mapped_column(ForeignKey("sales.id"), nullable=True) # Associado a uma venda
+    sale_id: Mapped[int] = mapped_column(ForeignKey("sales.id"), nullable=True)
     
     transaction_type: Mapped[TransactionType] = mapped_column(SQLAlchemyEnum(TransactionType), nullable=False)
     amount: Mapped[float] = mapped_column(Float, nullable=False)
     description: Mapped[str] = mapped_column(String(255), nullable=True)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     
     cash_register: Mapped["CashRegister"] = relationship(back_populates="transactions")
-    sale: Mapped["Sale"] = relationship()
+    sale: Mapped["Sale"] = relationship(lazy="selectin") # Adicionado lazy="selectin"

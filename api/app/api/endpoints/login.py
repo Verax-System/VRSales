@@ -12,7 +12,10 @@ from app.schemas.token_schema import Token
 
 router = APIRouter()
 
-@router.post("/access-token", response_model=Token)
+# --- CORREÇÃO APLICADA AQUI ---
+# A rota foi alterada de "/access-token" para "/token" para corresponder à chamada do frontend.
+@router.post("/token", response_model=Token)
+# -----------------------------
 async def login_access_token(
     db: AsyncSession = Depends(dependencies.get_db),
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -30,15 +33,12 @@ async def login_access_token(
     
     access_token_expires = timedelta(minutes=security.ACCESS_TOKEN_EXPIRE_MINUTES)
     
-    # --- INÍCIO DA CORREÇÃO ---
-    # Criamos um dicionário com a chave "sub" (subject), que é o padrão para JWT.
-    # O valor deve ser uma string.
+    # O conteúdo do token deve usar "sub" (subject) como padrão JWT
     token_data = {"sub": str(user.id)}
-    # --- FIM DA CORREÇÃO ---
     
     return {
         "access_token": security.create_access_token(
-            data=token_data, expires_delta=access_token_expires # Passamos o dicionário
+            data=token_data, expires_delta=access_token_expires
         ),
         "token_type": "bearer",
     }

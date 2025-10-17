@@ -1,17 +1,16 @@
-from pydantic import BaseModel, field_validator, ValidationInfo
-from datetime import datetime
+from pydantic import BaseModel
 from typing import List, Optional
+from datetime import datetime
 
-from app.schemas.enums import OrderStatus, OrderType, OrderItemStatus
-from app.schemas.additional import Additional
-from .product import Product
+# Importa os Enums que definem os tipos e status
+from app.schemas.enums import OrderType, OrderStatus
+from app.schemas.product import Product
+from app.schemas.user import User
 
-# --- Item do Pedido ---
 class OrderItemBase(BaseModel):
     product_id: int
     quantity: int
     notes: Optional[str] = None
-    additional_ids: List[int] = []
 
 class OrderItemCreate(OrderItemBase):
     pass
@@ -19,50 +18,30 @@ class OrderItemCreate(OrderItemBase):
 class OrderItem(OrderItemBase):
     id: int
     price_at_order: float
-    status: OrderItemStatus
-    additionals: List[Additional] = []
-    product: Product
-
+    product: Optional[Product] = None
     class Config:
-        from_attributes = True
+        orm_mode = True
 
-# --- Pedido/Comanda ---
-
-class OrderCreate(BaseModel):
+class OrderBase(BaseModel):
+    # O campo 'order_type' é obrigatório para a lógica funcionar.
     order_type: OrderType
-    table_id: Optional[int] = None
+    
     customer_id: Optional[int] = None
+    table_id: Optional[int] = None
     delivery_address: Optional[str] = None
 
-    @field_validator('table_id')
-    @classmethod
-    def check_table_id(cls, v: int, info: ValidationInfo) -> int:
-        if info.data.get('order_type') == OrderType.DINE_IN and v is None:
-            raise ValueError('table_id é obrigatório para pedidos do tipo DINE_IN')
-        return v
-
-    @field_validator('customer_id', 'delivery_address')
-    @classmethod
-    def check_delivery_info(cls, v: str, info: ValidationInfo) -> str:
-        if info.data.get('order_type') == OrderType.DELIVERY and v is None:
-            # Pega o nome do campo que está sendo validado a partir do 'info'
-            field_name = info.field_name
-            raise ValueError(f'{field_name} é obrigatório para pedidos do tipo DELIVERY')
-        return v
+class OrderCreate(OrderBase):
+    pass
 
 class OrderUpdate(BaseModel):
-    status: OrderStatus
+    status: Optional[OrderStatus] = None
+    customer_id: Optional[int] = None
 
-class Order(BaseModel):
+class Order(OrderBase):
     id: int
     status: OrderStatus
-    order_type: OrderType
-    table_id: Optional[int] = None
-    customer_id: Optional[int] = None
-    delivery_address: Optional[str] = None
     created_at: datetime
+    user: Optional[User] = None
     items: List[OrderItem] = []
-    total_amount: float = 0.0
-
     class Config:
-        from_attributes = True
+        orm_mode = True

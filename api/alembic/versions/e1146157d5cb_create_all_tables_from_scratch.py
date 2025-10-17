@@ -1,8 +1,8 @@
-"""empty message
+"""create all tables from scratch
 
-Revision ID: 95a27d598506
+Revision ID: e1146157d5cb
 Revises: 
-Create Date: 2025-10-17 11:20:16.566081
+Create Date: 2025-10-17 15:53:19.671702
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '95a27d598506'
+revision: str = 'e1146157d5cb'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -139,6 +139,7 @@ def upgrade() -> None:
     )
     op.create_table('cash_registers',
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('store_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('status', sa.Enum('OPEN', 'CLOSED', name='cashregisterstatus'), nullable=False),
     sa.Column('opening_balance', sa.Float(), nullable=False),
@@ -147,6 +148,7 @@ def upgrade() -> None:
     sa.Column('balance_difference', sa.Float(), nullable=True),
     sa.Column('opened_at', sa.DateTime(), nullable=False),
     sa.Column('closed_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['store_id'], ['stores.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -154,16 +156,18 @@ def upgrade() -> None:
     op.create_table('orders',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('store_id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=True),
     sa.Column('status', sa.Enum('OPEN', 'CLOSED', 'PAID', name='orderstatus'), nullable=False),
     sa.Column('order_type', sa.Enum('DINE_IN', 'DELIVERY', 'TAKEOUT', name='ordertype'), nullable=False),
     sa.Column('delivery_address', sa.String(length=500), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('closed_at', sa.DateTime(), nullable=True),
     sa.Column('table_id', sa.Integer(), nullable=True),
     sa.Column('customer_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['customer_id'], ['customers.id'], ),
     sa.ForeignKeyConstraint(['store_id'], ['stores.id'], ),
     sa.ForeignKeyConstraint(['table_id'], ['tables.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_orders_id'), 'orders', ['id'], unique=False)
@@ -189,8 +193,8 @@ def upgrade() -> None:
     sa.Column('category_id', sa.Integer(), nullable=True),
     sa.Column('subcategory_id', sa.Integer(), nullable=True),
     sa.Column('store_id', sa.Integer(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['category_id'], ['product_categories.id'], ),
     sa.ForeignKeyConstraint(['store_id'], ['stores.id'], ),
     sa.ForeignKeyConstraint(['subcategory_id'], ['product_subcategories.id'], ),
@@ -223,7 +227,7 @@ def upgrade() -> None:
     sa.Column('transaction_type', sa.Enum('OPENING_BALANCE', 'SALE_PAYMENT', 'SUPPLY', 'WITHDRAWAL', 'CLOSING_BALANCE', name='transactiontype'), nullable=False),
     sa.Column('amount', sa.Float(), nullable=False),
     sa.Column('description', sa.String(length=255), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['cash_register_id'], ['cash_registers.id'], ),
     sa.ForeignKeyConstraint(['sale_id'], ['sales.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -241,15 +245,18 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('payments',
-    sa.Column('store_id', sa.Integer(), nullable=False),
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('order_id', sa.Integer(), nullable=True),
+    sa.Column('sale_id', sa.Integer(), nullable=True),
     sa.Column('amount', sa.Float(), nullable=False),
-    sa.Column('payment_method', sa.Enum('CASH', 'CREDIT_CARD', 'DEBIT_CARD', 'PIX', 'OTHER', name='paymentmethod'), nullable=False),
-    sa.Column('sale_id', sa.Integer(), nullable=False),
+    sa.Column('payment_method', sa.String(), nullable=False),
+    sa.Column('status', sa.String(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['order_id'], ['orders.id'], ),
     sa.ForeignKeyConstraint(['sale_id'], ['sales.id'], ),
-    sa.ForeignKeyConstraint(['store_id'], ['stores.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_index(op.f('ix_payments_id'), 'payments', ['id'], unique=False)
     op.create_table('product_batches',
     sa.Column('store_id', sa.Integer(), nullable=False),
     sa.Column('id', sa.Integer(), nullable=False),
@@ -341,6 +348,7 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_product_batches_id'), table_name='product_batches')
     op.drop_index(op.f('ix_product_batches_expiration_date'), table_name='product_batches')
     op.drop_table('product_batches')
+    op.drop_index(op.f('ix_payments_id'), table_name='payments')
     op.drop_table('payments')
     op.drop_table('order_items')
     op.drop_table('cash_register_transactions')

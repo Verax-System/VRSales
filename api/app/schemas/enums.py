@@ -24,10 +24,10 @@ class OrderStatus(str, enum.Enum):
     CLOSED = "closed"
     PAID = "paid"
 
-class OrderType(str, enum.Enum):
-    DINE_IN = "dine_in"
-    DELIVERY = "delivery"
-    TAKEOUT = "takeout"
+class OrderType(str, Enum):
+    DINE_IN = "DINE_IN"
+    DELIVERY = "DELIVERY"
+    TAKEOUT = "TAKEOUT"
 
 class PaymentMethod(str, enum.Enum):
     CASH = "cash"
@@ -43,11 +43,11 @@ class UserRole(str, enum.Enum):
     CASHIER = "cashier"
 
 
-class OrderItemStatus(str, enum.Enum):
+class OrderItemStatus(str, Enum):
     PENDING = "pending"
     PREPARING = "preparing"
     READY = "ready"
-    DELIVERED = "delivered" # Adicionamos um status final
+    DELIVERED = "delivered"
 
     # Adicionamos a definição dos status de mesa que estava faltando
 class TableStatus(str, Enum):

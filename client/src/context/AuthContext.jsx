@@ -1,10 +1,6 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-// --- INÍCIO DA CORREÇÃO ---
-// Importa a instância padrão e a função de login nomeada
-import ApiService, { login as apiLogin } from '../api/ApiService';
-// --- FIM DA CORREÇÃO ---
-
+import ApiService from '../api/ApiService'; // Apenas a importação padrão é necessária agora
 
 const AuthContext = createContext(null);
 
@@ -13,15 +9,17 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem('accessToken');
+    // Limpa o cabeçalho de autorização para futuras requisições
+    delete ApiService.defaults?.headers?.common['Authorization'];
     navigate('/login');
-  };
+  }, [navigate]);
 
-  const fetchAndSetUser = async () => {
+  const fetchAndSetUser = useCallback(async () => {
     try {
-      const response = await ApiService.get('/users/me');
+      const response = await ApiService.getCurrentUser();
       setUser(response.data);
       return response.data;
     } catch (error) {
@@ -29,7 +27,7 @@ export const AuthProvider = ({ children }) => {
       logout();
       return null;
     }
-  };
+  }, [logout]);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -40,11 +38,11 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     };
     initializeAuth();
-  }, []);
+  }, [fetchAndSetUser]);
 
   const login = async (email, password) => {
-    // Usa a função de login importada
-    const response = await apiLogin(email, password);
+    // Usa a função de login do ApiService
+    const response = await ApiService.login(email, password);
     const { access_token } = response.data;
     localStorage.setItem('accessToken', access_token);
     
@@ -53,7 +51,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   if (loading) {
-    return <div>A carregar sistema...</div>;
+    // Pode adicionar um componente de Spinner/Loading aqui
+    return <div>Carregando sistema...</div>;
   }
 
   return (

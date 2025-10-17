@@ -3,7 +3,8 @@ from sqlalchemy.future import select
 from sqlalchemy import func, desc
 from datetime import date, timedelta # Adicione timedelta
 
-from app.models.sale import Sale, SaleItem
+from app.models.sale import Sale
+from app.schemas.sale_item import SaleItem
 from app.models.product import Product
 from app.models.user import User
 

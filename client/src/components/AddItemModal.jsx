@@ -1,159 +1,113 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Input, List, Avatar, Button, message, Spin, Empty, InputNumber, Space, Typography } from 'antd';
-import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Modal, Input, List, Avatar, Button, message, Spin, Empty, InputNumber } from 'antd';
 import ApiService from '../api/ApiService';
 import { useDebounce } from '../hooks/useDebounce';
 
-const { Text } = Typography;
-
-// Estilos embutidos para o componente
-const ComponentStyles = () => (
-  <style>{`
-    .add-item-list .ant-list-item {
-        padding: 12px;
-        border-radius: 8px;
-        transition: background-color 0.3s ease;
-    }
-
-    .add-item-list .ant-list-item:hover {
-        background-color: #f9f9f9;
-    }
-  `}</style>
-);
-
 const AddItemModal = ({ open, onCancel, orderId, onSuccess }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [quantities, setQuantities] = useState({});
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [quantities, setQuantities] = useState({});
+    const [addingProductId, setAddingProductId] = useState(null);
 
-  useEffect(() => {
-    // Limpa a busca quando o modal é fechado
-    if (!open) {
-      setSearchTerm('');
-      setProducts([]);
-      setQuantities({});
-    }
-  }, [open]);
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  useEffect(() => {
-    const searchProducts = async () => {
-      if (debouncedSearchTerm && debouncedSearchTerm.length > 2) {
-        setLoading(true);
-        try {
-          const response = await ApiService.lookupProduct(debouncedSearchTerm);
-          setProducts(response.data);
-          setQuantities({}); // Reseta as quantidades a cada nova busca
-        } catch (error) {
-          message.error('Erro ao buscar produtos.');
-        } finally {
-          setLoading(false);
+    useEffect(() => {
+        if (open) {
+            const fetchProducts = async () => {
+                setLoading(true);
+                try {
+                    const params = debouncedSearchTerm ? { search: debouncedSearchTerm } : {};
+                    const response = await ApiService.get('/products/', { params });
+                    setProducts(response.data);
+                } catch (error) {
+                    message.error('Erro ao buscar produtos.');
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchProducts();
         }
-      } else {
-        setProducts([]);
-      }
+    }, [open, debouncedSearchTerm]);
+
+    const handleQuantityChange = (productId, value) => {
+        setQuantities(prev => ({ ...prev, [productId]: value }));
     };
-    searchProducts();
-  }, [debouncedSearchTerm]);
 
-  const handleQuantityChange = (productId, quantity) => {
-    setQuantities(prev => ({ ...prev, [productId]: quantity }));
-  };
+    const handleAddItem = async (product) => {
+        const quantity = quantities[product.id] || 1;
+        if (quantity <= 0) {
+            message.warning('A quantidade deve ser maior que zero.');
+            return;
+        }
 
-  const handleAddItem = async (product, quantity) => {
-    if (!quantity || quantity < 1) {
-      message.error('A quantidade deve ser de pelo menos 1.');
-      return;
-    }
-    try {
-      const itemData = { product_id: product.id, quantity: quantity };
-      await ApiService.addItemToOrder(orderId, itemData);
-      message.success(`${quantity}x "${product.name}" adicionado(s) à comanda!`);
-      // Limpa o campo de busca e a lista para o próximo item
-      setSearchTerm('');
-      setProducts([]);
-      onSuccess(); // Notifica a página pai para atualizar a comanda
-    } catch (error) {
-      message.error(error.response?.data?.detail || 'Erro ao adicionar item.');
-    }
-  };
+        setAddingProductId(product.id);
+        try {
+            await ApiService.post(`/orders/${orderId}/items`, {
+                product_id: product.id,
+                quantity: quantity,
+            });
+            message.success(`${quantity}x "${product.name}" adicionado(s) com sucesso!`);
+            onSuccess(); // Chama a função para fechar o modal e atualizar a comanda
+        } catch (error) {
+            message.error(error.response?.data?.detail || 'Falha ao adicionar o item.');
+        } finally {
+            setAddingProductId(null);
+        }
+    };
 
-  const listVariants = {
-    visible: { transition: { staggerChildren: 0.05 } },
-    hidden: {},
-  };
-
-  const itemVariants = {
-    visible: { opacity: 1, y: 0 },
-    hidden: { opacity: 0, y: 20 },
-  };
-
-  return (
-    <Modal
-      title="Adicionar Item à Comanda"
-      open={open}
-      onCancel={onCancel}
-      footer={null}
-      width={700}
-      destroyOnClose
-    >
-      <ComponentStyles />
-      <Input.Search
-        placeholder="Digite o nome ou código do produto (mín. 3 caracteres)"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        loading={loading}
-        style={{ marginBottom: 20 }}
-        enterButton={<Button type="primary" icon={<SearchOutlined />}>Buscar</Button>}
-        size="large"
-        autoFocus
-      />
-        <div style={{ minHeight: '300px' }}>
-            <AnimatePresence>
-                <motion.div initial="hidden" animate="visible" variants={listVariants}>
+    return (
+        <Modal
+            open={open}
+            onCancel={onCancel}
+            title="Adicionar Item à Comanda"
+            width={700}
+            footer={null} // O botão de adicionar está na lista
+        >
+            <Input.Search
+                placeholder="Buscar produto por nome ou código..."
+                onChange={e => setSearchTerm(e.target.value)}
+                style={{ marginBottom: 20 }}
+                loading={loading}
+                allowClear
+            />
+            <Spin spinning={loading}>
+                {products.length > 0 ? (
                     <List
-                      className="add-item-list"
-                      itemLayout="horizontal"
-                      dataSource={products}
-                      locale={{ emptyText: <Empty description={debouncedSearchTerm ? "Nenhum produto encontrado" : "Digite para buscar"} /> }}
-                      renderItem={(product) => (
-                        <motion.div variants={itemVariants}>
+                        itemLayout="horizontal"
+                        dataSource={products}
+                        renderItem={product => (
                             <List.Item
-                              actions={[
-                                <Space key={`action-${product.id}`}>
-                                  <InputNumber
-                                    min={1}
-                                    defaultValue={1}
-                                    value={quantities[product.id] || 1}
-                                    onChange={(value) => handleQuantityChange(product.id, value)}
-                                    size="middle"
-                                  />
-                                  <Button 
-                                    type="primary" 
-                                    icon={<PlusOutlined />} 
-                                    onClick={() => handleAddItem(product, quantities[product.id] || 1)}
-                                  >
-                                    Adicionar
-                                  </Button>
-                                </Space>
-                              ]}
+                                actions={[
+                                    <InputNumber
+                                        min={1}
+                                        defaultValue={1}
+                                        onChange={value => handleQuantityChange(product.id, value)}
+                                        style={{ width: 60, marginRight: 8 }}
+                                    />,
+                                    <Button
+                                        type="primary"
+                                        onClick={() => handleAddItem(product)}
+                                        loading={addingProductId === product.id}
+                                    >
+                                        Adicionar
+                                    </Button>
+                                ]}
                             >
-                              <List.Item.Meta
-                                avatar={<Avatar shape="square" size={48} src={product.image_url} />}
-                                title={<Text strong>{product.name}</Text>}
-                                description={`R$ ${product.price.toFixed(2)}`}
-                              />
+                                <List.Item.Meta
+                                    avatar={<Avatar src={product.image_url || null}>{!product.image_url && product.name[0]}</Avatar>}
+                                    title={product.name}
+                                    description={`R$ ${product.price.toFixed(2)}`}
+                                />
                             </List.Item>
-                        </motion.div>
-                      )}
+                        )}
                     />
-                </motion.div>
-            </AnimatePresence>
-        </div>
-    </Modal>
-  );
+                ) : (
+                    <Empty description="Nenhum produto encontrado." />
+                )}
+            </Spin>
+        </Modal>
+    );
 };
 
 export default AddItemModal;
