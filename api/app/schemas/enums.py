@@ -1,4 +1,5 @@
 import enum
+from enum import Enum
 
 # O (str, enum.Enum) é uma prática recomendada para que o FastAPI/Pydantic
 # trate os membros do enum como strings, o que é ideal para APIs JSON.
@@ -47,3 +48,8 @@ class OrderItemStatus(str, enum.Enum):
     PREPARING = "preparing"
     READY = "ready"
     DELIVERED = "delivered" # Adicionamos um status final
+
+    # Adicionamos a definição dos status de mesa que estava faltando
+class TableStatus(str, Enum):
+    AVAILABLE = "available"
+    OCCUPIED = "occupied"
