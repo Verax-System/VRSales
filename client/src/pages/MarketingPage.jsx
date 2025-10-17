@@ -18,7 +18,6 @@ import dayjs from 'dayjs';
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 
-// Estilos embutidos (sem alterações)
 const PageStyles = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
@@ -37,8 +36,6 @@ const PageStyles = () => (
   `}</style>
 );
 
-// PASSO 3 (CORRIGIDO): O formulário agora é um componente "filho" inteligente.
-// Ele controla o envio para a API e notifica o "pai" quando termina.
 const CampaignFormModal = ({ visible, onCancel, onSuccess, editingCampaign }) => {
   const [form] = Form.useForm();
   const [formLoading, setFormLoading] = useState(false);
@@ -66,14 +63,14 @@ const CampaignFormModal = ({ visible, onCancel, onSuccess, editingCampaign }) =>
 
     try {
       if (isEditing) {
-        // PASSO 1 (CORRIGIDO): Usando o método padrão do ApiService
         await ApiService.put(`/marketing/campaigns/${editingCampaign.id}`, payload);
       } else {
-        // PASSO 1 (CORRIGIDO): Usando o método padrão do ApiService
-        await ApiService.post('/marketing/campaigns/', payload);
+        // --- CORREÇÃO AQUI ---
+        // A barra "/" no final foi removida para evitar o redirecionamento 307
+        await ApiService.post('/marketing/campaigns', payload);
+        // --- FIM DA CORREÇÃO ---
       }
       
-      // A CORREÇÃO PRINCIPAL: Notifica o pai sobre o sucesso.
       if (onSuccess) {
         onSuccess();
       }
@@ -119,8 +116,6 @@ const CampaignFormModal = ({ visible, onCancel, onSuccess, editingCampaign }) =>
   );
 };
 
-
-// PASSO 2 (CORRIGIDO): A página principal (componente "pai")
 const MarketingPage = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -130,8 +125,7 @@ const MarketingPage = () => {
   const fetchCampaigns = useCallback(async () => {
     setLoading(true);
     try {
-      // PASSO 1 (CORRIGIDO): Usando o método padrão do ApiService
-      const response = await ApiService.get('/marketing/campaigns/');
+      const response = await ApiService.get('/marketing/campaigns');
       setCampaigns(response.data);
     } catch (error) {
       message.error("Erro ao carregar campanhas de marketing.");
@@ -156,21 +150,18 @@ const MarketingPage = () => {
 
   const handleModalCancel = () => {
     setIsModalVisible(false);
-    // Opcional: A propriedade destroyOnClose do Modal já limpa o estado do formulário.
     setEditingCampaign(null); 
   };
   
-  // A FUNÇÃO CHAVE: O que fazer quando o formulário for salvo com sucesso.
   const handleFormSuccess = () => {
     message.success('Campanha salva com sucesso!');
-    setIsModalVisible(false); // 1. Fecha a janela
-    fetchCampaigns();       // 2. Atualiza a lista na tela
+    setIsModalVisible(false);
+    fetchCampaigns();
     setEditingCampaign(null);
   };
 
   const handleDelete = async (id) => {
     try {
-      // PASSO 1 (CORRIGIDO): Usando o método padrão do ApiService
       await ApiService.delete(`/marketing/campaigns/${id}`);
       message.success("Campanha excluída com sucesso!");
       fetchCampaigns();
@@ -271,7 +262,6 @@ const MarketingPage = () => {
           </AnimatePresence>
         )}
 
-        {/* O "Pai" renderiza o componente do formulário/modal e passa a função de sucesso */}
         <CampaignFormModal
           visible={isModalVisible}
           onCancel={handleModalCancel}

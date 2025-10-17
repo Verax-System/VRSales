@@ -22,11 +22,15 @@ const ApiService = {
   // Funções genéricas
   get: (url, config) => apiClient.get(url, config),
   post: (url, data, config) => apiClient.post(url, data, config),
+  
+  // --- CORREÇÃO AQUI ---
+  // Adicionando o método PUT que estava em falta para as operações de atualização.
+  put: (url, data, config) => apiClient.put(url, data, config),
+  // --- FIM DA CORREÇÃO ---
+  
   patch: (url, data, config) => apiClient.patch(url, data, config),
   delete: (url, config) => apiClient.delete(url, config),
 
-  // --- CORREÇÃO APLICADA AQUI ---
-  // A rota foi alterada de '/auth/token' para '/login/token'
   login: (email, password) => {
     const formData = new URLSearchParams();
     formData.append('username', email);
@@ -35,7 +39,6 @@ const ApiService = {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
   },
-  // --- FIM DA CORREÇÃO ---
 
   getCurrentUser: () => {
     return ApiService.get('/users/me');
@@ -60,6 +63,15 @@ const ApiService = {
   cancelOrder: (orderId) => {
     return ApiService.patch(`/orders/${orderId}/cancel`);
   },
+  
+  // Adicione outras chamadas específicas da API aqui conforme necessário
+  getKitchenOrders: () => ApiService.get('/orders/kitchen'), // Exemplo
+  updateOrderItemStatus: (itemId, status) => ApiService.patch(`/orders/items/${itemId}/status`, { status }), // Exemplo
+  getStores: () => ApiService.get('/stores'),
+  createStore: (data) => ApiService.post('/stores', data),
+  updateStore: (id, data) => ApiService.put(`/stores/${id}`, data),
+  getGlobalDashboardSummary: () => ApiService.get('/super-admin/dashboard'),
+  
 };
 
 export default ApiService;
