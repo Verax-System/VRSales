@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from app.api.endpoints import (
     super_admin, stores, attributes, categories, batches, products,
     login, users, sales, cash_register, reports, additionals,
-    customers, suppliers, ingredients, tables, orders, marketing
+    customers, suppliers, ingredients, tables, orders, marketing, reservations
 )
 
 api_router = APIRouter()
@@ -15,7 +15,7 @@ api_router.include_router(categories.router, prefix="/categories", tags=["catego
 api_router.include_router(customers.router, prefix="/customers", tags=["customers"])
 api_router.include_router(suppliers.router, prefix="/suppliers", tags=["suppliers"])
 api_router.include_router(sales.router, prefix="/sales", tags=["sales"])
-
+api_router.include_router(reservations.router, prefix="/reservations", tags=["reservations"]) # <-- Adicione a nova rota
 # --- CORREÇÃO APLICADA AQUI ---
 # O prefixo foi alterado para o plural para corresponder à chamada do frontend.
 api_router.include_router(cash_register.router, prefix="/cash-registers", tags=["cash-register"])

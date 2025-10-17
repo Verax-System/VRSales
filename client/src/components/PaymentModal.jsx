@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Modal, Row, Col, Statistic, Select, InputNumber, Button, Form, message, Divider, Space } from 'antd';
-import { DollarCircleOutlined, CreditCardOutlined, QrcodeOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { Modal, Row, Col, Statistic, Select, InputNumber, Button, Form, message, Divider, Space, Input } from 'antd';
+import { DollarCircleOutlined, CreditCardOutlined, QrcodeOutlined, CloseCircleOutlined, TeamOutlined } from '@ant-design/icons';
 import ApiService from '../api/ApiService';
 
 const { Option } = Select;
@@ -35,27 +35,38 @@ const PaymentModal = ({ open, onCancel, onOk, cartItems, totalAmount, customerId
     setLoading(true);
     try {
       const saleData = {
-        items: cartItems.map(item => ({ product_id: item.id, quantity: item.quantity })),
+        items: cartItems.map(item => ({ product_id: item.id, quantity: item.quantity, price_at_sale: item.price })),
         payments: finalPayments,
         customer_id: customerId,
+        total_amount: totalAmount,
+        // Adicione outros campos necessários pela sua API, como order_id se aplicável
       };
       
-      await ApiService.createSale(saleData);
+      // A sua API de criação de venda pode precisar de ajustes para aceitar múltiplos pagamentos.
+      await ApiService.createSale(saleData); 
       
       const finalChange = finalTotalPaid - totalAmount;
       message.success(`Venda finalizada! Troco: R$ ${finalChange.toFixed(2)}`);
       onOk();
     } catch (error) {
-        // --- INÍCIO DA MUDANÇA ---
-        // Adicionamos um console.error para ver o objeto de erro completo no navegador
         console.error("ERRO DETALHADO RECEBIDO PELO FRONTEND:", error.response);
-        
-        const errorMsg = error.response?.data?.detail || 'Erro ao finalizar a venda. Verifique o console para detalhes (F12).';
-        message.error(errorMsg, 5); // Aumenta a duração da mensagem para 5 segundos
-        // --- FIM DA MUDANÇA ---
+        const errorMsg = error.response?.data?.detail || 'Erro ao finalizar a venda.';
+        message.error(errorMsg, 5);
     } finally {
         setLoading(false);
     }
+  };
+
+  // --- NOVA FUNCIONALIDADE: DIVIDIR CONTA ---
+  const handleSplitBill = (people) => {
+    if (people < 2) return;
+    const amountPerPerson = parseFloat((totalAmount / people).toFixed(2));
+    const newPayments = Array.from({ length: people }, (_, i) => ({
+        payment_method: 'cash',
+        amount: i === 0 ? totalAmount - (amountPerPerson * (people - 1)) : amountPerPerson, // Garante que a soma seja exata
+    }));
+    setPayments(newPayments);
+    form.setFieldsValue({ payments: newPayments });
   };
 
   return (
@@ -83,6 +94,14 @@ const PaymentModal = ({ open, onCancel, onOk, cartItems, totalAmount, customerId
       </Row>
       <Divider />
       
+      {/* --- NOVA SEÇÃO: BOTÕES PARA DIVIDIR CONTA --- */}
+      <Space style={{ marginBottom: 24 }}>
+          <Text><TeamOutlined /> Dividir conta igualmente por:</Text>
+          <Button onClick={() => handleSplitBill(2)}>2 Pessoas</Button>
+          <Button onClick={() => handleSplitBill(3)}>3 Pessoas</Button>
+          <Button onClick={() => handleSplitBill(4)}>4 Pessoas</Button>
+      </Space>
+
       <Form form={form} onFinish={handleFinishSale} onValuesChange={(_, allValues) => setPayments(allValues.payments || [])}>
         <Form.List name="payments">
           {(fields, { add, remove }) => (

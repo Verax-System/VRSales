@@ -14,103 +14,31 @@ dayjs.locale('pt-br');
 const { Title, Text } = Typography;
 const { Content } = Layout;
 
-// CSS embutido para o novo design claro e vibrante
 const PageStyles = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-
-    .kds-page-container {
-      background-color: #f0f2f5;
-      font-family: 'Inter', sans-serif;
-      min-height: 100vh;
-    }
-
-    /* ESTE É O NOVO HEADER QUE VOCÊ PEDIU */
-    .kds-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 24px;
-      padding: 20px 24px;
-      background: linear-gradient(135deg, #e74c3c 0%, #f39c12 100%);
-      border-radius: 16px;
-      color: white;
-      box-shadow: 0 10px 30px -10px rgba(231, 76, 60, 0.5);
-    }
-    
-    .kds-header .ant-typography {
-        color: white;
-        text-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    }
-
-    .kds-content {
-      padding: 0 24px 24px 24px;
-    }
-
-    .order-card {
-      background: #fff;
-      border-radius: 12px;
-      border: 1px solid #e8e8e8;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s ease;
-    }
-    
-    .order-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-    }
-
-    .order-card-status-bar {
-        position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        width: 6px;
-    }
+    .kds-page-container { background-color: #f0f2f5; font-family: 'Inter', sans-serif; min-height: 100vh; }
+    .kds-header { display: flex; justify-content: space-between; align-items: center; margin: 24px; padding: 20px 24px; background: linear-gradient(135deg, #e74c3c 0%, #f39c12 100%); border-radius: 16px; color: white; box-shadow: 0 10px 30px -10px rgba(231, 76, 60, 0.5); }
+    .kds-header .ant-typography { color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    .kds-content { padding: 0 24px 24px 24px; }
+    .order-card { background: #fff; border-radius: 12px; border: 1px solid #e8e8e8; box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: relative; overflow: hidden; transition: all 0.3s ease; }
+    .order-card:hover { transform: translateY(-5px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+    .order-card-status-bar { position: absolute; top: 0; left: 0; bottom: 0; width: 6px; }
     .order-card-status-bar.success { background: #2ecc71; }
     .order-card-status-bar.warning { background: #f39c12; }
     .order-card-status-bar.error { background: #e74c3c; }
-
-    .card-title {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .order-card .ant-card-head {
-        padding: 0 24px 0 30px; /* Espaço para a barra de status */
-    }
-    
-    .order-card .ant-card-body {
-        padding: 8px 16px;
-    }
-
-    .order-item {
-      display: flex;
-      align-items: center;
-      padding: 12px 8px;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    
-    .order-item:last-child {
-        border-bottom: none;
-    }
-    
-    .order-item.status-ready {
-        opacity: 0.6;
-    }
-    .order-item.status-ready .item-details {
-        text-decoration: line-through;
-    }
-
+    .card-title { display: flex; justify-content: space-between; align-items: center; }
+    .order-card .ant-card-head { padding: 0 24px 0 30px; }
+    .order-card .ant-card-body { padding: 8px 16px; }
+    .order-item { display: flex; align-items: center; padding: 12px 8px; border-bottom: 1px solid #f0f0f0; }
+    .order-item:last-child { border-bottom: none; }
+    .order-item.status-ready { opacity: 0.6; }
+    .order-item.status-ready .item-details { text-decoration: line-through; }
     .item-quantity { margin-right: 12px; }
     .item-details { flex-grow: 1; }
     .item-actions { margin-left: 16px; }
   `}</style>
 );
-
 
 const getOrderTimeStatus = (createdAt) => {
   const minutes = dayjs().diff(dayjs(createdAt), 'minute');
@@ -124,18 +52,8 @@ const OrderCard = ({ order, onStatusChange }) => {
   const allItemsReady = order.items.every(item => item.status === 'ready');
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-      whileHover={{ y: -5 }}
-    >
-      <Card
-        className="order-card"
-        headStyle={{ padding: '0 24px 0 30px', borderBottom: '1px solid #f0f0f0' }}
-        bodyStyle={{ padding: '8px 16px' }}
-        title={
+    <motion.div layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }} whileHover={{ y: -5 }}>
+      <Card className="order-card" headStyle={{ padding: '0 24px 0 30px', borderBottom: '1px solid #f0f0f0' }} bodyStyle={{ padding: '8px 16px' }} title={
           <div className="card-title">
             <Title level={4} style={{ margin: 0 }}>Mesa {order.table?.number || 'Delivery'}</Title>
             <Tag icon={<ClockCircleOutlined />} color={timeStatus.color}>{timeStatus.text}</Tag>
@@ -172,7 +90,6 @@ const OrderCard = ({ order, onStatusChange }) => {
   );
 };
 
-
 const KDSPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -181,9 +98,9 @@ const KDSPage = () => {
   const fetchKitchenOrders = useCallback(async (isInitialLoad = false) => {
     if (isInitialLoad) setLoading(true);
     try {
-      const response = await ApiService.getKitchenOrders();
+      const response = await ApiService.get('/orders/kitchen'); // Assumindo que esta rota existe
       setOrders(response.data);
-    } catch (error) {
+    } catch {
       message.error('Erro ao buscar pedidos da cozinha.');
     } finally {
       if (isInitialLoad) setLoading(false);
@@ -201,15 +118,17 @@ const KDSPage = () => {
       if (newStatus === 'ready_all') {
         const orderToUpdate = orders.find(o => o.id === orderId);
         if (orderToUpdate) {
-          const updatePromises = orderToUpdate.items.filter(item => item.status !== 'ready').map(item => ApiService.updateOrderItemStatus(item.id, 'ready'));
+          const updatePromises = orderToUpdate.items.filter(item => item.status !== 'ready').map(item => 
+            ApiService.patch(`/orders/items/${item.id}/status`, { status: 'ready' })
+          );
           await Promise.all(updatePromises);
         }
       } else {
-        await ApiService.updateOrderItemStatus(itemId, newStatus);
+        await ApiService.patch(`/orders/items/${itemId}/status`, { status: newStatus });
       }
       message.success('Status atualizado!');
       fetchKitchenOrders(false);
-    } catch (error) {
+    } catch {
       message.error('Falha ao atualizar o status.');
     }
   };

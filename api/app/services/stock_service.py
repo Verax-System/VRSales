@@ -1,12 +1,11 @@
+# api/app/services/stock_service.py
 from sqlalchemy.orm import Session
 from loguru import logger
 
 from app.models.sale import Sale
 from app.models.product import Product
 from app.models.user import User
-from app.models.stock_movement import StockMovement
-from app.models.stock_movement import MovementType
-from app.crud import product as crud_product
+from app.models.stock_movement import StockMovement, MovementType
 
 class StockService:
     def _create_stock_movement(
@@ -23,19 +22,14 @@ class StockService:
         Método privado central para criar um registro de movimentação de estoque
         e atualizar o estoque do produto.
         """
-        # 1. Atualiza o estoque do produto
-        old_stock = product.stock
         product.stock += quantity_change
         
-        # Garante que o estoque não fique negativo
         if product.stock < 0:
             product.stock = 0
             
         db.add(product)
-        db.commit()
-        db.refresh(product)
+        # O commit será feito pela função que chama o serviço
 
-        # 2. Cria o registro histórico
         movement = StockMovement(
             product_id=product.id,
             user_id=user_id,
@@ -43,13 +37,11 @@ class StockService:
             quantity=quantity_change,
             stock_after_movement=product.stock,
             reason=reason,
+            store_id=product.store_id # Garante que o store_id seja salvo
         )
         db.add(movement)
-        db.commit()
-        db.refresh(movement)
         
-        # 3. Loga alertas de estoque baixo
-        if product.stock < product.low_stock_threshold:
+        if product.stock <= product.low_stock_threshold:
             logger.warning(
                 f"Estoque baixo para o produto ID {product.id} ('{product.name}'). "
                 f"Estoque atual: {product.stock}, Limite: {product.low_stock_threshold}."
@@ -60,13 +52,23 @@ class StockService:
     def deduct_stock_from_sale(self, db: Session, *, sale: Sale) -> None:
         """Refatorado para usar o método central _create_stock_movement."""
         for item in sale.items:
-            product = crud_product.product.get(db, id=item.product_id)
+            # --- INÍCIO DA CORREÇÃO ---
+            # Usamos db.get(), que é o método síncrono padrão do SQLAlchemy
+            # para buscar um objeto pela sua chave primária.
+            product = db.get(Product, item.product_id)
+            # --- FIM DA CORREÇÃO ---
+
             if product:
+                # Verificação de segurança para garantir que o produto pertence à mesma loja da venda
+                if product.store_id != sale.store_id:
+                    logger.error(f"Tentativa de dedução de estoque para o produto ID {item.product_id} que não pertence à loja da venda ID {sale.id}.")
+                    continue # Pula para o próximo item
+
                 self._create_stock_movement(
                     db=db,
                     product=product,
                     user_id=sale.user_id,
-                    quantity_change=-item.quantity,  # Quantidade negativa para saídas
+                    quantity_change=-item.quantity,
                     movement_type=MovementType.SALE,
                     reason=f"Venda ID: {sale.id}"
                 )
@@ -79,9 +81,9 @@ class StockService:
         """
         Ajusta o estoque de um produto para um valor específico (para inventário).
         """
-        product = crud_product.product.get(db, id=product_id)
+        product = db.get(Product, product_id)
         if not product:
-            return None # Trataremos o erro 404 no endpoint
+            return None
             
         quantity_change = new_stock_level - product.stock
 
@@ -94,5 +96,4 @@ class StockService:
             reason=reason
         )
 
-# Instância única do serviço
 stock_service = StockService()

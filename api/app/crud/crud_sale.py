@@ -1,68 +1,84 @@
+# api/app/crud/crud_sale.py
+
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, selectinload
 from typing import List
+from fastapi import HTTPException, status
+from decimal import Decimal, ROUND_HALF_UP
 
 from app.crud.base import CRUDBase
-from app.models.sale import Sale
-from app.models.sale import SaleItem
+from app.models.sale import Sale, SaleItem as SaleItemModel
+from app.models.payment import Payment
 from app.schemas.sale import SaleCreate, SaleUpdate
+from app.models.user import User
 
-# Importa todos os serviços necessários
 from app.services.crm_service import crm_service
 from app.services.stock_service import stock_service
-# --- INÍCIO DA ATUALIZAÇÃO ---
 from app.services.cash_register_service import cash_register_service
-# --- FIM DA ATUALIZAÇÃO ---
+
+def _run_sync_post_sale_services(db_session: Session, *, sale: Sale):
+    """
+    Função auxiliar que executa os serviços síncronos de forma segura.
+    """
+    sync_sale = db_session.merge(sale)
+    
+    cash_register_service.add_sale_transaction(db_session, sale=sync_sale)
+    crm_service.update_customer_stats_from_sale(db_session, sale=sync_sale)
+    stock_service.deduct_stock_from_sale(db_session, sale=sync_sale)
 
 class CRUDSale(CRUDBase[Sale, SaleCreate, SaleUpdate]):
-    def create(self, db: Session, *, obj_in: SaleCreate) -> Sale:
+    
+    # --- MÉTODO CORRIGIDO E RENOMEADO ---
+    async def create_with_items(self, db: AsyncSession, *, obj_in: SaleCreate, current_user: User) -> Sale:
         """
-        Cria uma nova venda e orquestra os serviços de pós-venda:
-        - Registra o pagamento no caixa.
-        - Atualiza as estatísticas do cliente (CRM).
-        - Deduz os itens vendidos do estoque.
+        Cria uma nova venda a partir do zero (ex: do POS) e orquestra os serviços de pós-venda.
         """
-        # --- INÍCIO DA ATUALIZAÇÃO ---
-        # 1. Antes de tudo, verifica se há um caixa aberto.
-        #    O próprio serviço levantará uma exceção se não houver.
-        cash_register_service.get_open_register(db)
-        # --- FIM DA ATUALIZAÇÃO ---
+        sale_data = obj_in.model_dump()
+        items_data = sale_data.pop("items", [])
+        payments_data = sale_data.pop("payments", [])
 
-        sale_data = obj_in.dict()
-        items_data = sale_data.pop("items")
+        if not items_data or not payments_data:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="A venda deve conter pelo menos um item e um método de pagamento.")
+
+        # Calcula o total real a partir dos itens para segurança
+        total_amount = sum(Decimal(str(item['price_at_sale'])) * Decimal(item['quantity']) for item in items_data)
+        total_amount = float(total_amount.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+        total_paid = sum(p['amount'] for p in payments_data)
+        if total_paid < total_amount:
+             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="O valor pago é menor que o total da venda.")
+
+        # Cria a instância da Venda
+        db_sale = Sale(
+            total_amount=total_amount,
+            payment_method=payments_data[0]['payment_method'], # Pega o primeiro como principal
+            user_id=current_user.id,
+            store_id=current_user.store_id,
+            customer_id=obj_in.customer_id,
+            items=[SaleItemModel(**item) for item in items_data],
+            payments=[Payment(**p) for p in payments_data]
+        )
         
-        db_sale = Sale(**sale_data)
         db.add(db_sale)
-        db.commit()
-        db.refresh(db_sale)
+        await db.commit()
+        await db.refresh(db_sale)
 
-        for item_data in items_data:
-            db_item = SaleItem(**item_data, sale_id=db_sale.id)
-            db.add(db_item)
-            
-        db.commit()
-        db.refresh(db_sale)
+        # Executa os serviços síncronos de forma segura
+        await db.run_sync(_run_sync_post_sale_services, sale=db_sale)
         
-        # --- ORDEM DE ORQUESTRAÇÃO ATUALIZADA ---
-        # 1. Registra o pagamento no caixa
-        cash_register_service.add_sale_transaction(db, sale=db_sale)
-        
-        # 2. Atualiza o CRM do cliente
-        crm_service.update_customer_stats_from_sale(db, sale=db_sale)
-        
-        # 3. Deduz do estoque
-        stock_service.deduct_stock_from_sale(db, sale=db_sale)
-        # --- FIM DA ORDEM ---
+        # Recarrega a venda com todos os relacionamentos para retornar ao frontend
+        await db.refresh(db_sale, attribute_names=['items', 'payments'])
         
         return db_sale
 
-    def get_sales_by_customer(self, db: Session, *, customer_id: int) -> List[Sale]:
-        # ... (código existente)
-        return (
-            db.query(self.model)
-            .filter(Sale.customer_id == customer_id)
-            .options(selectinload(Sale.items).selectinload(SaleItem.product))
+    async def get_sales_by_customer(self, db: AsyncSession, *, customer_id: int, current_user: User) -> List[Sale]:
+        stmt = (
+            select(self.model)
+            .filter(Sale.customer_id == customer_id, Sale.store_id == current_user.store_id)
+            .options(selectinload(Sale.items).selectinload(SaleItemModel.product))
             .order_by(Sale.created_at.desc())
-            .all()
         )
+        result = await db.execute(stmt)
+        return result.scalars().all()
 
 sale = CRUDSale(Sale)

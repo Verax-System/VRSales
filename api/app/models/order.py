@@ -1,3 +1,4 @@
+# api/app/models/order.py
 from sqlalchemy import (
     String, Integer, Float, ForeignKey, DateTime, func, Enum as SQLAlchemyEnum
 )
@@ -47,16 +48,19 @@ class Order(Base):
         lazy="selectin"
     )
     
-    # --- CORREÇÃO APLICADA AQUI ---
-    # Adicionamos a relação 'payments' que estava faltando para completar o back_populates.
     payments: Mapped[List["Payment"]] = relationship(back_populates="order", cascade="all, delete-orphan", lazy="selectin")
-    # -----------------------------
 
 class OrderItem(Base):
     __tablename__ = "order_items"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    
+    # --- INÍCIO DA ALTERAÇÃO ---
+    # Adicionamos a coluna para rastrear a quantidade já paga deste item.
+    paid_quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # --- FIM DA ALTERAÇÃO ---
+
     price_at_order: Mapped[float] = mapped_column(Float, nullable=False)
     notes: Mapped[Optional[str]] = mapped_column(String(255))
     status: Mapped[OrderItemStatus] = mapped_column(

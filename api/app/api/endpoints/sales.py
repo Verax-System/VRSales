@@ -1,11 +1,13 @@
+# api/app/api/endpoints/sales.py
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# --- CORREÇÃO AQUI ---
-from app.crud import crud_sale
+# --- INÍCIO DA CORREÇÃO ---
+from app import crud # Importa o pacote crud inteiro
+from app.models.user import User as UserModel
 from app.schemas.sale import Sale, SaleCreate
-from app.schemas.user import User
-from app.api.dependencies import get_db, get_current_user
+from app.api.dependencies import get_db, get_current_active_user
+# --- FIM DA CORREÇÃO ---
 
 router = APIRouter()
 
@@ -13,6 +15,10 @@ router = APIRouter()
 async def create_sale(
     sale_in: SaleCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_active_user)
 ):
-    return await crud_sale.create_sale(db=db, sale_in=sale_in, user_id=current_user.id)
+    """
+    Cria uma nova venda (usado pelo POS).
+    """
+    # --- CORREÇÃO: Usa a referência completa a partir do pacote crud ---
+    return await crud.sale.create_with_items(db=db, obj_in=sale_in, current_user=current_user)

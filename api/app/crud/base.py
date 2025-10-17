@@ -1,3 +1,4 @@
+# api/app/crud/base.py
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,6 +17,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     def __init__(self, model: Type[ModelType]):
         self.model = model
 
+    # --- CORRIGIDO para ser async ---
     async def get(self, db: AsyncSession, id: Any, *, current_user: User) -> Optional[ModelType]:
         stmt = select(self.model).filter(self.model.id == id)
         if hasattr(self.model, 'store_id') and current_user.role != 'super_admin':
@@ -23,8 +25,9 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         result = await db.execute(stmt)
         return result.scalars().first()
 
+    # --- CORRIGIDO para ser async ---
     async def get_multi(
-        self, db: AsyncSession, *, skip: int = 0, limit: int = 100, current_user: User
+        self, db: AsyncSession, *, skip: int = 0, limit: int = 100, current_user: User, **kwargs
     ) -> List[ModelType]:
         stmt = select(self.model)
         if hasattr(self.model, 'store_id') and current_user.role != 'super_admin':
@@ -35,13 +38,6 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return result.scalars().all()
 
     async def create(self, db: AsyncSession, *, obj_in: CreateSchemaType, current_user: User) -> ModelType:
-        """
-        Cria um novo registro no banco de dados.
-        """
-        # --- AQUI ESTÁ A CORREÇÃO FINAL ---
-        # Trocamos 'jsonable_encoder' por 'model_dump()'.
-        # model_dump() mantém os tipos de dados do Python (como datas),
-        # que é o que o SQLAlchemy precisa para falar com o banco de dados.
         obj_in_data = obj_in.model_dump()
         
         if hasattr(self.model, 'store_id'):
@@ -77,6 +73,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         await db.refresh(db_obj)
         return db_obj
 
+    # --- CORRIGIDO para ser async ---
     async def remove(self, db: AsyncSession, *, id: int, current_user: User) -> Optional[ModelType]:
         obj = await self.get(db, id=id, current_user=current_user)
         if not obj:

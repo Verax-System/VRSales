@@ -4,7 +4,7 @@ import {
   DesktopOutlined, AppstoreOutlined, AreaChartOutlined, UserOutlined, SettingOutlined,
   LogoutOutlined, TeamOutlined, CalendarOutlined, BarcodeOutlined, TableOutlined,
   LineChartOutlined, SafetyCertificateOutlined, FireOutlined, RocketOutlined,
-  LayoutOutlined, GlobalOutlined, ShopOutlined
+  LayoutOutlined, GlobalOutlined, ShopOutlined, BookOutlined // Adicionado BookOutlined
 } from '@ant-design/icons';
 import { Routes, Route, useNavigate, useLocation, Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
@@ -29,6 +29,9 @@ import UsersPage from './pages/UsersPage';
 import OpenCashRegisterPage from './pages/OpenCashRegisterPage';
 import GlobalDashboardPage from './pages/superadmin/GlobalDashboardPage';
 import StoresManagementPage from './pages/superadmin/StoresManagementPage';
+// --- INÍCIO DA CORREÇÃO ---
+import ReservationPage from './pages/ReservationPage'; // Importa a nova página
+// --- FIM DA CORREÇÃO ---
 
 
 const { Header, Content, Sider } = Layout;
@@ -39,14 +42,14 @@ const storeMenuItems = [
     label: 'Vendas e Operações',
     key: 'grp-sales',
     type: 'group',
-    roles: ['admin', 'manager', 'cashier'], // O grupo é visível para todos
+    roles: ['admin', 'manager', 'cashier'],
     children: [
     { key: '/pos', icon: <BarcodeOutlined />, label: 'Frente de Caixa', roles: ['admin', 'manager', 'cashier'] },
     { key: '/tables', icon: <TableOutlined />, label: 'Gestão de Mesas', roles: ['admin', 'manager', 'cashier'] },
     { key: '/kds', icon: <FireOutlined />, label: 'Painel da Cozinha', roles: ['admin', 'manager'] },
     ],
   },
-  { type: 'divider', roles: ['admin', 'manager'] }, // Divisor
+  { type: 'divider', roles: ['admin', 'manager'] },
 
 {
     label: 'Análise e Marketing',
@@ -55,6 +58,9 @@ const storeMenuItems = [
     roles: ['admin', 'manager'],
     children: [
     { key: '/', icon: <AreaChartOutlined />, label: 'Análise da Loja', roles: ['admin', 'manager'] },
+    // --- INÍCIO DA CORREÇÃO ---
+    { key: '/reservations', icon: <BookOutlined />, label: 'Reservas', roles: ['admin', 'manager'] },
+    // --- FIM DA CORREÇÃO ---
     { key: '/reports', icon: <LineChartOutlined />, label: 'Relatórios', roles: ['admin', 'manager'] },
     { key: '/marketing', icon: <RocketOutlined />, label: 'Marketing', roles: ['admin', 'manager'] },
     { key: '/customers', icon: <UserOutlined />, label: 'Clientes', roles: ['admin', 'manager', 'cashier'] },
@@ -158,7 +164,6 @@ const MainLayout = () => {
             <a onClick={(e) => e.preventDefault()} className="cursor-pointer">
               <Space>
                 <Avatar style={{ backgroundColor: '#1890ff' }} icon={<UserOutlined />} />
-                {/* O user.full_name agora virá da API */}
                 <span className="text-gray-700">{user.full_name || 'Usuário'}</span>
               </Space>
             </a>
@@ -200,6 +205,9 @@ const App = () => {
           <Route path="expiration" element={<ExpirationControlPage />} />
           <Route path="marketing" element={<MarketingPage />} />
           <Route path="kds" element={<KDSPage />} />
+          {/* --- INÍCIO DA CORREÇÃO --- */}
+          <Route path="reservations" element={<ReservationPage />} />
+          {/* --- FIM DA CORREÇÃO --- */}
         </Route>
 
         <Route element={<RoleBasedRoute allowedRoles={['admin', 'manager', 'cashier']} />}>

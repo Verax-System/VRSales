@@ -20,9 +20,12 @@ class TableStatus(str, enum.Enum):
 
 class OrderStatus(str, enum.Enum):
     """ Status de uma comanda/pedido. """
-    OPEN = "open"
-    CLOSED = "closed"
-    PAID = "paid"
+    OPEN = "OPEN"
+    CLOSED = "CLOSED"
+    PAID = "PAID"
+    # --- CORREÇÃO AQUI ---
+    # Garantindo que o valor no código Python é o mesmo que vamos adicionar à base de dados.
+    CANCELLED = "CANCELLED"
 
 class OrderType(str, Enum):
     DINE_IN = "DINE_IN"
@@ -53,3 +56,4 @@ class OrderItemStatus(str, Enum):
 class TableStatus(str, Enum):
     AVAILABLE = "available"
     OCCUPIED = "occupied"
+    RESERVED = "reserved" #
