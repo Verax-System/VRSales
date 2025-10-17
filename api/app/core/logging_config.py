@@ -1,60 +1,38 @@
 import logging
-import sys
-from loguru import logger
-
-class InterceptHandler(logging.Handler):
-    """
-    Handler para interceptar logs do sistema de logging padrão do Python
-    e redirecioná-los para o Loguru.
-    """
-    def emit(self, record):
-        try:
-            level = logger.level(record.levelname).name
-        except ValueError:
-            level = record.levelno
-
-        frame, depth = logging.currentframe(), 2
-        while frame.f_code.co_filename == logging.__file__:
-            frame = frame.f_back
-            depth += 1
-
-        logger.opt(depth=depth, exception=record.exc_info).log(
-            level, record.getMessage()
-        )
+from logging.handlers import TimedRotatingFileHandler
+import os
+from datetime import datetime
 
 def setup_logging():
-    """
-    Configura o Loguru como o único logger para a aplicação.
-    Remove handlers existentes, adiciona um novo handler configurado
-    e intercepta os logs padrão.
-    """
-    # Remove qualquer handler pré-configurado para evitar duplicação de logs
-    logger.remove()
+    # Caminho para o diretório de logs
+    log_directory = "logs"
+    if not os.path.exists(log_directory):
+        os.makedirs(log_directory)
+
+    # Configuração básica do logger
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
     
-    # Adiciona um novo handler para output no console com formato customizado
-    # O formato inclui timestamp, nível, nome do arquivo, função e número da linha
-    logger.add(
-        sys.stdout,
-        colorize=True,
-        format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
-               "<level>{level: <8}</level> | "
-               "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
-               "<level>{message}</level>",
-        level="INFO" # Define o nível mínimo de log a ser exibido
-    )
+    # Formato do log
+    log_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
-    # Configura um handler para logs de arquivos, rotacionando o arquivo
-    # quando ele atinge 10 MB e mantendo um backup de 10 arquivos.
-    logger.add(
-        "logs/file_{time}.log",
-        rotation="10 MB",
-        retention="10 days",
-        format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - {message}",
-        level="DEBUG",
-        encoding="utf-8"
-    )
+    # --- INÍCIO DA MUDANÇA ---
+    # As linhas abaixo, que criavam e adicionavam o handler de arquivo, foram comentadas.
+    # Assim, os logs não serão mais salvos em arquivos.
 
-    # Intercepta todos os logs do sistema para que uvicorn, fastapi, etc.,
-    # também usem o Loguru.
-    logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
-    logger.info("Configuração de logging concluída e interceptadores ativados.")
+    # # Handler para salvar logs em arquivos com rotação diária
+    # now = datetime.now()
+    # log_filename = f"{log_directory}/file_{now.strftime('%Y-%m-%d_%H-%M-%S_%f')}.log"
+    # file_handler = TimedRotatingFileHandler(log_filename, when="midnight", interval=1, backupCount=30)
+    # file_handler.setFormatter(log_format)
+    # logger.addHandler(file_handler)
+    
+    # --- FIM DA MUDANÇA ---
+
+    # Handler para exibir logs no console (mantido)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(log_format)
+    
+    # Adiciona o handler do console ao logger se ainda não tiver um
+    if not any(isinstance(h, logging.StreamHandler) for h in logger.handlers):
+        logger.addHandler(console_handler)
