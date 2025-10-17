@@ -13,7 +13,7 @@ from app.schemas.token_schema import Token
 router = APIRouter()
 
 # --- CORREÇÃO APLICADA AQUI ---
-# A rota foi alterada de "/access-token" para "/token" para corresponder à chamada do frontend.
+# A rota foi alterada de volta para "/token" para corresponder à chamada do frontend.
 @router.post("/token", response_model=Token)
 # -----------------------------
 async def login_access_token(

@@ -7,12 +7,7 @@ from app.api.endpoints import (
 
 api_router = APIRouter()
 
-# --- INÍCIO DA CORREÇÃO ---
-# Incluindo o roteador de login com o prefixo correto.
-# A URL final será /api/v1/login/access-token
 api_router.include_router(login.router, prefix="/login", tags=["login"])
-# --- FIM DA CORREÇÃO ---
-
 api_router.include_router(users.router, prefix="/users", tags=["users"])
 api_router.include_router(stores.router, prefix="/stores", tags=["stores"])
 api_router.include_router(products.router, prefix="/products", tags=["products"])
@@ -20,7 +15,12 @@ api_router.include_router(categories.router, prefix="/categories", tags=["catego
 api_router.include_router(customers.router, prefix="/customers", tags=["customers"])
 api_router.include_router(suppliers.router, prefix="/suppliers", tags=["suppliers"])
 api_router.include_router(sales.router, prefix="/sales", tags=["sales"])
-api_router.include_router(cash_register.router, prefix="/cash-register", tags=["cash-register"])
+
+# --- CORREÇÃO APLICADA AQUI ---
+# O prefixo foi alterado para o plural para corresponder à chamada do frontend.
+api_router.include_router(cash_register.router, prefix="/cash-registers", tags=["cash-register"])
+# -----------------------------
+
 api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
 api_router.include_router(additionals.router, prefix="/additionals", tags=["additionals"])
 api_router.include_router(ingredients.router, prefix="/ingredients", tags=["ingredients"])

@@ -2,21 +2,18 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from typing import AsyncGenerator, Optional, List # Adicionar Optional
+from typing import AsyncGenerator, Optional, List 
 
 from app.core import security
 from app.db.session import AsyncSessionLocal
 from app.models.user import User as UserModel
-from app.schemas.enums import UserRole # Importar UserRole
+from app.schemas.enums import UserRole
 
-# Mantemos o esquema original que FORÇA a autenticação
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login/access-token")
-
-# --- INÍCIO DA MUDANÇA ---
-# Criamos um NOVO esquema com auto_error=False.
-# Isso tentará ler o token, mas não retornará um erro 401 se ele não existir.
-oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/api/v1/login/access-token", auto_error=False)
-# --- FIM DA MUDANÇA ---
+# --- INÍCIO DA CORREÇÃO ---
+# A tokenUrl DEVE ser a rota completa que o frontend chama.
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login/token")
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/api/v1/login/token", auto_error=False)
+# --- FIM DA CORREÇÃO ---
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -26,6 +23,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         finally:
             await db.close()
 
+# ... (o resto do ficheiro permanece exatamente como está)
 async def get_current_user(
     db: AsyncSession = Depends(get_db), token: str = Depends(oauth2_scheme)
 ) -> UserModel:
@@ -57,16 +55,11 @@ async def get_current_active_user(
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
-# --- INÍCIO DA MUDANÇA ---
 async def get_current_active_user_optional(
     db: AsyncSession = Depends(get_db), token: str = Depends(oauth2_scheme_optional)
 ) -> Optional[UserModel]:
-    """
-    Tenta obter o usuário autenticado. Se não houver token ou for inválido,
-    retorna None em vez de lançar uma exceção.
-    """
     if token is None:
-        return None  # Nenhum token foi fornecido
+        return None
 
     try:
         payload = security.decode_access_token(token)
@@ -85,10 +78,7 @@ async def get_current_active_user_optional(
             
         return user
     except Exception:
-        # Se qualquer erro ocorrer na validação do token, tratamos como usuário não logado
         return None
-# --- FIM DA MUDANÇA ---
-
 
 class RoleChecker:
     def __init__(self, allowed_roles: List[UserRole]):
