@@ -1,0 +1,61 @@
+2025-10-17 11:21:42.254 | INFO     | app.core.logging_config:setup_logging:60 - Configuração de logging concluída e interceptadores ativados.
+2025-10-17 11:21:56.864 | DEBUG    | logging:callHandlers:1706 - Calling on_field_start with no data
+2025-10-17 11:21:56.864 | DEBUG    | logging:callHandlers:1706 - Calling on_field_name with data[0:8]
+2025-10-17 11:21:56.864 | DEBUG    | logging:callHandlers:1706 - Calling on_field_data with data[9:28]
+2025-10-17 11:21:56.864 | DEBUG    | logging:callHandlers:1706 - Calling on_field_end with no data
+2025-10-17 11:21:56.864 | DEBUG    | logging:callHandlers:1706 - Calling on_field_start with no data
+2025-10-17 11:21:56.864 | DEBUG    | logging:callHandlers:1706 - Calling on_field_name with data[29:37]
+2025-10-17 11:21:56.864 | DEBUG    | logging:callHandlers:1706 - Calling on_field_data with data[38:46]
+2025-10-17 11:21:56.864 | DEBUG    | logging:callHandlers:1706 - Calling on_field_end with no data
+2025-10-17 11:21:56.864 | DEBUG    | logging:callHandlers:1706 - Calling on_end with no data
+2025-10-17 11:21:57.130 | INFO     | main:log_requests:47 - Request: POST /api/v1/login/access-token | Status: 400 | Duration: 265.78ms
+2025-10-17 11:21:59.183 | DEBUG    | logging:callHandlers:1706 - Calling on_field_start with no data
+2025-10-17 11:21:59.183 | DEBUG    | logging:callHandlers:1706 - Calling on_field_name with data[0:8]
+2025-10-17 11:21:59.183 | DEBUG    | logging:callHandlers:1706 - Calling on_field_data with data[9:28]
+2025-10-17 11:21:59.183 | DEBUG    | logging:callHandlers:1706 - Calling on_field_end with no data
+2025-10-17 11:21:59.183 | DEBUG    | logging:callHandlers:1706 - Calling on_field_start with no data
+2025-10-17 11:21:59.183 | DEBUG    | logging:callHandlers:1706 - Calling on_field_name with data[29:37]
+2025-10-17 11:21:59.183 | DEBUG    | logging:callHandlers:1706 - Calling on_field_data with data[38:46]
+2025-10-17 11:21:59.183 | DEBUG    | logging:callHandlers:1706 - Calling on_field_end with no data
+2025-10-17 11:21:59.183 | DEBUG    | logging:callHandlers:1706 - Calling on_end with no data
+2025-10-17 11:21:59.200 | INFO     | main:log_requests:47 - Request: POST /api/v1/login/access-token | Status: 400 | Duration: 17.05ms
+2025-10-17 11:22:14.668 | DEBUG    | logging:callHandlers:1706 - Calling on_field_start with no data
+2025-10-17 11:22:14.668 | DEBUG    | logging:callHandlers:1706 - Calling on_field_name with data[0:8]
+2025-10-17 11:22:14.668 | DEBUG    | logging:callHandlers:1706 - Calling on_field_data with data[9:33]
+2025-10-17 11:22:14.668 | DEBUG    | logging:callHandlers:1706 - Calling on_field_end with no data
+2025-10-17 11:22:14.668 | DEBUG    | logging:callHandlers:1706 - Calling on_field_start with no data
+2025-10-17 11:22:14.668 | DEBUG    | logging:callHandlers:1706 - Calling on_field_name with data[34:42]
+2025-10-17 11:22:14.668 | DEBUG    | logging:callHandlers:1706 - Calling on_field_data with data[43:51]
+2025-10-17 11:22:14.668 | DEBUG    | logging:callHandlers:1706 - Calling on_field_end with no data
+2025-10-17 11:22:14.668 | DEBUG    | logging:callHandlers:1706 - Calling on_end with no data
+2025-10-17 11:22:14.668 | INFO     | main:log_requests:47 - Request: POST /api/v1/login/access-token | Status: 400 | Duration: 0.29ms
+2025-10-17 11:22:28.592 | DEBUG    | logging:callHandlers:1706 - Calling on_field_start with no data
+2025-10-17 11:22:28.592 | DEBUG    | logging:callHandlers:1706 - Calling on_field_name with data[0:8]
+2025-10-17 11:22:28.592 | DEBUG    | logging:callHandlers:1706 - Calling on_field_data with data[9:33]
+2025-10-17 11:22:28.592 | DEBUG    | logging:callHandlers:1706 - Calling on_field_end with no data
+2025-10-17 11:22:28.592 | DEBUG    | logging:callHandlers:1706 - Calling on_field_start with no data
+2025-10-17 11:22:28.592 | DEBUG    | logging:callHandlers:1706 - Calling on_field_name with data[34:42]
+2025-10-17 11:22:28.592 | DEBUG    | logging:callHandlers:1706 - Calling on_field_data with data[43:51]
+2025-10-17 11:22:28.592 | DEBUG    | logging:callHandlers:1706 - Calling on_field_end with no data
+2025-10-17 11:22:28.592 | DEBUG    | logging:callHandlers:1706 - Calling on_end with no data
+2025-10-17 11:22:28.596 | INFO     | main:log_requests:47 - Request: POST /api/v1/login/access-token | Status: 400 | Duration: 3.66ms
+2025-10-17 11:22:32.395 | DEBUG    | logging:callHandlers:1706 - Calling on_field_start with no data
+2025-10-17 11:22:32.395 | DEBUG    | logging:callHandlers:1706 - Calling on_field_name with data[0:8]
+2025-10-17 11:22:32.395 | DEBUG    | logging:callHandlers:1706 - Calling on_field_data with data[9:33]
+2025-10-17 11:22:32.395 | DEBUG    | logging:callHandlers:1706 - Calling on_field_end with no data
+2025-10-17 11:22:32.395 | DEBUG    | logging:callHandlers:1706 - Calling on_field_start with no data
+2025-10-17 11:22:32.395 | DEBUG    | logging:callHandlers:1706 - Calling on_field_name with data[34:42]
+2025-10-17 11:22:32.395 | DEBUG    | logging:callHandlers:1706 - Calling on_field_data with data[43:51]
+2025-10-17 11:22:32.396 | DEBUG    | logging:callHandlers:1706 - Calling on_field_end with no data
+2025-10-17 11:22:32.396 | DEBUG    | logging:callHandlers:1706 - Calling on_end with no data
+2025-10-17 11:22:32.400 | INFO     | main:log_requests:47 - Request: POST /api/v1/login/access-token | Status: 400 | Duration: 5.02ms
+2025-10-17 11:22:40.222 | DEBUG    | logging:callHandlers:1706 - Calling on_field_start with no data
+2025-10-17 11:22:40.222 | DEBUG    | logging:callHandlers:1706 - Calling on_field_name with data[0:8]
+2025-10-17 11:22:40.222 | DEBUG    | logging:callHandlers:1706 - Calling on_field_data with data[9:33]
+2025-10-17 11:22:40.222 | DEBUG    | logging:callHandlers:1706 - Calling on_field_end with no data
+2025-10-17 11:22:40.222 | DEBUG    | logging:callHandlers:1706 - Calling on_field_start with no data
+2025-10-17 11:22:40.222 | DEBUG    | logging:callHandlers:1706 - Calling on_field_name with data[34:42]
+2025-10-17 11:22:40.222 | DEBUG    | logging:callHandlers:1706 - Calling on_field_data with data[43:51]
+2025-10-17 11:22:40.222 | DEBUG    | logging:callHandlers:1706 - Calling on_field_end with no data
+2025-10-17 11:22:40.222 | DEBUG    | logging:callHandlers:1706 - Calling on_end with no data
+2025-10-17 11:22:40.224 | INFO     | main:log_requests:47 - Request: POST /api/v1/login/access-token | Status: 400 | Duration: 3.19ms
