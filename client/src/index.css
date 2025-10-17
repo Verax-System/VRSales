@@ -29,3 +29,8 @@ body {
   height: 100vh;
   display: flex;
 }
+.ant-menu-dark.ant-menu-inline .ant-menu-item-divider {
+    border-top-color: #374151; /* Este é o 'gray-700' do Tailwind */
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
