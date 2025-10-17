@@ -1,7 +1,10 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { jwtDecode } from 'jwt-decode';
-import ApiService from '../api/ApiService';
 import { useNavigate } from 'react-router-dom';
+// --- INÍCIO DA CORREÇÃO ---
+// Importa a instância padrão e a função de login nomeada
+import ApiService, { login as apiLogin } from '../api/ApiService';
+// --- FIM DA CORREÇÃO ---
+
 
 const AuthContext = createContext(null);
 
@@ -10,61 +13,47 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      if (token) {
-        const decodedUser = jwtDecode(token);
-        if (decodedUser.exp * 1000 > Date.now()) {
-          setUser({
-            id: decodedUser.sub,
-            name: decodedUser.name || 'Utilizador',
-            role: decodedUser.role,
-            store_id: decodedUser.store_id,
-          });
-        } else {
-          localStorage.removeItem('accessToken');
-        }
-      }
-    } catch (error) {
-      console.error("Falha ao processar o token de autenticação.", error);
-      localStorage.removeItem('accessToken');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const login = async (email, password) => {
-    const response = await ApiService.login(email, password);
-    const { access_token } = response.data;
-
-    localStorage.setItem('accessToken', access_token);
-    
-    // --- INÍCIO DA CORREÇÃO ---
-    // A linha abaixo foi removida porque ApiService.js não tem o método 'init'
-    // e o interceptor já faz o trabalho de adicionar o token.
-    // ApiService.init(access_token); 
-    // --- FIM DA CORREÇÃO ---
-    
-    const decodedUser = jwtDecode(access_token);
-    setUser({
-      id: decodedUser.sub,
-      name: decodedUser.name || 'Utilizador',
-      role: decodedUser.role,
-      store_id: decodedUser.store_id,
-    });
-  };
-
   const logout = () => {
     setUser(null);
     localStorage.removeItem('accessToken');
-    // Não é necessário chamar ApiService aqui, o interceptor irá simplesmente
-    // deixar de encontrar um token no localStorage.
     navigate('/login');
   };
 
+  const fetchAndSetUser = async () => {
+    try {
+      const response = await ApiService.get('/users/me');
+      setUser(response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Falha ao buscar dados do usuário, sessão encerrada.", error);
+      logout();
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        await fetchAndSetUser();
+      }
+      setLoading(false);
+    };
+    initializeAuth();
+  }, []);
+
+  const login = async (email, password) => {
+    // Usa a função de login importada
+    const response = await apiLogin(email, password);
+    const { access_token } = response.data;
+    localStorage.setItem('accessToken', access_token);
+    
+    const userData = await fetchAndSetUser();
+    return userData;
+  };
+
   if (loading) {
-    return <div>A carregar...</div>;
+    return <div>A carregar sistema...</div>;
   }
 
   return (

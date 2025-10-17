@@ -1,83 +1,23 @@
 import React, { useState } from 'react';
-// A CORREÇÃO ESTÁ AQUI: Adicionei 'Typography' à importação do antd.
 import { Form, Input, Button, message, Alert, Typography } from 'antd';
 import { UserOutlined, LockOutlined, DesktopOutlined } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
-// E AQUI: Desestruturamos Title e Text a partir do Typography importado.
 const { Title, Text } = Typography;
 
-// Estilos embutidos para a nova página de login
 const PageStyles = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-
-    .login-container {
-      display: flex;
-      width: 100vw;
-      height: 100vh;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .login-promo-panel {
-      width: 50%;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 48px;
-      text-align: center;
-    }
-    
-    .promo-icon {
-      font-size: 64px;
-      margin-bottom: 24px;
-      padding: 20px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 50%;
-    }
-
-    .login-form-panel {
-      width: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: #f0f2f5;
-    }
-
-    .login-form-wrapper {
-      width: 100%;
-      max-width: 400px;
-      padding: 40px;
-      background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    }
-    
-    .login-form-title {
-        text-align: center;
-        margin-bottom: 32px;
-    }
-    
-    .login-form-button {
-        height: 48px;
-        font-size: 16px;
-        font-weight: 600;
-    }
-    
-    /* Responsividade para telas menores */
-    @media (max-width: 768px) {
-      .login-promo-panel {
-        display: none;
-      }
-      .login-form-panel {
-        width: 100%;
-      }
-    }
+    .login-container { display: flex; width: 100vw; height: 100vh; font-family: 'Inter', sans-serif; }
+    .login-promo-panel { width: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 48px; text-align: center; }
+    .promo-icon { font-size: 64px; margin-bottom: 24px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+    .login-form-panel { width: 50%; display: flex; justify-content: center; align-items: center; background-color: #f0f2f5; }
+    .login-form-wrapper { width: 100%; max-width: 400px; padding: 40px; background: #ffffff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); }
+    .login-form-title { text-align: center; margin-bottom: 32px; }
+    .login-form-button { height: 48px; font-size: 16px; font-weight: 600; }
+    @media (max-width: 768px) { .login-promo-panel { display: none; } .login-form-panel { width: 100%; } }
   `}</style>
 );
 
@@ -91,9 +31,23 @@ const LoginPage = () => {
     setLoading(true);
     setError('');
     try {
-      await login(values.email, values.password);
-      message.success('Login bem-sucedido! Redirecionando...');
-      navigate('/');
+      // A função 'login' agora retorna os dados do usuário (ou null se falhar)
+      const userData = await login(values.email, values.password);
+
+      if (userData && userData.role) {
+        message.success('Login bem-sucedido! Redirecionando...');
+        
+        // Lógica de redirecionamento agora é segura
+        if (userData.role === 'super_admin') {
+          navigate('/global-dashboard');
+        } else {
+          navigate('/'); // Rota padrão para outros usuários
+        }
+      } else {
+         // Este erro acontecerá se o login for ok, mas a busca por /users/me falhar
+         throw new Error("Login bem-sucedido, mas não foi possível obter os dados do usuário.");
+      }
+
     } catch (err) {
       setError('Email ou senha inválidos. Por favor, tente novamente.');
       console.error(err);
@@ -137,31 +91,19 @@ const LoginPage = () => {
             </div>
 
             {error && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-4">
-                <Alert message={error} type="error" showIcon closable onClose={() => setError('')} />
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <Alert message={error} type="error" showIcon closable onClose={() => setError('')} style={{ marginBottom: 24 }} />
               </motion.div>
             )}
 
             <Form name="login_form" onFinish={onFinish} size="large" layout="vertical">
-              <Form.Item
-                label="Email"
-                name="email"
-                rules={[{ required: true, type: 'email', message: 'Por favor, insira um email válido!' }]}
-              >
+              <Form.Item label="Email" name="email" rules={[{ required: true, type: 'email', message: 'Por favor, insira um email válido!' }]}>
                 <Input prefix={<UserOutlined />} placeholder="seuemail@exemplo.com" />
               </Form.Item>
-              <Form.Item
-                label="Senha"
-                name="password"
-                rules={[{ required: true, message: 'Por favor, insira a sua senha!' }]}
-              >
+              <Form.Item label="Senha" name="password" rules={[{ required: true, message: 'Por favor, insira a sua senha!' }]}>
                 <Input.Password prefix={<LockOutlined />} placeholder="••••••••" />
               </Form.Item>
-              
-              <Form.Item>
-                <a style={{ float: 'right' }} href="">Esqueceu a senha?</a>
-              </Form.Item>
-
+              <Form.Item><a style={{ float: 'right' }} href="">Esqueceu a senha?</a></Form.Item>
               <Form.Item>
                 <Button type="primary" htmlType="submit" block loading={loading} className="login-form-button">
                   {loading ? 'Entrando...' : 'Entrar'}
