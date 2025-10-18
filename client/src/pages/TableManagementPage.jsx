@@ -19,7 +19,6 @@ dayjs.locale('pt-br');
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-// ... (Componentes PageStyles e TableCard não mudam) ...
 const PageStyles = () => (
     <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
@@ -37,6 +36,7 @@ const PageStyles = () => (
     `}</style>
 );
 
+// --- INÍCIO DA ATUALIZAÇÃO DO CARD ---
 const TableCard = ({ table, onClick, onEdit, onDelete }) => {
     const [currentTime, setCurrentTime] = useState(dayjs());
 
@@ -53,6 +53,7 @@ const TableCard = ({ table, onClick, onEdit, onDelete }) => {
         return `(${dayjs(table.open_order_created_at).fromNow(true)})`;
     };
 
+    // Define os itens do menu de contexto
     const menuItems = [
         {
             key: 'edit',
@@ -72,6 +73,7 @@ const TableCard = ({ table, onClick, onEdit, onDelete }) => {
                     okText="Sim"
                     cancelText="Não"
                 >
+                    {/* Envolve o texto em um span para parar a propagação do clique */}
                     <span onClick={(e) => e.stopPropagation()}>Excluir</span>
                 </Popconfirm>
             ),
@@ -110,6 +112,7 @@ const TableCard = ({ table, onClick, onEdit, onDelete }) => {
         </Dropdown>
     );
 };
+// --- FIM DA ATUALIZAÇÃO DO CARD ---
 
 
 const TableManagementPage = () => {
@@ -241,22 +244,22 @@ const TableManagementPage = () => {
         }
     };
 
+    // --- INÍCIO DA NOVA FUNÇÃO DE DELETAR ---
     const handleDeleteTable = async (tableId) => {
         try {
             await ApiService.delete(`/tables/${tableId}`);
             message.success('Mesa excluída com sucesso!');
-            fetchTables(false);
+            fetchTables(false); // Atualiza a lista de mesas
         } catch (error) {
             message.error(error.response?.data?.detail || 'Erro ao excluir mesa.');
         }
     };
+    // --- FIM DA NOVA FUNÇÃO DE DELETAR ---
 
     const handleTransferOk = async (values) => {
         setModalLoading(true);
         try {
-            // --- INÍCIO DA CORREÇÃO ---
             await ApiService.post(`/orders/${selectedOrder.id}/transfer`, { target_table_id: values.target_table_id });
-            // --- FIM DA CORREÇÃO ---
             message.success('Comanda transferida com sucesso!');
             setIsTransferModalVisible(false);
             setIsOrderModalVisible(false);
@@ -386,6 +389,7 @@ const TableManagementPage = () => {
                     <Row gutter={[24, 24]}>
                         {tables.map(table => (
                             <Col xs={12} sm={8} md={6} lg={4} xl={3} key={table.id}>
+                                {/* --- ATUALIZAÇÃO AQUI --- */}
                                 <TableCard
                                     table={table}
                                     onClick={handleTableClick}
@@ -503,9 +507,7 @@ const TableManagementPage = () => {
             {isTransferModalVisible && (
                 <Modal title="Transferir Comanda" open={isTransferModalVisible} onCancel={() => setIsTransferModalVisible(false)} footer={null}>
                     <Form onFinish={handleTransferOk} layout="vertical">
-                        {/* --- INÍCIO DA CORREÇÃO --- */}
                         <Form.Item name="target_table_id" label="Transferir para a Mesa" rules={[{ required: true, message: 'Selecione a mesa de destino!' }]}>
-                        {/* --- FIM DA CORREÇÃO --- */}
                             <Select showSearch placeholder="Selecione uma mesa livre">
                                 {tables.filter(t => t.status === 'available').map(t => (
                                     <Option key={t.id} value={t.id}>{t.number}</Option>

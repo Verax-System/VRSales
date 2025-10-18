@@ -4,7 +4,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.crud.crud_order import order as crud_order
+from app.crud.crud_order import order as crud_order, get_full_order
 from app.api import dependencies
 from app.models.user import User as UserModel
 from app.schemas.order import Order as OrderSchema, OrderCreate, OrderItemCreate, PartialPaymentRequest, OrderMerge, OrderTransfer
@@ -101,6 +101,25 @@ async def merge_orders(
         current_user=current_user
     )
     return updated_order
+
+@router.patch("/{order_id}/cancel", response_model=OrderSchema)
+async def cancel_order(
+    order_id: int,
+    db: AsyncSession = Depends(dependencies.get_db),
+    current_user: UserModel = Depends(dependencies.get_current_active_user),
+):
+    """
+    Cancela uma comanda aberta.
+    """
+    # --- CORREÇÃO AQUI ---
+    # Usamos a função importada diretamente.
+    order_to_cancel = await get_full_order(db=db, id=order_id)
+    # --- FIM DA CORREÇÃO ---
+
+    if not order_to_cancel or order_to_cancel.store_id != current_user.store_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comanda não encontrada.")
+    
+    return await crud_order.cancel_order(db=db, order=order_to_cancel, current_user=current_user)
 
 # --- INÍCIO DO NOVO ENDPOINT ---
 @router.post("/{order_id}/transfer", response_model=OrderSchema)

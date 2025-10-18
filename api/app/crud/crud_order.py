@@ -2,7 +2,7 @@
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, selectinload, joinedload
 from typing import List, Optional
 from fastapi import HTTPException, status
 from decimal import Decimal, ROUND_HALF_UP
@@ -20,6 +20,18 @@ from app.schemas.order import OrderCreate, OrderUpdate, OrderItemCreate, Partial
 from app.services.cash_register_service import cash_register_service
 from app.services.crm_service import crm_service
 from app.services.stock_service import stock_service
+
+async def get_full_order(db: AsyncSession, *, id: int) -> Optional[Order]:
+    """ Carrega uma comanda com todos os seus relacionamentos. """
+    stmt = select(Order).where(Order.id == id).options(
+        selectinload(Order.items).options(
+            joinedload(OrderItem.product)
+        ),
+        selectinload(Order.table),
+        selectinload(Order.user)
+    )
+    result = await db.execute(stmt)
+    return result.scalars().first()
 
 def _run_sync_post_sale_services(db_session: Session, *, sale: Sale):
     """
@@ -57,6 +69,22 @@ class CRUDOrder(CRUDBase[Order, OrderCreate, OrderUpdate]):
         await db.commit()
         await db.refresh(db_order)
         return db_order
+
+    async def cancel_order(self, db: AsyncSession, *, order: Order, current_user: User) -> Order:
+        if order.status != OrderStatus.OPEN:
+            raise HTTPException(status_code=400, detail="Apenas comandas abertas podem ser canceladas.")
+
+        if order.table_id:
+            table = await db.get(Table, order.table_id)
+            if table and table.store_id == current_user.store_id:
+                table.status = TableStatus.AVAILABLE
+                db.add(table)
+        
+        order.status = OrderStatus.CANCELLED
+        db.add(order)
+        await db.commit()
+        await db.refresh(order)
+        return order
 
     async def get_open_order_by_table(self, db: AsyncSession, *, table_id: int, current_user: User) -> Optional[Order]:
         stmt = select(Order).filter(

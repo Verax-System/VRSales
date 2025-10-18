@@ -113,6 +113,9 @@ async def delete_table(
     table_id: int,
     current_user: UserModel = Depends(get_current_active_user)
 ) -> Any:
+    """
+    Exclui uma mesa. A mesa não pode estar ocupada.
+    """
     table = await crud_table.table.get(db=db, id=table_id, current_user=current_user)
     if not table:
          raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mesa não encontrada para exclusão.")
