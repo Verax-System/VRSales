@@ -374,26 +374,37 @@ const POSPage = () => {
       fetchProducts();
     }
   };
-
+  
   const addProductToCart = (productToAdd) => {
-    const productWithStock = { ...productToAdd, stock: productToAdd.stock ?? Math.floor(Math.random() * 15) };
-    setLastAddedItem(productWithStock);
+    const existingCartItem = cartItems.find(item => item.id === productToAdd.id);
+    const quantityInCart = existingCartItem ? existingCartItem.quantity : 0;
+
+    if (productToAdd.stock <= quantityInCart) {
+        message.warning(`Atenção: Estoque do produto "${productToAdd.name}" está zerado ou negativo.`, 4);
+    }
+    
+    setLastAddedItem(productToAdd);
     setCartItems(currentItems => {
-      const existingItemIndex = currentItems.findIndex(item => item.id === productWithStock.id);
-      if (existingItemIndex > -1) {
-        const updatedItems = [...currentItems];
-        updatedItems[existingItemIndex] = {
-          ...updatedItems[existingItemIndex],
-          quantity: updatedItems[existingItemIndex].quantity + 1
-        };
-        return updatedItems;
-      } else {
-        return [{ ...productWithStock, quantity: 1, key: productWithStock.id }, ...currentItems];
-      }
+        const existingItemIndex = currentItems.findIndex(item => item.id === productToAdd.id);
+        if (existingItemIndex > -1) {
+            const updatedItems = [...currentItems];
+            updatedItems[existingItemIndex] = {
+                ...updatedItems[existingItemIndex],
+                quantity: updatedItems[existingItemIndex].quantity + 1,
+            };
+            return updatedItems;
+        } else {
+            return [{ ...productToAdd, quantity: 1, key: productToAdd.id }, ...currentItems];
+        }
     });
-    message.success(`${productWithStock.name} adicionado!`);
+
+    if (!existingCartItem) {
+        message.success(`${productToAdd.name} adicionado!`);
+    }
+
     setSearchValue('');
     setAutocompleteOptions([]);
+    searchInputRef.current?.focus();
   };
 
   const onAutocompleteSelect = (_, option) => {
@@ -417,19 +428,31 @@ const POSPage = () => {
       searchInputRef.current?.focus();
     }
   };
-
+  
   const updateQuantity = (productId, amount) => {
+    const itemToUpdate = cartItems.find(item => item.id === productId);
+    if (!itemToUpdate) return;
+  
+    const newQuantity = itemToUpdate.quantity + amount;
+  
+    if (amount > 0 && newQuantity > itemToUpdate.stock) {
+      message.warning(`Atenção: Estoque do produto "${itemToUpdate.name}" é de ${itemToUpdate.stock} unidades.`, 4);
+    }
+  
     setCartItems(currentItems =>
       currentItems
         .map(item => {
           if (item.id === productId) {
-            const newQuantity = item.quantity + amount;
             return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
           }
           return item;
         })
         .filter(Boolean)
     );
+  
+    if (newQuantity <= 0) {
+      message.info('Item removido.');
+    }
   };
 
   const removeItem = (productId) => {
@@ -507,7 +530,6 @@ const POSPage = () => {
       setIsCustomerModalVisible(false);
       customerForm.resetFields();
       setSelectedCustomer(response.data);
-      // Adiciona o novo cliente à lista de opções para que ele apareça imediatamente
       setCustomerOptions(prev => [...prev, {
         value: response.data.id,
         label: (
@@ -555,9 +577,9 @@ const POSPage = () => {
         <Space>
           <Avatar shape="square" src={record.image_url} icon={<ShoppingOutlined />} />
           <Text>{name || 'Produto sem nome'}</Text>
-          {(record.stock !== undefined && record.stock <= (record.low_stock_threshold || 5)) && (
-            <Tooltip title={`Estoque baixo! Apenas ${record.stock} unidades.`}>
-              <WarningOutlined style={{ color: 'var(--warning-color)' }} />
+          {(record.stock <= 0) && (
+            <Tooltip title={`Estoque Negativo ou Zerado: ${record.stock}`}>
+              <WarningOutlined style={{ color: 'var(--danger-color)' }} />
             </Tooltip>
           )}
         </Space>
@@ -579,7 +601,7 @@ const POSPage = () => {
     },
     {
       title: 'Total', key: 'total',
-      render: (_, record) => <Text strong>R$ ${((record.price || 0) * (record.quantity || 0)).toFixed(2).replace('.', ',')}</Text>
+      render: (_, record) => <Text strong>R$ {((record.price || 0) * (record.quantity || 0)).toFixed(2).replace('.', ',')}</Text>
     },
     {
       key: 'action', width: 50, align: 'center',

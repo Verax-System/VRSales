@@ -1,3 +1,4 @@
+# api/app/schemas/product.py
 from pydantic import Field, validator, ConfigDict
 from typing import Optional, List
 from datetime import datetime
@@ -28,11 +29,13 @@ class ProductBase(BaseSchema):
         gt=0, # gt = Greater Than (maior que)
         description="Preço de venda do produto. Deve ser um valor positivo."
     )
+    # --- CORREÇÃO AQUI ---
+    # A validação `ge=0` foi removida para permitir estoque negativo.
     stock: int = Field(
         ..., 
-        ge=0, # ge = Greater Than or Equal (maior ou igual a)
-        description="Quantidade em estoque do produto. Não pode ser negativo."
+        description="Quantidade em estoque do produto."
     )
+    # --- FIM DA CORREÇÃO ---
     low_stock_threshold: int = Field(
         10, 
         ge=0,
@@ -82,7 +85,7 @@ class ProductUpdate(ProductBase):
     """
     name: Optional[str] = Field(None, min_length=3, max_length=100)
     price: Optional[float] = Field(None, gt=0)
-    stock: Optional[int] = Field(None, ge=0)
+    stock: Optional[int] = None # ge=0 removido aqui também
     low_stock_threshold: Optional[int] = Field(None, ge=0)
     category: Optional[ProductCategory] = None
     subcategory: Optional[ProductSubcategory] = None
@@ -101,8 +104,7 @@ class Product(ProductBase):
     
     # Relacionamentos (carregados via ORM)
     category: Optional[ProductCategory] = None
-    subcategory: Optional[ProductSubcategory] = None # <-- Adicionado para consistência
+    subcategory: Optional[ProductSubcategory] = None
     variations: List[ProductVariation] = []
 
-    # CORREÇÃO: 'orm_mode=True' foi substituído por 'from_attributes=True' no Pydantic V2
     model_config = ConfigDict(from_attributes=True)

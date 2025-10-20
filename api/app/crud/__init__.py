@@ -13,7 +13,8 @@ from .crud_order import order
 from .crud_supplier import supplier
 from .crud_table import table
 from .crud_batch import batch
-from .crud_sale import sale # Mantemos este para consistência, mas o problema está em como os outros o chamam
+from .crud_sale import sale
+from .crud_reservation import reservation # <-- LINHA ADICIONADA AQUI
 
 # 2. Importa os módulos CRUD que são baseados em funções, usando um alias (apelido) para facilitar o acesso.
 from . import crud_additional as additional

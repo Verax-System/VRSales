@@ -24,8 +24,10 @@ class StockService:
         """
         product.stock += quantity_change
         
-        if product.stock < 0:
-            product.stock = 0
+        # --- CORREÇÃO AQUI ---
+        # A trava que impedia o estoque de ficar negativo foi removida.
+        # if product.stock < 0:
+        #     product.stock = 0
             
         db.add(product)
         # O commit será feito pela função que chama o serviço
@@ -52,17 +54,12 @@ class StockService:
     def deduct_stock_from_sale(self, db: Session, *, sale: Sale) -> None:
         """Refatorado para usar o método central _create_stock_movement."""
         for item in sale.items:
-            # --- INÍCIO DA CORREÇÃO ---
-            # Usamos db.get(), que é o método síncrono padrão do SQLAlchemy
-            # para buscar um objeto pela sua chave primária.
             product = db.get(Product, item.product_id)
-            # --- FIM DA CORREÇÃO ---
 
             if product:
-                # Verificação de segurança para garantir que o produto pertence à mesma loja da venda
                 if product.store_id != sale.store_id:
                     logger.error(f"Tentativa de dedução de estoque para o produto ID {item.product_id} que não pertence à loja da venda ID {sale.id}.")
-                    continue # Pula para o próximo item
+                    continue 
 
                 self._create_stock_movement(
                     db=db,

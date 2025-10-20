@@ -15,7 +15,9 @@ class Reservation(Base):
     
     customer_name: Mapped[str] = mapped_column(String(150), nullable=False)
     phone_number: Mapped[Optional[str]] = mapped_column(String(20))
-    reservation_time: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
+    # --- CORREÇÃO AQUI ---
+    reservation_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    # --- FIM DA CORREÇÃO ---
     number_of_people: Mapped[int] = mapped_column(Integer, nullable=False)
     notes: Mapped[Optional[str]] = mapped_column(String(500))
     status: Mapped[str] = mapped_column(String(50), default="confirmed")

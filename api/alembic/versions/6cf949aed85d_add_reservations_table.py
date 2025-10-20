@@ -1,8 +1,8 @@
-"""empty message
+"""Add reservations table
 
-Revision ID: e66e5f1e8445
-Revises: 3f7dfee389f1
-Create Date: 2025-10-20 07:50:01.467749
+Revision ID: 6cf949aed85d
+Revises: 54238cde823e
+Create Date: 2025-10-20 10:38:26.928989
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'e66e5f1e8445'
-down_revision: Union[str, Sequence[str], None] = '3f7dfee389f1'
+revision: str = '6cf949aed85d'
+down_revision: Union[str, Sequence[str], None] = '54238cde823e'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

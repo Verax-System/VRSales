@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// Garantindo todas as importações necessárias
 import { Calendar, Badge, Modal, Form, Input, InputNumber, DatePicker, Select, Button, message, Spin, Alert, List, Popconfirm, Typography, Row, Col, Card, Space, Empty } from 'antd';
 import { motion } from 'framer-motion';
 import { PlusOutlined, BookOutlined, UserOutlined, ClockCircleOutlined, TeamOutlined, TableOutlined, AlignLeftOutlined, CloseCircleOutlined } from '@ant-design/icons';
@@ -9,7 +8,6 @@ import dayjs from 'dayjs';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-// Estilos embutidos para a nova página
 const PageStyles = () => (
     <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
@@ -37,7 +35,7 @@ const PageStyles = () => (
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         border: none;
-        height: 100%; /* Para ocupar a altura da Row */
+        height: 100%;
     }
     
     .reservations-list .ant-list-item {
@@ -121,7 +119,7 @@ const ReservationPage = () => {
             message.success('Reserva criada com sucesso!');
             setIsModalVisible(false);
             form.resetFields();
-            fetchReservations(selectedDate); // Atualiza a lista para a data atual
+            fetchReservations(selectedDate);
         } catch(error) {
             message.error(error.response?.data?.detail || 'Erro ao criar reserva.');
             console.error("Erro ao criar reserva:", error.response?.data || error);
@@ -132,12 +130,9 @@ const ReservationPage = () => {
     
     const handleDelete = async (id) => {
         try {
-            await ApiService.delete(`/reservations/${id}/`);
+            await ApiService.delete(`/reservations/${id}`);
             message.success('Reserva cancelada!');
-            // Remove a reserva da lista localmente para feedback imediato
-            setReservations(prev => prev.filter(r => r.id !== id));
-            // Poderia re-buscar do servidor, mas remover localmente é mais rápido
-            // fetchReservations(selectedDate); 
+            fetchReservations(selectedDate); 
         } catch (error) {
             message.error('Erro ao cancelar reserva.');
         }
@@ -206,11 +201,10 @@ const ReservationPage = () => {
                     title="Nova Reserva" 
                     open={isModalVisible} 
                     onCancel={() => setIsModalVisible(false)} 
-                    footer={null} // Footer personalizado no Form
-                    destroyOnClose // Use destroyOnHidden se preferir
+                    footer={null}
+                    destroyOnClose
                     width={600}
                 >
-                    {/* Renderiza Form apenas quando modal está visível */}
                     {isModalVisible && (
                         <Form 
                             form={form} 
@@ -233,11 +227,13 @@ const ReservationPage = () => {
                                     </Form.Item>
                                 </Col>
                             </Row>
+                            {/* --- INÍCIO DA CORREÇÃO --- */}
                             <Form.Item name="table_id" label="Mesa Designada" rules={[{ required: true }]}>
-                                <Select placeholder="Selecione a mesa" size="large">
-                                    {tables.filter(t => t.is_active).map(t => <Option key={t.id} value={t.id}>{t.number}</Option>)}
+                                <Select placeholder="Selecione uma mesa disponível" size="large">
+                                    {tables.filter(t => t.status === 'available').map(t => <Option key={t.id} value={t.id}>{t.number}</Option>)}
                                 </Select>
                             </Form.Item>
+                            {/* --- FIM DA CORREÇÃO --- */}
                             <Form.Item name="notes" label="Observações (Opcional)">
                                 <Input.TextArea rows={2} prefix={<AlignLeftOutlined />} />
                             </Form.Item>
