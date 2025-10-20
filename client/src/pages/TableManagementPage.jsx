@@ -420,17 +420,17 @@ const TableManagementPage = () => {
                             <Tag icon={<UserOutlined />}>{selectedOrder.user?.full_name || 'N/A'}</Tag>
                         </Space>
                     }
-                    open={isOrderModalVisible} onCancel={handleCloseOrderModal} width={800}
+                    open={isOrderModalVisible} onCancel={handleCloseOrderModal} width={900}
                     footer={<div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
                         <Space>
                             <Button icon={<SwapOutlined />} onClick={() => setIsTransferModalVisible(true)} disabled={isOrderPaid}>Transferir</Button>
-                            <Button icon={<MergeCellsOutlined />} onClick={() => setIsMergeModalVisible(true)} disabled={isOrderPaid}>Juntar</Button>
+                            <Button icon={<MergeCellsOutlined />} onClick={() => setIsMergeModalVisible(true)} disabled={isOrderPaid}>Juntar</Button> 
                             <Popconfirm title="Cancelar Comanda?" onConfirm={handleCancelOrder} okText="Sim, Cancelar" cancelText="Não" placement="top"><Button danger icon={<CloseCircleOutlined />} disabled={isOrderPaid}>Cancelar</Button></Popconfirm>
-                        </Space>
+                        </Space> 
                         <Space>
-                            <Button key="add" type="dashed" onClick={() => setIsAddItemModalVisible(true)} disabled={isOrderPaid}>Adicionar Item</Button>
+                            <Button key="add" type="dashed" onClick={() => setIsAddItemModalVisible(true)} disabled={isOrderPaid}>Adicionar Item</Button> 
                             <Button key="paySelected" type="primary" icon={<CheckSquareOutlined />} onClick={() => setIsPartialPaymentModalVisible(true)} disabled={itemsToPayList.length === 0 || isOrderPaid}>Pagar Selecionados</Button>
-                            <Button key="pay" type="primary" icon={<DollarCircleOutlined />} onClick={handleGoToPayment} disabled={isOrderPaid}>Pagar Restante</Button>
+                            <Button key="pay" type="primary" icon={<DollarCircleOutlined />} onClick={handleGoToPayment} disabled={isOrderPaid}>Pagar Restante</Button> 
                         </Space>
                     </div>}
                 >
