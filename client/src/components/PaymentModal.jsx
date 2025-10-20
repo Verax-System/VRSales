@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Modal, Row, Col, Statistic, Select, InputNumber, Button, Form, message, Divider, Space, Input } from 'antd';
+import { Modal, Row, Col, Statistic, Select, InputNumber, Button, Form, message, Divider, Space, Input, Typography } from 'antd';
 import { DollarCircleOutlined, CreditCardOutlined, QrcodeOutlined, CloseCircleOutlined, TeamOutlined } from '@ant-design/icons';
 import ApiService from '../api/ApiService';
 
 const { Option } = Select;
+const { Text } = Typography;
 
 const PaymentModal = ({ open, onCancel, onOk, cartItems, totalAmount, customerId }) => {
   const [form] = Form.useForm();
@@ -31,22 +32,24 @@ const PaymentModal = ({ open, onCancel, onOk, cartItems, totalAmount, customerId
       message.error('O valor pago é menor que o total da venda.');
       return;
     }
-    
+
     setLoading(true);
     try {
+      // --- CORREÇÃO PRINCIPAL AQUI ---
+      // O objeto `cartItems` recebido via props já está no formato correto.
+      // Apenas passamos ele diretamente para a API.
       const saleData = {
-        items: cartItems.map(item => ({ product_id: item.id, quantity: item.quantity, price_at_sale: item.price })),
+        items: cartItems, // Apenas use a prop diretamente
         payments: finalPayments,
         customer_id: customerId,
         total_amount: totalAmount,
-        // Adicione outros campos necessários pela sua API, como order_id se aplicável
       };
-      
-      // A sua API de criação de venda pode precisar de ajustes para aceitar múltiplos pagamentos.
-      await ApiService.createSale(saleData); 
-      
+      // --- FIM DA CORREÇÃO ---
+
+      await ApiService.post('/sales/', saleData); // A chamada ao ApiService está correta
+
       const finalChange = finalTotalPaid - totalAmount;
-      message.success(`Venda finalizada! Troco: R$ ${finalChange.toFixed(2)}`);
+      message.success(`Venda finalizada! Troco: R$ ${finalChange.toFixed(2).replace('.', ',')}`);
       onOk();
     } catch (error) {
         console.error("ERRO DETALHADO RECEBIDO PELO FRONTEND:", error.response);
@@ -57,13 +60,12 @@ const PaymentModal = ({ open, onCancel, onOk, cartItems, totalAmount, customerId
     }
   };
 
-  // --- NOVA FUNCIONALIDADE: DIVIDIR CONTA ---
   const handleSplitBill = (people) => {
-    if (people < 2) return;
+    if (people < 2 || totalAmount <= 0) return;
     const amountPerPerson = parseFloat((totalAmount / people).toFixed(2));
     const newPayments = Array.from({ length: people }, (_, i) => ({
         payment_method: 'cash',
-        amount: i === 0 ? totalAmount - (amountPerPerson * (people - 1)) : amountPerPerson, // Garante que a soma seja exata
+        amount: i === 0 ? totalAmount - (amountPerPerson * (people - 1)) : amountPerPerson,
     }));
     setPayments(newPayments);
     form.setFieldsValue({ payments: newPayments });
@@ -93,8 +95,7 @@ const PaymentModal = ({ open, onCancel, onOk, cartItems, totalAmount, customerId
         </Col>
       </Row>
       <Divider />
-      
-      {/* --- NOVA SEÇÃO: BOTÕES PARA DIVIDIR CONTA --- */}
+
       <Space style={{ marginBottom: 24 }}>
           <Text><TeamOutlined /> Dividir conta igualmente por:</Text>
           <Button onClick={() => handleSplitBill(2)}>2 Pessoas</Button>

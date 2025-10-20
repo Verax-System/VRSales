@@ -23,7 +23,6 @@ class CashRegisterService:
         
         if not open_register:
             logger.warning(f"Tentativa de operação em caixa, mas nenhum caixa aberto foi encontrado para a loja ID {store_id}.")
-            # --- CORREÇÃO: MENSAGEM DE ERRO MAIS DETALHADA ---
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Operação falhou: Nenhum caixa aberto encontrado para a loja ID {store_id}.",
@@ -70,7 +69,8 @@ class CashRegisterService:
             )
             db.add(transaction)
         
-        db.flush()
+        # --- CORREÇÃO AQUI ---
+        # A linha db.flush() foi removida.
         logger.info(f"Transações de pagamento para a Venda ID {sale.id} adicionadas ao Caixa ID {open_register.id}.")
 
     def close_register(self, db: Session, *, user: User, close_info: CashRegisterClose) -> CashRegister:

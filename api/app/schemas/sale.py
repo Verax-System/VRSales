@@ -1,54 +1,44 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 from datetime import datetime
 
-# Importa o schema do item da venda, que precisa ser criado ou verificado
-from .sale_item import SaleItem  # Supondo que você tenha ou crie este schema
+# Importa os schemas que serão aninhados na resposta
+from .sale_item import SaleItem, SaleItemCreate
+from .payment import PaymentCreate, Payment as PaymentSchema # 1. IMPORTAR O SCHEMA DE PAGAMENTO COMPLETO
+from .user import User
+from .customer import Customer
 
 # =====================================================================================
-# Schema Base e de Criação (mantenha como está ou refatore se necessário)
+# Schema Base e de Criação
 # =====================================================================================
 class SaleBase(BaseModel):
     total_amount: float = Field(..., gt=0, description="Valor total da venda.")
-    payment_method: str = Field(..., max_length=50, description="Método de pagamento principal.")
     customer_id: Optional[int] = None
-    user_id: int
 
 class SaleCreate(SaleBase):
-    items: List[SaleItem] # Itens que compõem a venda
+    items: List[SaleItemCreate]
+    payments: List[PaymentCreate]
 
 class SaleUpdate(BaseModel):
-    # Por agora, não permitiremos a atualização de nenhum campo da venda.
-    # Se fosse necessário, os campos opcionais viriam aqui.
     pass
+
 # =====================================================================================
-# Schema para Leitura/Retorno da Venda (COM DETALHES PARA O HISTÓRICO)
+# Schema para Leitura/Retorno da Venda (COM DETALHES COMPLETOS)
 # =====================================================================================
 class Sale(SaleBase):
     id: int
+    user_id: int
     created_at: datetime
-    
-    # --- INÍCIO DA ATUALIZAÇÃO ---
-    # Inclui a lista de itens da venda na resposta da API
-    # Isso é essencial para exibir o histórico de compras detalhado.
+    payment_method: str # Mantemos para um resumo rápido ou compatibilidade
+
     items: List[SaleItem] = []
-    # --- FIM DA ATUALIZAÇÃO ---
+    user: Optional[User] = None
+    customer: Optional[Customer] = None
 
-    class Config:
-        orm_mode = True
+    # --- CORREÇÃO PRINCIPAL AQUI ---
+    # Adicionamos a lista de pagamentos detalhados à resposta da API.
+    # O 'crud_sale.py' já carrega esta informação do banco, só faltava expô-la aqui.
+    payments: List[PaymentSchema] = []
+    # --- FIM DA CORREÇÃO ---
 
-# --- INÍCIO DA CRIAÇÃO ---
-# Se o schema SaleItem não existir, crie-o.
-# Novo arquivo: api/app/schemas/sale_item.py
-"""
-from pydantic import BaseModel, Field
-
-class SaleItem(BaseModel):
-    product_id: int
-    quantity: int = Field(..., gt=0)
-    price_at_sale: float = Field(..., gt=0)
-
-    class Config:
-        orm_mode = True
-"""
-# --- FIM DA CRIAÇÃO ---
+    model_config = ConfigDict(from_attributes=True)
