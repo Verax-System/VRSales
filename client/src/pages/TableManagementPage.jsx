@@ -36,7 +36,6 @@ const PageStyles = () => (
     `}</style>
 );
 
-// --- INÍCIO DA ATUALIZAÇÃO DO CARD ---
 const TableCard = ({ table, onClick, onEdit, onDelete }) => {
     const [currentTime, setCurrentTime] = useState(dayjs());
 
@@ -53,7 +52,6 @@ const TableCard = ({ table, onClick, onEdit, onDelete }) => {
         return `(${dayjs(table.open_order_created_at).fromNow(true)})`;
     };
 
-    // Define os itens do menu de contexto
     const menuItems = [
         {
             key: 'edit',
@@ -73,7 +71,6 @@ const TableCard = ({ table, onClick, onEdit, onDelete }) => {
                     okText="Sim"
                     cancelText="Não"
                 >
-                    {/* Envolve o texto em um span para parar a propagação do clique */}
                     <span onClick={(e) => e.stopPropagation()}>Excluir</span>
                 </Popconfirm>
             ),
@@ -112,7 +109,6 @@ const TableCard = ({ table, onClick, onEdit, onDelete }) => {
         </Dropdown>
     );
 };
-// --- FIM DA ATUALIZAÇÃO DO CARD ---
 
 
 const TableManagementPage = () => {
@@ -244,17 +240,15 @@ const TableManagementPage = () => {
         }
     };
 
-    // --- INÍCIO DA NOVA FUNÇÃO DE DELETAR ---
     const handleDeleteTable = async (tableId) => {
         try {
             await ApiService.delete(`/tables/${tableId}`);
             message.success('Mesa excluída com sucesso!');
-            fetchTables(false); // Atualiza a lista de mesas
+            fetchTables(false);
         } catch (error) {
             message.error(error.response?.data?.detail || 'Erro ao excluir mesa.');
         }
     };
-    // --- FIM DA NOVA FUNÇÃO DE DELETAR ---
 
     const handleTransferOk = async (values) => {
         setModalLoading(true);
@@ -311,6 +305,8 @@ const TableManagementPage = () => {
         }
     };
 
+    // --- INÍCIO DA CORREÇÃO ---
+    // Altera a função para usar o modal de pagamento parcial em vez de navegar para o POS
     const handleGoToPayment = () => {
         if (selectedOrder?.status === 'PAID') {
             message.info("Esta comanda já foi totalmente paga.");
@@ -318,25 +314,35 @@ const TableManagementPage = () => {
         }
 
         if (!selectedOrder || selectedOrder.items.length === 0) {
-            message.warning('Adicione itens à comanda antes de ir para o pagamento.');
+            message.warning('Não há itens na comanda para pagar.');
             return;
         }
-        const itemsForPOS = selectedOrder.items
-            .filter(item => (item.quantity - item.paid_quantity) > 0)
-            .map(item => ({
-                ...item.product,
-                id: item.product_id,
-                quantity: item.quantity - item.paid_quantity,
-                price: item.price_at_order,
-            }));
-        
-        if (itemsForPOS.length === 0) {
+
+        const remainingItems = selectedOrder.items.filter(item => (item.quantity - item.paid_quantity) > 0);
+
+        if (remainingItems.length === 0) {
             message.info("Todos os itens desta comanda já foram pagos.");
             return;
         }
 
-        navigate('/pos', { state: { orderId: selectedOrder.id, orderItems: itemsForPOS, fromTable: true } });
+        // 1. Preenche o estado `selectedItemsToPay` com todos os itens restantes.
+        const allItemsToPay = {};
+        remainingItems.forEach(item => {
+            allItemsToPay[item.id] = {
+                order_item_id: item.id,
+                quantity: item.quantity - item.paid_quantity,
+                price: item.price_at_order,
+                name: item.product.name,
+                maxQuantity: item.quantity - item.paid_quantity,
+            };
+        });
+        setSelectedItemsToPay(allItemsToPay);
+
+        // 2. Abre o modal de pagamento parcial, que agora conterá todos os itens.
+        setIsPartialPaymentModalVisible(true);
     };
+    // --- FIM DA CORREÇÃO ---
+
 
     const handleCancelOrder = async () => {
         if (!selectedOrder) return;
@@ -389,7 +395,6 @@ const TableManagementPage = () => {
                     <Row gutter={[24, 24]}>
                         {tables.map(table => (
                             <Col xs={12} sm={8} md={6} lg={4} xl={3} key={table.id}>
-                                {/* --- ATUALIZAÇÃO AQUI --- */}
                                 <TableCard
                                     table={table}
                                     onClick={handleTableClick}

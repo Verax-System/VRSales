@@ -50,11 +50,9 @@ def _run_sync_post_sale_services(db_session: Session, *, sale: Sale):
 
 class CRUDOrder(CRUDBase[Order, OrderCreate, OrderUpdate]):
 
-    # --- INÍCIO DA CORREÇÃO PRINCIPAL: LÓGICA DE PAGAMENTO PARCIAL ---
     async def process_partial_payment(self, db: AsyncSession, *, order_id: int, payment_request: PartialPaymentRequest, current_user: User) -> Order:
         logger.info(f"Iniciando pagamento para comanda ID: {order_id} pelo usuário ID: {current_user.id}")
         
-        # Usamos get_full_order para garantir que todos os itens e produtos estão carregados
         order = await get_full_order(db, id=order_id)
         
         if not order or order.store_id != current_user.store_id:
@@ -86,7 +84,6 @@ class CRUDOrder(CRUDBase[Order, OrderCreate, OrderUpdate]):
             item_total = Decimal(str(order_item.price_at_order)) * Decimal(item_to_pay.quantity)
             total_to_pay_decimal += item_total
             
-            # Prepara o item para o histórico de Venda (Sale)
             sale_items_for_history.append(
                 SaleItemModel(
                     product_id=order_item.product_id,
@@ -102,10 +99,9 @@ class CRUDOrder(CRUDBase[Order, OrderCreate, OrderUpdate]):
             logger.error(f"FALHA: Valor pago (R$ {total_paid_amount}) é menor que o total dos itens (R$ {total_to_pay_float}).")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Valor pago (R$ {total_paid_amount}) é menor que o total dos itens selecionados (R$ {total_to_pay_float}).")
 
-        # Cria a Venda (Sale) para registrar no histórico
         db_sale = Sale(
             total_amount=total_to_pay_float,
-            payment_method=payment_request.payments[0].payment_method, # Pega o primeiro como principal
+            payment_method=payment_request.payments[0].payment_method,
             user_id=current_user.id,
             store_id=current_user.store_id,
             customer_id=payment_request.customer_id or order.customer_id,
@@ -113,9 +109,8 @@ class CRUDOrder(CRUDBase[Order, OrderCreate, OrderUpdate]):
             payments=[Payment(**p.model_dump()) for p in payment_request.payments]
         )
         db.add(db_sale)
-        db.add_all(items_to_update_in_order) # Adiciona os OrderItems atualizados
+        db.add_all(items_to_update_in_order)
 
-        # Verifica se todos os itens da comanda foram pagos
         all_items_paid = all((item.quantity == item.paid_quantity) for item in order.items)
         if all_items_paid:
             order.status = OrderStatus.PAID
@@ -125,17 +120,14 @@ class CRUDOrder(CRUDBase[Order, OrderCreate, OrderUpdate]):
             logger.info(f"Comanda ID {order.id} totalmente paga. Liberando a mesa {order.table_id}.")
 
         await db.commit()
-        await db.refresh(db_sale) # Necessário para obter o ID da venda
+        await db.refresh(db_sale)
 
         logger.info(f"Venda (Sale) ID {db_sale.id} criada a partir da comanda. Executando serviços de pós-venda...")
         await db.run_sync(_run_sync_post_sale_services, sale=db_sale)
         logger.info("Serviços de pós-venda concluídos.")
         
-        # Retorna a comanda atualizada
         return await get_full_order(db, id=order.id)
-    # --- FIM DA CORREÇÃO PRINCIPAL ---
     
-    # ... (resto do arquivo sem alterações, apenas para garantir a completude) ...
     async def get_open_order_by_table(self, db: AsyncSession, *, table_id: int, current_user: User) -> Optional[Order]:
         stmt = ( select(Order).where(Order.store_id == current_user.store_id, Order.table_id == table_id, Order.status == OrderStatus.OPEN).options(selectinload(Order.items).selectinload(OrderItem.product), selectinload(Order.customer)))
         result = await db.execute(stmt)
@@ -212,5 +204,47 @@ class CRUDOrder(CRUDBase[Order, OrderCreate, OrderUpdate]):
         await db.commit()
         await db.refresh(db_order)
         return await get_full_order(db, id=db_order.id)
+    
+    # --- INÍCIO DAS NOVAS FUNÇÕES ---
+    async def transfer_order(self, db: AsyncSession, *, source_order: Order, target_table_id: int, current_user: User) -> Order:
+        """Transfere uma comanda para uma nova mesa."""
+        target_table = await db.get(Table, target_table_id)
+        if not target_table or target_table.store_id != current_user.store_id:
+            raise HTTPException(status_code=404, detail="Mesa de destino não encontrada.")
+        if target_table.status != TableStatus.AVAILABLE:
+            raise HTTPException(status_code=400, detail="Mesa de destino não está livre.")
+        
+        # Libera a mesa antiga
+        if source_order.table:
+            source_order.table.status = TableStatus.AVAILABLE
+            db.add(source_order.table)
+            
+        # Ocupa a nova mesa e atualiza a comanda
+        target_table.status = TableStatus.OCCUPIED
+        source_order.table_id = target_table.id
+        db.add(target_table)
+        db.add(source_order)
+        
+        await db.commit()
+        await db.refresh(source_order)
+        return source_order
+
+    async def merge_orders(self, db: AsyncSession, *, target_order: Order, source_order_id: int, current_user: User) -> Order:
+        """Junta os itens de uma comanda de origem em uma comanda de destino."""
+        source_order = await get_full_order(db, id=source_order_id)
+        if not source_order or source_order.store_id != current_user.store_id:
+            raise HTTPException(status_code=404, detail="Comanda de origem não encontrada.")
+
+        # Move os itens
+        for item in source_order.items:
+            item.order_id = target_order.id
+            db.add(item)
+            
+        # Cancela a comanda de origem
+        await self.cancel_order(db, order=source_order, current_user=current_user)
+        
+        await db.commit()
+        return await get_full_order(db, id=target_order.id)
+    # --- FIM DAS NOVAS FUNÇÕES ---
         
 order = CRUDOrder(Order)

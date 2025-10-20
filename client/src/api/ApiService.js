@@ -69,7 +69,11 @@ const ApiService = {
   // Vendas (Sales) - para finalizar o pagamento
   createSale: (saleData) => ApiService.post('/sales/', saleData),
 
+  // --- INÍCIO DA NOVA FUNÇÃO ---
   // Comandas (Orders) - para a venda persistente no POS
+  processPartialPayment: (orderId, paymentData) => ApiService.post(`/orders/${orderId}/pay`, paymentData),
+  // --- FIM DA NOVA FUNÇÃO ---
+  
   createOrder: (orderData) => ApiService.post('/orders/', orderData),
   getActivePosOrder: () => ApiService.get('/orders/pos/active'),
   addItemToOrder: (orderId, itemData) => ApiService.post(`/orders/${orderId}/items`, itemData),
