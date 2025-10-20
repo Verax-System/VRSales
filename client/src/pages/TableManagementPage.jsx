@@ -413,9 +413,18 @@ const TableManagementPage = () => {
                 <p>Deseja abrir uma nova comanda na Mesa <strong>{tableToOpen?.number}</strong>?</p>
             </Modal>
             
-            <Modal title={editingTable ? "Editar Mesa" : "Adicionar Nova Mesa"} open={isAddEditModalVisible} onCancel={() => setIsAddEditModalVisible(false)} onOk={handleAddEditOk}>
-                <Form form={form} layout="vertical"><Form.Item name="number" label="Número ou Nome da Mesa" rules={[{ required: true, message: 'Por favor, insira o número/nome da mesa!' }]}><Input placeholder="Ex: 01, Varanda 2, etc." /></Form.Item></Form>
-            </Modal>
+<Modal title={editingTable ? "Editar Mesa" : "Adicionar Nova Mesa"} open={isAddEditModalVisible} onCancel={() => setIsAddEditModalVisible(false)} onOk={handleAddEditOk}>
+    <Form form={form} layout="vertical" initialValues={{ capacity: 2 }}>
+        <Form.Item name="number" label="Número ou Nome da Mesa" rules={[{ required: true, message: 'Por favor, insira o número/nome da mesa!' }]}>
+            <Input placeholder="Ex: 01, Varanda 2, etc." />
+        </Form.Item>
+        {/* --- NOVO CAMPO ADICIONADO --- */}
+        <Form.Item name="capacity" label="Capacidade de Lugares" rules={[{ required: true, message: 'Defina a capacidade!'}]}>
+            <InputNumber min={1} style={{ width: '100%' }} />
+        </Form.Item>
+        {/* --- FIM DA ALTERAÇÃO --- */}
+    </Form>
+</Modal>
 
             {selectedOrder && (
                 <Modal

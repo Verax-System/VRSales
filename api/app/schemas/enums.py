@@ -12,6 +12,13 @@ class UnitOfMeasure(str, enum.Enum):
     MILLILITER = "ml"
     UNIT = "un"
 
+# --- INÍCIO DA NOVA ADIÇÃO ---
+class TableShape(str, enum.Enum):
+    """ Formatos de mesa disponíveis. """
+    RECTANGLE = "rectangle"
+    ROUND = "round"
+# --- FIM DA NOVA ADIÇÃO ---
+
 class TableStatus(str, enum.Enum):
     """ Status de uma mesa no restaurante. """
     AVAILABLE = "available"
@@ -22,7 +29,6 @@ class OrderStatus(str, enum.Enum):
     OPEN = "open"
     CLOSED = "closed"
     PAID = "paid"
-    # --- NOVO STATUS ADICIONADO ---
     CANCELLED = "cancelled"
 
 class OrderType(str, Enum):
@@ -38,20 +44,13 @@ class PaymentMethod(str, enum.Enum):
     OTHER = "other"
 
 class UserRole(str, enum.Enum):
-    SUPER_ADMIN = "super_admin" # O novo nível mais alto
+    SUPER_ADMIN = "super_admin"
     ADMIN = "admin"
     MANAGER = "manager"
     CASHIER = "cashier"
-
 
 class OrderItemStatus(str, Enum):
     PENDING = "pending"
     PREPARING = "preparing"
     READY = "ready"
     DELIVERED = "delivered"
-
-    # Adicionamos a definição dos status de mesa que estava faltando
-class TableStatus(str, Enum):
-    AVAILABLE = "available"
-    OCCUPIED = "occupied"
-    RESERVED = "reserved" #
