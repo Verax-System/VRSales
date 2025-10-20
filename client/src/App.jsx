@@ -172,7 +172,7 @@ const App = () => {
         <Route element={<RoleBasedRoute allowedRoles={['admin', 'manager', 'cashier']} />}>
           <Route path="customers" element={<CustomerPage />} />
         </Route>
-        <Route element={<RoleBasedRoute allowedRoles={['admin']} />}>
+        <Route element={<RoleBasedRoute allowedRoles={['admin', 'super_admin']} />}>
           <Route path="users" element={<UsersPage />} />
           <Route path="settings/floor-plan" element={<FloorPlanSettingsPage />} />
         </Route>

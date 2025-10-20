@@ -1,8 +1,8 @@
-"""create all tables from scratch
+"""create initial database schema
 
-Revision ID: e1146157d5cb
+Revision ID: 54238cde823e
 Revises: 
-Create Date: 2025-10-17 15:53:19.671702
+Create Date: 2025-10-20 07:45:55.078750
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'e1146157d5cb'
+revision: str = '54238cde823e'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -157,7 +157,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('store_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=True),
-    sa.Column('status', sa.Enum('OPEN', 'CLOSED', 'PAID', name='orderstatus'), nullable=False),
+    sa.Column('status', sa.Enum('OPEN', 'CLOSED', 'PAID', 'CANCELLED', name='orderstatus'), nullable=False),
     sa.Column('order_type', sa.Enum('DINE_IN', 'DELIVERY', 'TAKEOUT', name='ordertype'), nullable=False),
     sa.Column('delivery_address', sa.String(length=500), nullable=True),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
@@ -235,6 +235,7 @@ def upgrade() -> None:
     op.create_table('order_items',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('quantity', sa.Integer(), nullable=False),
+    sa.Column('paid_quantity', sa.Integer(), nullable=False),
     sa.Column('price_at_order', sa.Float(), nullable=False),
     sa.Column('notes', sa.String(length=255), nullable=True),
     sa.Column('status', sa.Enum('PENDING', 'PREPARING', 'READY', 'DELIVERED', name='orderitemstatus'), nullable=False),
