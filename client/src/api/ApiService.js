@@ -1,3 +1,4 @@
+// client/src/api/ApiService.js
 import axios from 'axios';
 
 const apiClient = axios.create({
@@ -69,10 +70,8 @@ const ApiService = {
   // Vendas (Sales) - para finalizar o pagamento
   createSale: (saleData) => ApiService.post('/sales/', saleData),
 
-  // --- INÍCIO DA NOVA FUNÇÃO ---
   // Comandas (Orders) - para a venda persistente no POS
   processPartialPayment: (orderId, paymentData) => ApiService.post(`/orders/${orderId}/pay`, paymentData),
-  // --- FIM DA NOVA FUNÇÃO ---
   
   createOrder: (orderData) => ApiService.post('/orders/', orderData),
   getActivePosOrder: () => ApiService.get('/orders/pos/active'),
@@ -88,6 +87,18 @@ const ApiService = {
   getStores: () => ApiService.get('/stores'),
   getGlobalDashboardSummary: () => ApiService.get('/super-admin/dashboard'),
   getDashboardSummary: () => ApiService.get('/reports/dashboard'),
+
+  getTopSellingProducts: (limit = 10) => {
+    return ApiService.get(`/reports/top-selling-products?limit=${limit}`);
+  },
+  getSalesEvolution: (startDate, endDate) => {
+    return ApiService.get(`/reports/sales-evolution?start_date=${startDate}&end_date=${endDate}`);
+  },
+  getSalesByPeriodPdf: (startDate, endDate) => {
+    return ApiService.get(`/reports/pdf/sales-by-period?start_date=${startDate}&end_date=${endDate}`, {
+      responseType: 'blob', // !!! Importante: Espera um blob (ficheiro binário) como resposta !!!
+    });
+  },
 };
 
 export default ApiService;
