@@ -30,6 +30,7 @@ from app.models.cash_register import CashRegister, CashRegisterTransaction
 from app.models.stock_movement import StockMovement
 from app.models.variation import Attribute, AttributeOption, ProductVariation, VariationOptionsAssociation
 from app.models.reservation import Reservation
+from app.models.wall import Wall
 # Adicione qualquer outro modelo que você tenha
 
 async def init_db() -> None:

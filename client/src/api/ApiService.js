@@ -59,6 +59,13 @@ const ApiService = {
   },
   getCurrentUser: () => ApiService.get('/users/me'),
 
+  // Walls
+  getWalls: () => ApiService.get('/walls/'),
+  createWall: (wallData) => ApiService.post('/walls/', wallData),
+  updateWall: (wallId, wallData) => ApiService.put(`/walls/${wallId}`, wallData),
+  deleteWall: (wallId) => ApiService.delete(`/walls/${wallId}`),
+  updateWallsLayout: (layoutData) => ApiService.put('/walls/layout', layoutData), // Endpoint para salvar layout das paredes
+
   // Caixa
   getCashRegisterStatus: () => ApiService.get('/cash-registers/status'),
   openCashRegister: (data) => ApiService.post('/cash-registers/open', data),

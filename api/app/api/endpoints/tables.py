@@ -9,7 +9,7 @@ from app.crud import crud_table
 from app.models.user import User as UserModel
 from app.models.table import Table as TableModel
 from app.models.order import Order, OrderItem
-from app.schemas.table import Table as TableSchema, TableCreate, TableUpdate, TableLayoutUpdate
+from app.schemas.table import Table as TableSchema, TableCreate, TableUpdate, TableLayoutUpdate, TableLayoutUpdateRequest
 from app.api.dependencies import get_db, get_current_active_user, RoleChecker
 from app.schemas.enums import UserRole, OrderStatus, OrderItemStatus
 
@@ -84,14 +84,17 @@ async def create_table(
 ) -> Any:
     return await crud_table.table.create(db=db, obj_in=table_in, current_user=current_user)
 
+# Endpoint de Layout Atualizado
 @router.put("/layout", response_model=List[TableSchema], dependencies=[Depends(manager_permissions)])
 async def update_tables_layout(
     *,
     db: AsyncSession = Depends(get_db),
-    tables_layout: List[TableLayoutUpdate],
+    # CORREÇÃO: Espera o objeto TableLayoutUpdateRequest
+    layout_request: TableLayoutUpdateRequest,
     current_user: UserModel = Depends(get_current_active_user)
 ) -> Any:
-    return await crud_table.table.update_layout(db=db, tables_layout=tables_layout, current_user=current_user)
+    # CORREÇÃO: Passa a lista de dentro do objeto para o CRUD
+    return await crud_table.table.update_layout(db=db, tables_layout=layout_request.tables, current_user=current_user)
 
 @router.put("/{table_id}", response_model=TableSchema, dependencies=[Depends(manager_permissions)])
 async def update_table(
