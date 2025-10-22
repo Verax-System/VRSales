@@ -1,15 +1,16 @@
+# api/app/api/endpoints/reports.py
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import date, datetime # Adicionar datetime
 from typing import List, Any
 from fastapi.responses import StreamingResponse
 import io
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import cm
-from reportlab.lib import colors
+import traceback # Para log detalhado
+from loguru import logger # Para log detalhado
 
+# Importar serviços e schemas
 from app.services.analytics_service import analytics_service
+from app.services.pdf_service import generate_enhanced_sales_report_pdf # Renomeado
 from app.schemas.report import (
     SalesByPeriod, TopSellingProduct, SalesByUser, SalesEvolutionItem, PurchaseSuggestion,
     SalesByPaymentMethodItem, SalesByHourItem, SalesByCategoryItem, LowStockProductItem,
@@ -21,124 +22,79 @@ from app.models.user import User as UserModel
 from app.models.store import Store as StoreModel # Importar o modelo da Loja
 from app.schemas.enums import UserRole
 from app.services.dashboard_service import dashboard_service
-from app.crud import crud_report
+from app.crud import crud_report # Importar o módulo crud_report
 from app.schemas.user import User as UserSchema
 
 router = APIRouter()
 
 manager_permissions = RoleChecker([UserRole.ADMIN, UserRole.MANAGER])
 
-# --- Função Auxiliar para Gerar PDF (Aprimorada) ---
-def generate_sales_by_period_pdf_content(
-    data: SalesByPeriod,
-    start_date: date,
-    end_date: date,
-    store: StoreModel
-) -> bytes:
-    """Gera o conteúdo de um PDF profissional para o relatório de vendas por período."""
-    buffer = io.BytesIO()
-    p = canvas.Canvas(buffer, pagesize=A4)
-    width, height = A4
-    margin = 2 * cm
-    
-    # --- CABEÇALHO ---
-    p.setFont("Helvetica-Bold", 18)
-    p.setFillColorRGB(0.1, 0.32, 0.78) # Azul corporativo
-    p.drawString(margin, height - margin, "VR Sales")
-    
-    p.setFont("Helvetica", 10)
-    p.setFillColor(colors.black)
-    p.drawRightString(width - margin, height - margin + 0.5*cm, store.name)
-    p.setFillColor(colors.grey)
-    p.drawRightString(width - margin, height - margin, store.address or "Endereço não cadastrado")
-    
-    p.setStrokeColorRGB(0.9, 0.9, 0.9)
-    p.line(margin, height - margin - 0.5*cm, width - margin, height - margin - 0.5*cm)
-
-    # --- TÍTULO DO RELATÓRIO ---
-    current_y = height - margin - 2*cm
-    p.setFont("Helvetica-Bold", 16)
-    p.setFillColor(colors.black)
-    p.drawCentredString(width / 2, current_y, "Relatório de Vendas por Período")
-    current_y -= 0.7*cm
-    p.setFont("Helvetica", 12)
-    p.drawCentredString(width / 2, current_y, f"{start_date.strftime('%d/%m/%Y')} a {end_date.strftime('%d/%m/%Y')}")
-
-    # --- CONTEÚDO ---
-    current_y -= 2*cm
-    line_height = 1 * cm
-    
-    p.setFont("Helvetica-Bold", 12)
-    p.drawString(margin, current_y, "Receita Total:")
-    p.setFont("Helvetica", 12)
-    p.drawRightString(width - margin, current_y, f"R$ {data.total_sales_amount:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
-    current_y -= line_height
-
-    p.setFont("Helvetica-Bold", 12)
-    p.drawString(margin, current_y, "Número de Transações:")
-    p.setFont("Helvetica", 12)
-    p.drawRightString(width - margin, current_y, str(data.number_of_transactions))
-    current_y -= line_height
-
-    p.setFont("Helvetica-Bold", 12)
-    p.drawString(margin, current_y, "Ticket Médio:")
-    p.setFont("Helvetica", 12)
-    p.drawRightString(width - margin, current_y, f"R$ {data.average_ticket:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
-    
-    # --- RODAPÉ ---
-    footer_y = margin - 1*cm
-    p.line(margin, footer_y, width - margin, footer_y)
-    footer_text_y = footer_y - 0.5*cm
-    p.setFont("Helvetica", 8)
-    p.setFillColor(colors.grey)
-    p.drawString(margin, footer_text_y, f"Relatório gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
-    p.drawRightString(width - margin, footer_text_y, "Página 1 de 1")
-
-    p.showPage()
-    p.save()
-    buffer.seek(0)
-    return buffer.getvalue()
-# --- Fim da Função Auxiliar ---
-
-
+# --- Rota PDF /pdf/sales-by-period (Atualizada com try/except robusto) ---
 @router.get("/pdf/sales-by-period",
             response_class=StreamingResponse,
             dependencies=[Depends(manager_permissions)],
-            summary="Gerar Relatório PDF de Vendas por Período")
-async def generate_sales_by_period_report_pdf(
+            summary="Gerar Relatório PDF Aprimorado de Vendas por Período")
+async def generate_enhanced_sales_by_period_report_pdf( # Nome da função atualizado
     start_date: date,
     end_date: date,
     db: AsyncSession = Depends(get_db),
-    current_user: UserModel = Depends(get_current_active_user) # Alterado para UserModel
+    current_user: UserModel = Depends(get_current_active_user)
 ):
     """
-    Gera um relatório PDF das vendas por período.
+    Gera um relatório PDF aprimorado das vendas por período, incluindo detalhes adicionais.
     """
-    # 1. Busca os dados da loja do usuário
     if not current_user.store_id:
         raise HTTPException(status_code=400, detail="Usuário não associado a uma loja.")
     store = await db.get(StoreModel, current_user.store_id)
     if not store:
         raise HTTPException(status_code=404, detail="Loja não encontrada.")
 
-    # 2. Busca os dados do relatório
-    sales_data: SalesByPeriod = await crud_report.get_sales_by_period(db, start_date=start_date, end_date=end_date)
-    
-    # 3. Gera o PDF, passando os dados da loja
-    pdf_content = generate_sales_by_period_pdf_content(sales_data, start_date, end_date, store)
+    # Busca todos os dados necessários usando as funções do crud_report (assíncronas)
+    try:
+        summary_data = await crud_report.get_sales_by_period(db, start_date=start_date, end_date=end_date)
+        sales_by_user = await crud_report.get_sales_by_user(db, start_date=start_date, end_date=end_date)
+        sales_by_payment = await crud_report.get_sales_by_payment_method(db, start_date=start_date, end_date=end_date)
+        sales_by_category = await crud_report.get_sales_by_category(db, start_date=start_date, end_date=end_date)
+        # Buscar top 5 produtos por receita no período
+        top_products = await crud_report.get_top_selling_products_by_period(db, start_date=start_date, end_date=end_date, limit=5, order_by='revenue')
 
-    # 4. Define o nome do arquivo dinamicamente
-    filename = f"relatorio_vendas_{start_date}_a_{end_date}.pdf"
+    except Exception as e:
+        logger.error(f"Erro ao buscar dados para o relatório PDF (Vendas por Período): {e}\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Erro ao buscar dados para o relatório: {e}")
 
-    return StreamingResponse(
-        io.BytesIO(pdf_content),
-        media_type='application/pdf',
-        headers={'Content-Disposition': f'attachment; filename="{filename}"'}
-    )
+    # Geração do PDF com tratamento de erro específico
+    try:
+        buffer = io.BytesIO()
+        generate_enhanced_sales_report_pdf( # Chama a função atualizada
+            buffer=buffer,
+            store=store,
+            start_date=start_date,
+            end_date=end_date,
+            summary_data=summary_data,
+            sales_by_user=sales_by_user,
+            sales_by_payment=sales_by_payment,
+            sales_by_category=sales_by_category,
+            top_products=top_products
+        )
+        buffer.seek(0)
+        filename = f"relatorio_vendas_{start_date}_a_{end_date}.pdf"
 
-# --- Rotas JSON existentes e comentadas (sem alterações) ---
-# ... (o restante do seu arquivo permanece igual) ...
+        # Retorna o StreamingResponse apenas se a geração foi bem-sucedida
+        return StreamingResponse(
+            buffer,
+            media_type='application/pdf',
+            headers={'Content-Disposition': f'attachment; filename="{filename}"'}
+        )
+    except Exception as e:
+        # Captura erros específicos da geração do PDF
+        logger.error(f"Erro durante a geração do PDF (Vendas por Período) com reportlab: {e}\n{traceback.format_exc()}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Falha ao gerar o arquivo PDF: {e}"
+        )
 
+
+# --- Rotas JSON existentes (sem alterações) ---
 @router.get(
     "/purchase-suggestions",
     response_model=List[PurchaseSuggestion],
@@ -149,9 +105,12 @@ async def get_purchase_suggestions(
     db: AsyncSession = Depends(get_db),
     current_user: UserModel = Depends(get_current_active_user)
 ):
+    # Nota: analytics_service.get_purchase_suggestions usa Session síncrona.
+    # A chamada db.run_sync é necessária para executá-la corretamente em um endpoint async.
     try:
       suggestions = await db.run_sync(analytics_service.get_purchase_suggestions)
     except Exception as e:
+       logger.error(f"Erro ao buscar sugestões de compra: {e}\n{traceback.format_exc()}")
        raise HTTPException(status_code=500, detail=f"Erro ao buscar sugestões: {e}")
     return suggestions
 
@@ -160,7 +119,7 @@ async def report_sales_by_period(
     start_date: date,
     end_date: date,
     db: AsyncSession = Depends(get_db),
-    current_user: UserSchema = Depends(get_current_user)
+    current_user: UserSchema = Depends(get_current_user) # Pode manter UserSchema aqui se preferir
 ):
     return await crud_report.get_sales_by_period(db, start_date=start_date, end_date=end_date)
 
@@ -168,8 +127,9 @@ async def report_sales_by_period(
 async def report_top_selling_products(
     limit: int = Query(5, ge=1, le=50),
     db: AsyncSession = Depends(get_db),
-    current_user: UserSchema = Depends(get_current_user)
+    current_user: UserSchema = Depends(get_current_user) # Pode manter UserSchema aqui se preferir
 ):
+    # Esta rota busca os top produtos GERAIS, não por período
     return await crud_report.get_top_selling_products(db, limit=limit)
 
 @router.get("/sales-by-user", response_model=List[SalesByUser])
@@ -177,7 +137,7 @@ async def report_sales_by_user(
     start_date: date,
     end_date: date,
     db: AsyncSession = Depends(get_db),
-    current_user: UserSchema = Depends(get_current_user)
+    current_user: UserSchema = Depends(get_current_user) # Pode manter UserSchema aqui se preferir
 ):
     return await crud_report.get_sales_by_user(db, start_date=start_date, end_date=end_date)
 
@@ -186,7 +146,7 @@ async def report_sales_evolution(
     start_date: date,
     end_date: date,
     db: AsyncSession = Depends(get_db),
-    current_user: UserSchema = Depends(get_current_user)
+    current_user: UserSchema = Depends(get_current_user) # Pode manter UserSchema aqui se preferir
 ):
     return await crud_report.get_sales_evolution_by_period(db, start_date=start_date, end_date=end_date)
 
@@ -208,3 +168,31 @@ async def get_dashboard_summary(
         )
     summary_data = await dashboard_service.get_dashboard_summary(db, store_id=current_user.store_id)
     return summary_data
+
+# --- Adicionar rotas para os outros dados JSON se necessário ---
+@router.get("/sales-by-payment-method", response_model=List[SalesByPaymentMethodItem])
+async def report_sales_by_payment_method(
+    start_date: date,
+    end_date: date,
+    db: AsyncSession = Depends(get_db),
+    current_user: UserSchema = Depends(get_current_user) # Pode manter UserSchema
+):
+    return await crud_report.get_sales_by_payment_method(db, start_date=start_date, end_date=end_date)
+
+@router.get("/sales-by-hour", response_model=List[SalesByHourItem])
+async def report_sales_by_hour(
+    start_date: date,
+    end_date: date,
+    db: AsyncSession = Depends(get_db),
+    current_user: UserSchema = Depends(get_current_user) # Pode manter UserSchema
+):
+    return await crud_report.get_sales_by_hour(db, start_date=start_date, end_date=end_date)
+
+@router.get("/sales-by-category", response_model=List[SalesByCategoryItem])
+async def report_sales_by_category(
+    start_date: date,
+    end_date: date,
+    db: AsyncSession = Depends(get_db),
+    current_user: UserSchema = Depends(get_current_user) # Pode manter UserSchema
+):
+    return await crud_report.get_sales_by_category(db, start_date=start_date, end_date=end_date)

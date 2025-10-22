@@ -16,6 +16,37 @@ from app.schemas.report import (
     SalesByPaymentMethodItem, SalesByHourItem, SalesByCategoryItem # Adicionados
 )
 
+async def get_top_selling_products_by_period(
+    db: AsyncSession, start_date: date, end_date: date, limit: int = 5, order_by: str = 'revenue'
+) -> List[TopSellingProduct]:
+    """ Retorna os produtos mais vendidos (por receita ou quantidade) em um período específico. """
+    stmt = (
+        select(
+            SaleItem.product_id,
+            Product.name.label("product_name"),
+            func.sum(SaleItem.quantity).label("total_quantity_sold"),
+            func.sum(SaleItem.quantity * SaleItem.price_at_sale).label("total_revenue") # Usar total_revenue agora
+        )
+        .join(Product, SaleItem.product_id == Product.id)
+        .join(Sale, SaleItem.sale_id == Sale.id) # *** JOIN com Sale para filtrar data ***
+        .where(
+            func.date(Sale.created_at) >= start_date, # *** Filtro de data ***
+            func.date(Sale.created_at) <= end_date   # *** Filtro de data ***
+        )
+        .group_by(SaleItem.product_id, Product.name)
+    )
+
+    if order_by == 'revenue':
+        stmt = stmt.order_by(desc("total_revenue")) # Ordena pela receita
+    else: # order_by 'quantity'
+        stmt = stmt.order_by(desc("total_quantity_sold"))
+
+    stmt = stmt.limit(limit)
+
+    result = await db.execute(stmt)
+    # Convertendo para o schema Pydantic explicitamente
+    # Ajuste: O schema espera 'total_revenue', não 'total_revenue_generated'
+    return [TopSellingProduct(**row._mapping) for row in result]
 
 async def get_sales_by_period(db: AsyncSession, start_date: date, end_date: date) -> SalesByPeriod:
     """

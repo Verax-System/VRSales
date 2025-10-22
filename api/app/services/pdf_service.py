@@ -1,83 +1,227 @@
 # api/app/services/pdf_service.py
-from fpdf import FPDF
-from datetime import date
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import cm
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+
+# --- NOVO: Importações para Gráficos ---
+from reportlab.graphics.shapes import Drawing
+from reportlab.graphics.charts.barcharts import VerticalBarChart
+from reportlab.graphics.charts.legends import Legend
+from reportlab.graphics.widgets.markers import makeMarker
+# --- FIM: Importações para Gráficos ---
+
+from datetime import date, datetime
 from typing import Dict, Any, List
+import io
+# from loguru import logger # Descomente se precisar para debug
 
+# Importar schemas e modelos
+from app.schemas.report import SalesByPeriod, SalesByUser, SalesByPaymentMethodItem, SalesByCategoryItem, TopSellingProduct
+from app.models.store import Store
+
+# --- Função format_currency (sem alterações) ---
 def format_currency(value: float) -> str:
-    """Formata um valor float para moeda BRL."""
-    return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    if value is None: return "R$ -"
+    try:
+        return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except (TypeError, ValueError): return str(value)
 
-class PDFReport(FPDF):
-    def header(self):
-        # Logo (opcional - ajuste o caminho se tiver um logo)
-        # self.image('path/to/your/logo.png', 10, 8, 33)
-        self.set_font('Helvetica', 'B', 15)
-        self.cell(0, 10, 'VR Sales - Relatório', 0, 1, 'C')
-        self.ln(5) # Quebra de linha
+# --- Função create_styled_table (Cores Atualizadas) ---
+def create_styled_table(data: List[List[Any]], col_widths: List[float] = None) -> Table:
+    """Cria um objeto Table do ReportLab com estilo azulado."""
+    # Definição de Cores (Exemplo - ajuste conforme sua identidade visual)
+    header_bg_color = colors.HexColor('#2575FC') # Azul mais escuro (do Gradiente Header Reserva)
+    header_text_color = colors.white
+    row_bg_color_odd = colors.HexColor('#F0F5FF') # Azul bem claro
+    row_bg_color_even = colors.white
+    grid_color = colors.lightgrey
 
-    def footer(self):
-        self.set_y(-15)
-        self.set_font('Helvetica', 'I', 8)
-        self.cell(0, 10, f'Página {self.page_no()}', 0, 0, 'C')
+    table = Table(data, colWidths=col_widths)
+    style = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), header_bg_color),
+        ('TEXTCOLOR', (0, 0), (-1, 0), header_text_color),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10), # Mais padding no header
+        ('GRID', (0, 0), (-1, -1), 0.5, grid_color), # Grid mais sutil
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('ALIGN', (0, 1), (0, -1), 'LEFT'),
+        ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8), # Mais padding
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+    ])
+    # Aplicar estilo zebrado com novas cores
+    for i in range(1, len(data)):
+        bg_color = row_bg_color_even if i % 2 == 0 else row_bg_color_odd
+        style.add('BACKGROUND', (0, i), (-1, i), bg_color)
 
-    def chapter_title(self, title):
-        self.set_font('Helvetica', 'B', 12)
-        self.cell(0, 10, title, 0, 1, 'L')
-        self.ln(4)
+    table.setStyle(style)
+    return table
 
-    def chapter_body(self, content):
-        self.set_font('Helvetica', '', 10)
-        self.multi_cell(0, 5, content)
-        self.ln()
+# --- NOVO: Função para Criar Gráfico de Barras ---
+def create_sales_by_user_bar_chart(sales_data: List[SalesByUser]) -> Drawing:
+    """Cria um gráfico de barras verticais para vendas por vendedor."""
+    drawing = Drawing(400, 200) # Largura e Altura do gráfico
+    data = [(user.total_sales_amount,) for user in sales_data] # Dados formatados para o gráfico
+    
+    bc = VerticalBarChart()
+    bc.x = 50
+    bc.y = 50
+    bc.height = 125
+    bc.width = 300
+    bc.data = data
+    bc.strokeColor = colors.black
+    bc.valueAxis.valueMin = 0 # Eixo Y começa em 0
+    bc.valueAxis.valueStep = None # Deixar o reportlab calcular os passos
+    bc.valueAxis.labelTextFormat = lambda v: format_currency(v) # Formatar eixo Y como moeda
+    bc.categoryAxis.labels.boxAnchor = 'ne'
+    bc.categoryAxis.labels.dx = 8
+    bc.categoryAxis.labels.dy = -2
+    bc.categoryAxis.labels.angle = 30
+    bc.categoryAxis.categoryNames = [user.user_full_name[:15] + ('...' if len(user.user_full_name) > 15 else '') for user in sales_data] # Nomes no eixo X (limitados)
 
-    def add_summary_table(self, data: Dict[str, Any], start_date: date, end_date: date):
-        self.set_font('Helvetica', '', 10)
-        period_str = f"Período: {start_date.strftime('%d/%m/%Y')} a {end_date.strftime('%d/%m/%Y')}"
-        self.cell(0, 6, period_str, 0, 1)
-        self.ln(2)
+    # Cores das barras (exemplo)
+    bar_color = colors.HexColor('#6A11CB') # Roxo (do Gradiente Header Global)
+    bc.bars[0].fillColor = bar_color
 
-        col_width = self.w / 3.5 # Largura aproximada das colunas
-        line_height = 8
+    drawing.add(bc)
 
-        headers = ["Indicador", "Valor"]
-        data_rows = [
-            ("Receita Total", format_currency(data.get('total_sales_amount', 0.0))),
-            ("Número de Vendas", str(data.get('number_of_transactions', 0))),
-            ("Ticket Médio", format_currency(data.get('average_ticket', 0.0))),
-        ]
+    # Legenda (opcional, útil se tiver mais de uma série de dados)
+    # legend = Legend()
+    # legend.alignment = 'right'
+    # legend.x = drawing.width - 10
+    # legend.y = drawing.height - 10
+    # legend.colorNamePairs = [(bar_color, 'Valor Vendido')]
+    # drawing.add(legend)
 
-        # Cabeçalho da Tabela
-        self.set_font('Helvetica', 'B', 10)
-        self.set_fill_color(230, 230, 230) # Cinza claro
-        self.cell(col_width * 1.5, line_height, headers[0], 1, 0, 'L', True)
-        self.cell(col_width, line_height, headers[1], 1, 1, 'R', True)
+    return drawing
 
-        # Dados da Tabela
-        self.set_font('Helvetica', '', 10)
-        fill = False
-        for row in data_rows:
-            self.set_fill_color(245, 245, 245) if fill else self.set_fill_color(255, 255, 255)
-            self.cell(col_width * 1.5, line_height, row[0], 'LR', 0, 'L', fill)
-            self.cell(col_width, line_height, row[1], 'LR', 1, 'R', fill)
-            fill = not fill
-        # Linha inferior da tabela
-        self.cell(col_width * 2.5, 0, '', 'T', 1)
+# --- Função Principal de Geração (com Gráfico Integrado) ---
+def generate_enhanced_sales_report_pdf(
+    buffer: io.BytesIO,
+    store: Store,
+    start_date: date,
+    end_date: date,
+    summary_data: SalesByPeriod,
+    sales_by_user: List[SalesByUser] = [],
+    sales_by_payment: List[SalesByPaymentMethodItem] = [],
+    sales_by_category: List[SalesByCategoryItem] = [],
+    top_products: List[TopSellingProduct] = []
+) -> None:
+    """Gera o conteúdo de um PDF aprimorado usando ReportLab."""
 
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                            leftMargin=2*cm, rightMargin=2*cm,
+                            topMargin=3*cm, bottomMargin=2.5*cm)
+    styles = getSampleStyleSheet()
+    story = []
 
-# Função principal para gerar o PDF de Vendas por Período
-def generate_sales_by_period_pdf(data: Dict[str, Any], start_date: date, end_date: date) -> bytes:
-    """
-    Gera o conteúdo binário de um PDF para o relatório de vendas por período.
-    """
-    pdf = PDFReport(orientation='P', unit='mm', format='A4')
-    pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=15)
+    # --- Estilos (como antes) ---
+    title_style = ParagraphStyle( name='ReportTitle', parent=styles['h1'], fontSize=18, alignment=TA_CENTER, spaceAfter=6)
+    subtitle_style = ParagraphStyle( name='ReportSubtitle', parent=styles['h2'], fontSize=12, alignment=TA_CENTER, spaceAfter=20)
+    section_title_style = ParagraphStyle( name='SectionTitle', parent=styles['h3'], fontSize=14, spaceBefore=15, spaceAfter=8)
+    summary_text_style = ParagraphStyle( name='SummaryText', parent=styles['Normal'], fontSize=11, spaceAfter=3)
 
-    pdf.chapter_title(f"Relatório de Vendas - {start_date.strftime('%d/%m/%Y')} a {end_date.strftime('%d/%m/%Y')}")
+    # --- Cabeçalho e Rodapé (como antes) ---
+    def header(canvas, doc):
+        canvas.saveState()
+        page_width = doc.width + doc.leftMargin + doc.rightMargin
+        header_y = doc.pagesize[1] - doc.topMargin
+        canvas.setFont('Helvetica-Bold', 16); canvas.setFillColorRGB(0.1, 0.32, 0.78)
+        canvas.drawString(doc.leftMargin, header_y + 1.2*cm, "VR Sales")
+        canvas.setFont('Helvetica', 9); canvas.setFillColor(colors.black)
+        canvas.drawRightString(page_width - doc.rightMargin, header_y + 1.4*cm, store.name)
+        canvas.setFillColor(colors.grey)
+        canvas.drawRightString(page_width - doc.rightMargin, header_y + 1.0*cm, store.address or "Endereço não cadastrado")
+        canvas.setStrokeColorRGB(0.9, 0.9, 0.9)
+        canvas.line(doc.leftMargin, header_y + 0.7*cm, page_width - doc.rightMargin, header_y + 0.7*cm)
+        canvas.restoreState()
 
-    pdf.add_summary_table(data, start_date, end_date)
+    def footer(canvas, doc):
+        canvas.saveState()
+        page_width = doc.width + doc.leftMargin + doc.rightMargin
+        footer_y = doc.bottomMargin
+        canvas.setStrokeColorRGB(0.9, 0.9, 0.9)
+        canvas.line(doc.leftMargin, footer_y - 0.2*cm, page_width - doc.rightMargin, footer_y - 0.2*cm)
+        canvas.setFont('Helvetica', 8); canvas.setFillColor(colors.grey)
+        canvas.drawString(doc.leftMargin, footer_y - 0.6*cm, f"Relatório gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+        canvas.drawRightString(page_width - doc.rightMargin, footer_y - 0.6*cm, f"Página {canvas.getPageNumber()}")
+        canvas.restoreState()
 
-    # Adicionar mais seções ou tabelas se necessário
+    # --- Conteúdo do Relatório ---
+    story.append(Paragraph("Relatório de Vendas", title_style))
+    story.append(Paragraph(f"Período: {start_date.strftime('%d/%m/%Y')} a {end_date.strftime('%d/%m/%Y')}", subtitle_style))
 
-    pdf_output = pdf.output(dest='S') # 'S' retorna o PDF como bytes
-    return pdf_output
+    # 1. Resumo Geral
+    story.append(Paragraph("Resumo Geral", section_title_style))
+    story.append(Paragraph(f"<b>Receita Total:</b> {format_currency(summary_data.total_sales_amount)}", summary_text_style))
+    story.append(Paragraph(f"<b>Número de Vendas:</b> {summary_data.number_of_transactions}", summary_text_style))
+    story.append(Paragraph(f"<b>Ticket Médio:</b> {format_currency(summary_data.average_ticket)}", summary_text_style))
+    story.append(Spacer(1, 0.8*cm))
+
+    # 2. Vendas por Vendedor (Tabela e Gráfico)
+    if sales_by_user:
+        story.append(Paragraph("Vendas por Vendedor", section_title_style))
+        # Adiciona o Gráfico
+        user_chart = create_sales_by_user_bar_chart(sales_by_user)
+        story.append(user_chart)
+        story.append(Spacer(1, 0.5*cm)) # Espaço entre gráfico e tabela
+        # Adiciona a Tabela
+        user_data = [["Vendedor", "Nº Vendas", "Valor Total"]]
+        user_data.extend([
+            [Paragraph(user.user_full_name, styles['Normal']), user.number_of_transactions, format_currency(user.total_sales_amount)]
+            for user in sales_by_user
+        ])
+        table_width = doc.width
+        user_table = create_styled_table(user_data, col_widths=[table_width*0.5, table_width*0.2, table_width*0.3])
+        story.append(user_table)
+        story.append(Spacer(1, 0.8*cm))
+
+    # 3. Vendas por Meio de Pagamento
+    if sales_by_payment:
+        story.append(Paragraph("Vendas por Meio de Pagamento", section_title_style))
+        payment_data = [["Meio de Pagamento", "Nº Transações", "Valor Total"]]
+        payment_data.extend([
+            [Paragraph(p.payment_method.replace('_', ' ').title(), styles['Normal']), p.transaction_count, format_currency(p.total_amount)]
+            for p in sales_by_payment
+        ])
+        table_width = doc.width
+        payment_table = create_styled_table(payment_data, col_widths=[table_width*0.4, table_width*0.3, table_width*0.3])
+        story.append(payment_table)
+        story.append(Spacer(1, 0.8*cm))
+
+    # 4. Vendas por Categoria
+    if sales_by_category:
+        story.append(Paragraph("Vendas por Categoria", section_title_style))
+        category_data = [["Categoria", "Nº Vendas", "Valor Total"]]
+        category_data.extend([
+            [Paragraph(c.category_name, styles['Normal']), c.transaction_count, format_currency(c.total_amount)]
+            for c in sales_by_category
+        ])
+        table_width = doc.width
+        category_table = create_styled_table(category_data, col_widths=[table_width*0.5, table_width*0.2, table_width*0.3])
+        story.append(category_table)
+        story.append(Spacer(1, 0.8*cm))
+
+    # 5. Top Produtos
+    if top_products:
+        story.append(Paragraph("Produtos Mais Vendidos no Período", section_title_style))
+        product_data = [["Produto", "Qtd Vendida", "Receita Gerada"]]
+        product_data.extend([
+            [Paragraph(p.product_name, styles['Normal']), p.total_quantity_sold, format_currency(p.total_revenue)]
+            for p in top_products
+        ])
+        table_width = doc.width
+        product_table = create_styled_table(product_data, col_widths=[table_width*0.5, table_width*0.2, table_width*0.3])
+        story.append(product_table)
+        story.append(Spacer(1, 0.8*cm))
+
+    # --- Construir o PDF ---
+    doc.build(story, onFirstPage=lambda canvas, doc: (header(canvas, doc), footer(canvas, doc)),
+                     onLaterPages=lambda canvas, doc: (header(canvas, doc), footer(canvas, doc)))
