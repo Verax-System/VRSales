@@ -12,6 +12,9 @@ from reportlab.graphics.shapes import Drawing
 from reportlab.graphics.charts.barcharts import VerticalBarChart
 from reportlab.graphics.charts.legends import Legend
 from reportlab.graphics.widgets.markers import makeMarker
+from reportlab.graphics.charts.piecharts import Pie
+from reportlab.graphics.charts.legends import Legend as PieLegend # Renomear para evitar conflito
+from reportlab.lib.validators import Auto
 # --- FIM: Importações para Gráficos ---
 
 from datetime import date, datetime
@@ -102,6 +105,60 @@ def create_sales_by_user_bar_chart(sales_data: List[SalesByUser]) -> Drawing:
 
     return drawing
 
+def create_payment_method_pie_chart(payment_data: List[SalesByPaymentMethodItem]) -> Drawing:
+    """Cria um gráfico de pizza para vendas por meio de pagamento."""
+    drawing = Drawing(400, 200) # Largura e Altura da área do gráfico
+    data = [p.total_amount for p in payment_data if p.total_amount > 0] # Apenas valores positivos
+    labels = [p.payment_method.replace('_', ' ').title() for p in payment_data if p.total_amount > 0]
+
+    if not data: # Se não houver dados, retorna um drawing vazio
+        return drawing
+
+    pc = Pie()
+    pc.x = 65  # Posição X do centro da pizza
+    pc.y = 10  # Posição Y do centro da pizza
+    pc.width = 130 # Largura da pizza
+    pc.height = 130 # Altura da pizza
+    pc.data = data
+    pc.labels = labels
+
+    # Estilo das fatias e rótulos
+    pc.slices.strokeWidth = 0.5
+    pc.slices.labelRadius = 1.1 # Distância dos rótulos do centro
+    pc.slices.fontSize = 9
+    pc.sideLabels = 1 # Rótulos fora da pizza
+    # Formatar rótulos como porcentagem (opcional)
+    # total = sum(data)
+    # pc.labelFormatter = lambda val: f'{(val/total)*100:.1f}%' if total > 0 else ''
+
+    # Cores das fatias (exemplo - pode adicionar mais cores se tiver mais métodos)
+    colors_palette = [
+        colors.HexColor('#2575FC'), # Azul
+        colors.HexColor('#6A11CB'), # Roxo
+        colors.HexColor('#2ecc71'), # Verde
+        colors.HexColor('#f39c12'), # Laranja
+        colors.grey,
+        colors.pink,
+    ]
+    for i, _ in enumerate(data):
+        pc.slices[i].fillColor = colors_palette[i % len(colors_palette)]
+
+    drawing.add(pc)
+
+    # Legenda à direita
+    legend = PieLegend()
+    legend.alignment = 'right'
+    legend.x = drawing.width - 50 # Posição X da legenda
+    legend.y = drawing.height / 2 + (len(labels) * 12 / 2) # Ajusta Y baseado no número de itens
+    legend.columnMaximum = 10 # Máximo de itens por coluna
+    legend.colorNamePairs = [(pc.slices[i].fillColor, labels[i]) for i in range(len(data))]
+    legend.fontSize = 9
+    legend.boxAnchor = 'ne' # Ancora no Nordeste (canto superior direito)
+
+    drawing.add(legend)
+
+    return drawing
+
 # --- Função Principal de Geração (com Gráfico Integrado) ---
 def generate_enhanced_sales_report_pdf(
     buffer: io.BytesIO,
@@ -186,6 +243,12 @@ def generate_enhanced_sales_report_pdf(
     # 3. Vendas por Meio de Pagamento
     if sales_by_payment:
         story.append(Paragraph("Vendas por Meio de Pagamento", section_title_style))
+        # --- Adiciona o Gráfico de Pizza ---
+        payment_chart = create_payment_method_pie_chart(sales_by_payment)
+        story.append(payment_chart)
+        story.append(Spacer(1, 0.5*cm)) # Espaço entre gráfico e tabela
+        # --- Fim Adição Gráfico ---
+        # Tabela (como antes)
         payment_data = [["Meio de Pagamento", "Nº Transações", "Valor Total"]]
         payment_data.extend([
             [Paragraph(p.payment_method.replace('_', ' ').title(), styles['Normal']), p.transaction_count, format_currency(p.total_amount)]
